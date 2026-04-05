@@ -6,12 +6,20 @@
       "type": "object",
       "properties": {
         "title": { "type": "string", "description": "The project title." },
+        "description": { "type": "string", "description": "A short description." },
         "category": { "type": "string", "description": "The project category." },
         "image": { "type": "string", "format": "url", "description": "The project image URL." },
+        "role": { "type": "string", "description": "The author's role." },
+        "timeline": { "type": "string", "description": "Project duration." },
+        "tools": { "type": "array", "items": { "type": "string" }, "description": "Tools used." },
+        "overview": { "type": "string", "description": "Detailed overview." },
+        "problem": { "type": "string", "description": "Problem statement." },
+        "solution": { "type": "string", "description": "Final solution." },
+        "impact": { "type": "string", "description": "Impact and metrics." },
         "createdAt": { "type": "string", "format": "date-time", "description": "The creation timestamp." },
         "authorId": { "type": "string", "description": "The UID of the author." }
       },
-      "required": ["title", "category", "image", "createdAt", "authorId"]
+      "required": ["title", "description", "category", "image", "createdAt", "authorId"]
     },
     "User": {
       "title": "User",
