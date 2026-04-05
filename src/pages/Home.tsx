@@ -15,6 +15,13 @@ export default function Home() {
   const [projects, setProjects] = useState(mockProjects);
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      setFocusIndex((prev) => (prev + 1) % focusAreas.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     const q = query(collection(db, "projects"), orderBy("createdAt", "desc"), limit(3));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedProjects = snapshot.docs.map(doc => ({
@@ -42,18 +49,18 @@ export default function Home() {
         >
           Hey, I'm Dicky.
         </motion.p>
-        <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter leading-[0.9] mb-12">
+        <h1 className="text-4xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-12">
           a digital product designer <br />
           with focus on <br />
-          <span className="relative inline-block min-w-[300px]">
+          <span className="relative inline-block h-[1.3em] overflow-hidden align-bottom px-2 -ml-2">
             <AnimatePresence mode="wait">
               <motion.span
                 key={focusAreas[focusIndex]}
-                initial={{ y: 40, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -40, opacity: 0 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute left-0 italic text-neutral-400"
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "-100%" }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                className="block italic text-neutral-400 whitespace-nowrap leading-[1.3] py-1"
               >
                 {focusAreas[focusIndex]}
               </motion.span>
@@ -127,9 +134,14 @@ export default function Home() {
       <footer className="px-6 md:px-12 lg:px-24 py-20 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-8">
         <p className="text-sm opacity-40">© 2026 Dicky Portfolio. All rights reserved.</p>
         <div className="flex gap-8">
-          <a href="#" className="text-sm font-medium uppercase tracking-widest hover:opacity-60">LinkedIn</a>
-          <a href="#" className="text-sm font-medium uppercase tracking-widest hover:opacity-60">Dribbble</a>
-          <a href="#" className="text-sm font-medium uppercase tracking-widest hover:opacity-60">Instagram</a>
+          <a 
+            href="https://www.linkedin.com/in/dicky-chu/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-sm font-medium uppercase tracking-widest hover:opacity-60"
+          >
+            LinkedIn
+          </a>
         </div>
       </footer>
     </div>
