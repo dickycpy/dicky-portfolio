@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: projects
+    // Fields:
+    //   - title: string (required, 1-100 chars)
+    //   - category: string (required, enum: ['Artificial Intelligence', 'Digital Marketing', 'Interactive Experience'])
+    //   - image: string (required, URL)
+    //   - createdAt: timestamp (required)
+    //   - authorId: string (required, UID)
+    //
+    // Collection: users
+    // Fields:
+    //   - email: string (required, email)
+    //   - role: string (required, enum: ['admin', 'user'])
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "dicky.chu.ibm@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['title', 'category', 'image', 'createdAt', 'authorId']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 100 &&
+             data.category in ['Artificial Intelligence', 'Digital Marketing', 'Interactive Experience'] &&
+             data.image is string && data.image.matches("^https?://.*") &&
+             data.createdAt is timestamp &&
+             data.authorId == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /projects/{projectId} {
+      allow read: if true; // Publicly readable
+      allow create: if isAdmin() && isValidProject(request.resource.data);
+      allow update: if isAdmin() && isValidProject(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && 
+                      request.resource.data.role == 'user' && 
+                      isOwner(userId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

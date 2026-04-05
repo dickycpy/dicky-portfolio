@@ -1,10 +1,20 @@
-<h1 align="center">Hi 👋, I'm Dicky Chu </h1>
-<h3 align="center">A passionate Product specialist from Hong Kong</h3>
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-- 🔭 I’m currently working on digital operations and analytics projects.
-- 🌱 I’m currently learning advanced data analysis, automation tools, and ways to streamline digital operations
-- 👯 I’m looking to collaborate on projects involving process automation, data-driven insights, and UX-informed operations improvements
-- 🤔 I’m looking for help with deepening my knowledge of enterprise analytics tools and best practices for digital operations in large organizations
-- 💬 Ask me about UI/UX design, product management, and building efficient workflows for content and campaign reporting
-- 😄 Pronouns: he/him
-- ⚡ Fun fact: I love road trips in Japan
+# Run and deploy your AI Studio app
+
+This contains everything you need to run your app locally.
+
+View your app in AI Studio: https://ai.studio/apps/80e96b04-d065-43f0-8f3c-e3d300cf58e7
+
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
