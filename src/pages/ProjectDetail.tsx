@@ -195,7 +195,10 @@ export default function ProjectDetail() {
                 <p className="text-lg">{project.tools?.join(", ")}</p>
               </div>
             </div>
-            <p className="text-2xl leading-relaxed">{project.overview}</p>
+            <div 
+              className="text-2xl leading-relaxed prose prose-xl max-w-none"
+              dangerouslySetInnerHTML={{ __html: project.overview }}
+            />
           </section>
 
           <section id="discover" className="scroll-mt-40">
@@ -203,7 +206,10 @@ export default function ProjectDetail() {
               02 <ChevronRight size={14} /> Discover
             </h2>
             <h3 className="text-4xl font-bold tracking-tighter mb-8">Problem Statement</h3>
-            <p className="text-xl text-neutral-600 leading-relaxed">{project.problem}</p>
+            <div 
+              className="text-xl text-neutral-600 leading-relaxed prose prose-lg max-w-none"
+              dangerouslySetInnerHTML={{ __html: project.problem }}
+            />
           </section>
 
           <section id="define" className="scroll-mt-40">
@@ -235,7 +241,10 @@ export default function ProjectDetail() {
               05 <ChevronRight size={14} /> Deliver
             </h2>
             <h3 className="text-4xl font-bold tracking-tighter mb-8">Final Solution</h3>
-            <p className="text-xl text-neutral-600 leading-relaxed mb-12">{project.solution}</p>
+            <div 
+              className="text-xl text-neutral-600 leading-relaxed mb-12 prose prose-lg max-w-none"
+              dangerouslySetInnerHTML={{ __html: project.solution }}
+            />
             <div className="space-y-8">
               <img src="https://picsum.photos/seed/deliver1/1200/800" alt="Deliver 1" className="w-full rounded-2xl" referrerPolicy="no-referrer" />
               <img src="https://picsum.photos/seed/deliver2/1200/800" alt="Deliver 2" className="w-full rounded-2xl" referrerPolicy="no-referrer" />
@@ -247,7 +256,10 @@ export default function ProjectDetail() {
               06 <ChevronRight size={14} /> Outcome
             </h2>
             <h3 className="text-4xl font-bold tracking-tighter mb-8">Impact & Metrics</h3>
-            <p className="text-3xl font-medium text-black">{project.impact}</p>
+            <div 
+              className="text-3xl font-medium text-black prose prose-2xl max-w-none"
+              dangerouslySetInnerHTML={{ __html: project.impact }}
+            />
           </section>
 
           <section id="learning" className="scroll-mt-40">
