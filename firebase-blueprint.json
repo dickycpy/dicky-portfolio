@@ -17,7 +17,8 @@
         "solution": { "type": "string", "description": "Final solution." },
         "impact": { "type": "string", "description": "Impact and metrics." },
         "createdAt": { "type": "string", "format": "date-time", "description": "The creation timestamp." },
-        "authorId": { "type": "string", "description": "The UID of the author." }
+        "authorId": { "type": "string", "description": "The UID of the author." },
+        "password": { "type": "string", "description": "Optional password for project access." }
       },
       "required": ["title", "description", "category", "image", "createdAt", "authorId"]
     },
