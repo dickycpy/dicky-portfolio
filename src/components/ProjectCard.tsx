@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProjectCardProps {
@@ -7,9 +7,10 @@ interface ProjectCardProps {
   category: string;
   image: string;
   index: number;
+  isLocked?: boolean;
 }
 
-export default function ProjectCard({ title, category, image, index }: ProjectCardProps) {
+export default function ProjectCard({ title, category, image, index, isLocked }: ProjectCardProps) {
   return (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
@@ -28,9 +29,17 @@ export default function ProjectCard({ title, category, image, index }: ProjectCa
         referrerPolicy="no-referrer"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-12 text-white">
-        <p className="text-sm font-medium uppercase tracking-widest mb-2 opacity-80">
-          {category}
-        </p>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-sm font-medium uppercase tracking-widest opacity-80">
+            {category}
+          </p>
+          {isLocked && (
+            <div className="flex items-center gap-1 px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full">
+              <Lock size={10} className="text-white" />
+              <span className="text-[8px] font-bold uppercase tracking-widest text-white">Locked</span>
+            </div>
+          )}
+        </div>
         <div className="flex justify-between items-end">
           <h3 className="text-4xl font-bold tracking-tighter">{title}</h3>
           <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black">
