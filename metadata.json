@@ -1,5 +1,5 @@
 {
   "name": "Dicky Portfolio",
-  "description": "A minimal, rational, and highly interactive UX designer portfolio for Dicky, featuring smooth micro-interactions and a project-focused layout.",
+  "description": "A minimal, rational, and highly interactive UX designer portfolio for Dicky, featuring smooth micro-interactions, a project-focused layout, an admin dashboard for project management, and password-protected case studies.",
   "requestFramePermissions": []
 }
