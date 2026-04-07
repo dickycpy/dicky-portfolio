@@ -37,6 +37,7 @@ export default function Projects() {
               title={project.title}
               category={project.category}
               image={project.image}
+              isLocked={!!project.password}
             />
           </Link>
         ))}
