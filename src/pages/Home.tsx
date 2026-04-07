@@ -88,6 +88,7 @@ export default function Home() {
                 title={project.title}
                 category={project.category}
                 image={project.image}
+                isLocked={!!project.password}
               />
             </Link>
           ))}
