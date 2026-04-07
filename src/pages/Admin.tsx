@@ -5,6 +5,8 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
 import { Edit2, Trash2, Plus, X } from "lucide-react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 
 enum OperationType {
   CREATE = 'create',
@@ -73,6 +75,22 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
+
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+    ['link', 'clean']
+  ],
+};
+
+const quillFormats = [
+  'header',
+  'bold', 'italic', 'underline', 'strike', 'blockquote',
+  'list', 'bullet', 'indent',
+  'link'
+];
 
 export default function Admin() {
   const [user, setUser] = useState(auth.currentUser);
@@ -343,39 +361,47 @@ export default function Admin() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Overview</label>
-                <textarea
-                  value={overview}
-                  onChange={(e) => setOverview(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors min-h-[100px] resize-none bg-transparent"
-                  required
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">Overview</label>
+                <ReactQuill 
+                  theme="snow" 
+                  value={overview} 
+                  onChange={setOverview} 
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-xl overflow-hidden"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Problem Statement</label>
-                <textarea
-                  value={problem}
-                  onChange={(e) => setProblem(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors min-h-[100px] resize-none bg-transparent"
-                  required
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">Problem Statement</label>
+                <ReactQuill 
+                  theme="snow" 
+                  value={problem} 
+                  onChange={setProblem} 
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-xl overflow-hidden"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Final Solution</label>
-                <textarea
-                  value={solution}
-                  onChange={(e) => setSolution(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors min-h-[100px] resize-none bg-transparent"
-                  required
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">Final Solution</label>
+                <ReactQuill 
+                  theme="snow" 
+                  value={solution} 
+                  onChange={setSolution} 
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-xl overflow-hidden"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Impact & Metrics</label>
-                <textarea
-                  value={impact}
-                  onChange={(e) => setImpact(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors min-h-[100px] resize-none bg-transparent"
-                  required
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">Impact & Metrics</label>
+                <ReactQuill 
+                  theme="snow" 
+                  value={impact} 
+                  onChange={setImpact} 
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-xl overflow-hidden"
                 />
               </div>
               <div>
