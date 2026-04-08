@@ -196,8 +196,8 @@ export default function ProjectDetail() {
               </div>
             </div>
             <div 
-              className="text-2xl leading-relaxed prose prose-xl max-w-none"
-              dangerouslySetInnerHTML={{ __html: project.overview }}
+              className="text-2xl leading-relaxed prose prose-xl max-w-none prose-neutral prose-p:text-neutral-800 prose-headings:text-black"
+              dangerouslySetInnerHTML={{ __html: project.overview || "<p className='opacity-40 italic'>No overview provided.</p>" }}
             />
           </section>
 
@@ -207,8 +207,8 @@ export default function ProjectDetail() {
             </h2>
             <h3 className="text-4xl font-bold tracking-tighter mb-8">Problem Statement</h3>
             <div 
-              className="text-xl text-neutral-600 leading-relaxed prose prose-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: project.problem }}
+              className="text-xl text-neutral-600 leading-relaxed prose prose-lg max-w-none prose-neutral"
+              dangerouslySetInnerHTML={{ __html: project.problem || "<p className='opacity-40 italic'>No problem statement provided.</p>" }}
             />
           </section>
 
@@ -242,8 +242,8 @@ export default function ProjectDetail() {
             </h2>
             <h3 className="text-4xl font-bold tracking-tighter mb-8">Final Solution</h3>
             <div 
-              className="text-xl text-neutral-600 leading-relaxed mb-12 prose prose-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: project.solution }}
+              className="text-xl text-neutral-600 leading-relaxed mb-12 prose prose-lg max-w-none prose-neutral"
+              dangerouslySetInnerHTML={{ __html: project.solution || "<p className='opacity-40 italic'>No solution provided.</p>" }}
             />
             <div className="space-y-8">
               <img src="https://picsum.photos/seed/deliver1/1200/800" alt="Deliver 1" className="w-full rounded-2xl" referrerPolicy="no-referrer" />
@@ -257,8 +257,8 @@ export default function ProjectDetail() {
             </h2>
             <h3 className="text-4xl font-bold tracking-tighter mb-8">Impact & Metrics</h3>
             <div 
-              className="text-3xl font-medium text-black prose prose-2xl max-w-none"
-              dangerouslySetInnerHTML={{ __html: project.impact }}
+              className="text-3xl font-medium text-black prose prose-2xl max-w-none prose-neutral"
+              dangerouslySetInnerHTML={{ __html: project.impact || "<p className='opacity-40 italic'>No impact metrics provided.</p>" }}
             />
           </section>
 
