@@ -170,17 +170,17 @@ export default function Admin() {
   };
 
   const handleEdit = (project: Project) => {
-    setTitle(project.title);
-    setDescription(project.description);
-    setCategory(project.category);
-    setRole(project.role);
-    setTimeline(project.timeline);
-    setTools(project.tools.join(", "));
-    setOverview(project.overview);
-    setProblem(project.problem);
-    setSolution(project.solution);
-    setImpact(project.impact);
-    setImageUrl(project.image);
+    setTitle(project.title || "");
+    setDescription(project.description || "");
+    setCategory(project.category || "Artificial Intelligence");
+    setRole(project.role || "");
+    setTimeline(project.timeline || "");
+    setTools(project.tools?.join(", ") || "");
+    setOverview(project.overview || "");
+    setProblem(project.problem || "");
+    setSolution(project.solution || "");
+    setImpact(project.impact || "");
+    setImageUrl(project.image || "");
     setPassword(project.password || "");
     setEditingId(project.id);
     setShowForm(true);
