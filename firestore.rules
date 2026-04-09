@@ -18,6 +18,13 @@ service cloud.firestore {
     //   - problem: string (optional, 1-5000 chars)
     //   - solution: string (optional, 1-5000 chars)
     //   - impact: string (optional, 1-5000 chars)
+    //   - introduction: string (optional, 1-10000 chars)
+    //   - challenge: string (optional, 1-10000 chars)
+    //   - approach: string (optional, 1-10000 chars)
+    //   - understanding: string (optional, 1-10000 chars)
+    //   - define: string (optional, 1-10000 chars)
+    //   - developDeliver: string (optional, 1-10000 chars)
+    //   - reflection: string (optional, 1-10000 chars)
     //   - createdAt: timestamp (required)
     //   - authorId: string (required, UID)
     //
