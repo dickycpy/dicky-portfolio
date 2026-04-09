@@ -2,12 +2,30 @@ import React, { useState, useEffect } from "react";
 import { auth, storage, db } from "@/firebase";
 import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs, writeBatch } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield } from "lucide-react";
+import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield, GripVertical } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 enum OperationType {
   CREATE = 'create',
@@ -35,6 +53,7 @@ interface Project {
   developDeliver?: string;
   reflection?: string;
   password?: string;
+  order?: number;
   createdAt: any;
 }
 
@@ -84,15 +103,63 @@ export default function Admin() {
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
-    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    // Fetch all projects to ensure we can fix those missing the 'order' field
+    const q = query(collection(db, "projects"));
     const unsubscribeProjects = onSnapshot(q, (snapshot) => {
-      setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Project[]);
+      let fetchedProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Project[];
+      
+      // Sort by order if available, otherwise by createdAt
+      fetchedProjects.sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+        if (a.order !== undefined) return -1;
+        if (b.order !== undefined) return 1;
+        return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+      });
+
+      // If any projects don't have an order, fix them
+      const needsOrder = fetchedProjects.some(p => p.order === undefined);
+      if (needsOrder) {
+        const batch = writeBatch(db);
+        fetchedProjects.forEach((p, index) => {
+          if (p.order === undefined) {
+            batch.update(doc(db, "projects", p.id), { order: index });
+          }
+        });
+        batch.commit().catch(err => console.error("Failed to fix project orders", err));
+      }
+      setProjects(fetchedProjects);
     });
     return () => {
       unsubscribeAuth();
       unsubscribeProjects();
     };
   }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = async (event: any) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = projects.findIndex((p) => p.id === String(active.id));
+      const newIndex = projects.findIndex((p) => p.id === String(over.id));
+
+      const newProjects = arrayMove(projects, oldIndex, newIndex) as Project[];
+      setProjects(newProjects);
+
+      // Update Firestore
+      const batch = writeBatch(db);
+      newProjects.forEach((project, index) => {
+        batch.update(doc(db, "projects", project.id), { order: index });
+      });
+      await batch.commit();
+    }
+  };
 
   const handleLogin = async () => {
     try {
@@ -172,8 +239,14 @@ export default function Admin() {
       if (editingId) {
         await updateDoc(doc(db, "projects", editingId), projectData);
       } else {
+        // Get the highest order to put new project at the end
+        const q = query(collection(db, "projects"), orderBy("order", "desc"));
+        const snapshot = await getDocs(q);
+        const highestOrder = snapshot.docs[0]?.data().order ?? -1;
+
         await addDoc(collection(db, "projects"), {
           ...projectData,
+          order: highestOrder + 1,
           createdAt: serverTimestamp(),
           authorId: user.uid,
         });
@@ -347,35 +420,84 @@ export default function Admin() {
 
       <div className="space-y-8">
         <h2 className="text-2xl font-bold tracking-tighter">Existing Projects</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.map((p) => (
-            <motion.div key={p.id} layout className="group bg-white rounded-[2rem] overflow-hidden border border-neutral-100 hover:shadow-xl transition-all">
-              <div className="aspect-video relative overflow-hidden bg-neutral-100">
-                <img src={p.image} alt={p.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(p)} className="p-3 bg-white text-black rounded-full shadow-lg hover:scale-110 transition-transform"><Edit2 size={16} /></button>
-                  <button onClick={async () => {
-                    if (window.confirm("Delete this project?")) {
-                      await deleteDoc(doc(db, "projects", p.id));
-                    }
-                  }} className="p-3 bg-white text-red-500 rounded-full shadow-lg hover:scale-110 transition-transform"><Trash2 size={16} /></button>
-                </div>
-              </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-bold text-xl tracking-tight">{p.title}</h3>
-                  <Link to={`/projects/${p.id}`} target="_blank" className="text-neutral-300 hover:text-black transition-colors"><ExternalLink size={16} /></Link>
-                </div>
-                <p className="text-sm text-neutral-500 line-clamp-2 mb-6">{p.description}</p>
-                <div className="flex justify-between items-center pt-6 border-t border-neutral-50">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400">{p.category}</span>
-                  {p.password && <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-1 bg-neutral-100 rounded">Locked</span>}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={projects.map(p => p.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {projects.map((p: Project) => (
+                <SortableProjectCard 
+                  key={p.id} 
+                  p={p} 
+                  handleEdit={handleEdit} 
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
+  );
+}
+
+const SortableProjectCard: React.FC<{ p: Project; handleEdit: (p: Project) => void }> = ({ p, handleEdit }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: p.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      layout
+      className="group bg-white rounded-[2rem] overflow-hidden border border-neutral-100 hover:shadow-xl transition-all relative"
+    >
+      <div className="aspect-video relative overflow-hidden bg-neutral-100">
+        <img src={p.image} alt={p.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />
+        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <button onClick={() => handleEdit(p)} className="p-3 bg-white text-black rounded-full shadow-lg hover:scale-110 transition-transform"><Edit2 size={16} /></button>
+          <button onClick={async () => {
+            if (window.confirm("Delete this project?")) {
+              await deleteDoc(doc(db, "projects", p.id));
+            }
+          }} className="p-3 bg-white text-red-500 rounded-full shadow-lg hover:scale-110 transition-transform"><Trash2 size={16} /></button>
+        </div>
+        <div 
+          {...attributes} 
+          {...listeners}
+          className="absolute top-4 left-4 p-3 bg-white/80 backdrop-blur text-black rounded-full shadow-lg cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <GripVertical size={16} />
+        </div>
+      </div>
+      <div className="p-8">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="font-bold text-xl tracking-tight">{p.title}</h3>
+          <Link to={`/projects/${p.id}`} target="_blank" className="text-neutral-300 hover:text-black transition-colors"><ExternalLink size={16} /></Link>
+        </div>
+        <p className="text-sm text-neutral-500 line-clamp-2 mb-6">{p.description}</p>
+        <div className="flex justify-between items-center pt-6 border-t border-neutral-50">
+          <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400">{p.category}</span>
+          {p.password && <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-1 bg-neutral-100 rounded">Locked</span>}
+        </div>
+      </div>
+    </motion.div>
   );
 }
