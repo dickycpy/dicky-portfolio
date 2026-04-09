@@ -1,8 +1,63 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
 
 @layer base {
   html {
     scroll-behavior: smooth;
+  }
+}
+
+/* Custom Rich Text Styles to replace @tailwindcss/typography */
+@layer components {
+  .rich-text-content {
+    @apply text-neutral-800 leading-relaxed;
+  }
+  
+  .rich-text-content h1 {
+    @apply text-4xl font-bold mb-6 mt-8 text-black;
+  }
+  
+  .rich-text-content h2 {
+    @apply text-3xl font-bold mb-4 mt-6 text-black;
+  }
+  
+  .rich-text-content h3 {
+    @apply text-2xl font-bold mb-3 mt-5 text-black;
+  }
+  
+  .rich-text-content p {
+    @apply mb-4;
+  }
+  
+  .rich-text-content ul {
+    @apply list-disc pl-6 mb-4 space-y-2;
+  }
+  
+  .rich-text-content ol {
+    @apply list-decimal pl-6 mb-4 space-y-2;
+  }
+  
+  .rich-text-content li {
+    @apply pl-1;
+  }
+  
+  .rich-text-content a {
+    @apply text-black underline underline-offset-4 decoration-black/20 hover:decoration-black transition-all;
+  }
+  
+  .rich-text-content blockquote {
+    @apply border-l-4 border-black/10 pl-6 italic my-8 text-neutral-600;
+  }
+
+  /* Sizes */
+  .rich-text-xl {
+    @apply text-2xl;
+  }
+  
+  .rich-text-lg {
+    @apply text-xl;
+  }
+  
+  .rich-text-2xl {
+    @apply text-3xl;
   }
 }
