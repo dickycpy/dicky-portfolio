@@ -96,9 +96,7 @@ service cloud.firestore {
                       isValidProject(request.resource.data) && 
                       request.resource.data.authorId == request.auth.uid;
       allow update: if isAdmin() && 
-                      isValidProject(request.resource.data) &&
-                      request.resource.data.authorId == resource.data.authorId &&
-                      request.resource.data.createdAt == resource.data.createdAt;
+                      isValidProject(request.resource.data);
       allow delete: if isAdmin();
     }
 
