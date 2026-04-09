@@ -4,7 +4,8 @@ import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
-import { Edit2, Trash2, Plus, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 
@@ -26,7 +27,6 @@ interface Project {
   role: string;
   timeline: string;
   tools: string[];
-  // New Sections
   introduction?: string;
   challenge?: string;
   approach?: string;
@@ -34,62 +34,15 @@ interface Project {
   define?: string;
   developDeliver?: string;
   reflection?: string;
-  // Legacy fields (keeping for compatibility)
-  overview?: string;
-  problem?: string;
-  solution?: string;
-  impact?: string;
   password?: string;
   createdAt: any;
-}
-
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId: string | undefined;
-    email: string | null | undefined;
-    emailVerified: boolean | undefined;
-    isAnonymous: boolean | undefined;
-    tenantId: string | null | undefined;
-    providerInfo: {
-      providerId: string;
-      displayName: string | null;
-      email: string | null;
-      photoUrl: string | null;
-    }[];
-  }
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
-    },
-    operationType,
-    path
-  }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
 }
 
 const quillModules = {
   toolbar: [
     [{ 'header': [1, 2, 3, false] }],
     ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
     ['link', 'clean']
   ],
 };
@@ -97,7 +50,7 @@ const quillModules = {
 const quillFormats = [
   'header',
   'bold', 'italic', 'underline', 'strike', 'blockquote',
-  'list', 'bullet', 'indent',
+  'list', 'bullet',
   'link'
 ];
 
@@ -107,41 +60,34 @@ export default function Admin() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"general" | "content" | "settings">("general");
 
   // Form State
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    category: "Artificial Intelligence",
+    role: "",
+    timeline: "",
+    tools: "",
+    imageUrl: "",
+    password: "",
+    introduction: "",
+    challenge: "",
+    approach: "",
+    understanding: "",
+    define: "",
+    developDeliver: "",
+    reflection: ""
+  });
   const [file, setFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Artificial Intelligence");
-  const [role, setRole] = useState("Lead Designer");
-  const [timeline, setTimeline] = useState("3 Months");
-  const [tools, setTools] = useState("Figma, React, Tailwind");
-  const [introduction, setIntroduction] = useState("");
-  const [challenge, setChallenge] = useState("");
-  const [approach, setApproach] = useState("");
-  const [understanding, setUnderstanding] = useState("");
-  const [define, setDefine] = useState("");
-  const [developDeliver, setDevelopDeliver] = useState("");
-  const [reflection, setReflection] = useState("");
-  const [password, setPassword] = useState("");
 
   useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((u) => {
-      setUser(u);
-    });
-
+    const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
     const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
     const unsubscribeProjects = onSnapshot(q, (snapshot) => {
-      const fetchedProjects = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Project[];
-      setProjects(fetchedProjects);
-    }, (error) => {
-      console.error("Error fetching projects:", error);
+      setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Project[]);
     });
-
     return () => {
       unsubscribeAuth();
       unsubscribeProjects();
@@ -149,83 +95,67 @@ export default function Admin() {
   }, []);
 
   const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      setUser(result.user);
+      await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (error) {
       console.error("Login failed", error);
     }
   };
 
-  const handleLogout = () => {
-    signOut(auth);
-    setUser(null);
-  };
-
   const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setCategory("Artificial Intelligence");
-    setRole("Lead Designer");
-    setTimeline("3 Months");
-    setTools("Figma, React, Tailwind");
-    setIntroduction("");
-    setChallenge("");
-    setApproach("");
-    setUnderstanding("");
-    setDefine("");
-    setDevelopDeliver("");
-    setReflection("");
-    setImageUrl("");
-    setPassword("");
+    setFormData({
+      title: "",
+      description: "",
+      category: "Artificial Intelligence",
+      role: "",
+      timeline: "",
+      tools: "",
+      imageUrl: "",
+      password: "",
+      introduction: "",
+      challenge: "",
+      approach: "",
+      understanding: "",
+      define: "",
+      developDeliver: "",
+      reflection: ""
+    });
     setFile(null);
     setEditingId(null);
     setShowForm(false);
+    setActiveTab("general");
   };
 
   const handleEdit = (project: Project) => {
-    setTitle(project.title || "");
-    setDescription(project.description || "");
-    setCategory(project.category || "Artificial Intelligence");
-    setRole(project.role || "");
-    setTimeline(project.timeline || "");
-    setTools(project.tools?.join(", ") || "");
-    setIntroduction(project.introduction || "");
-    setChallenge(project.challenge || "");
-    setApproach(project.approach || "");
-    setUnderstanding(project.understanding || "");
-    setDefine(project.define || "");
-    setDevelopDeliver(project.developDeliver || "");
-    setReflection(project.reflection || "");
-    setImageUrl(project.image || "");
-    setPassword(project.password || "");
+    setFormData({
+      title: project.title || "",
+      description: project.description || "",
+      category: project.category || "Artificial Intelligence",
+      role: project.role || "",
+      timeline: project.timeline || "",
+      tools: project.tools?.join(", ") || "",
+      imageUrl: project.image || "",
+      password: project.password || "",
+      introduction: project.introduction || "",
+      challenge: project.challenge || "",
+      approach: project.approach || "",
+      understanding: project.understanding || "",
+      define: project.define || "",
+      developDeliver: project.developDeliver || "",
+      reflection: project.reflection || ""
+    });
     setEditingId(project.id);
     setShowForm(true);
+    setActiveTab("general");
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this project?")) return;
-    try {
-      await deleteDoc(doc(db, "projects", id));
-      alert("Project deleted successfully!");
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `projects/${id}`);
-    }
-  };
-
-  const handleUpload = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (!file && !imageUrl) {
-      alert("Please provide an Image URL or select a file to upload.");
-      return;
-    }
-
     setLoading(true);
-    try {
-      let finalImageUrl = imageUrl;
 
+    try {
+      let finalImageUrl = formData.imageUrl;
       if (file) {
         const storageRef = ref(storage, `projects/${Date.now()}_${file.name}`);
         await uploadBytes(storageRef, file);
@@ -233,39 +163,25 @@ export default function Admin() {
       }
 
       const projectData = {
-        title,
-        description,
-        category,
+        ...formData,
         image: finalImageUrl,
-        role,
-        timeline,
-        tools: tools.split(",").map(t => t.trim()),
-        introduction,
-        challenge,
-        approach,
-        understanding,
-        define,
-        developDeliver,
-        reflection,
-        password: password.trim() || null,
+        tools: formData.tools.split(",").map(t => t.trim()).filter(t => t),
         updatedAt: serverTimestamp(),
       };
 
       if (editingId) {
         await updateDoc(doc(db, "projects", editingId), projectData);
-        alert("Project updated successfully!");
       } else {
         await addDoc(collection(db, "projects"), {
           ...projectData,
           createdAt: serverTimestamp(),
           authorId: user.uid,
         });
-        alert("Project added successfully!");
       }
       resetForm();
     } catch (error) {
       console.error("Operation failed", error);
-      alert("Operation failed. Check console for details.");
+      alert("Failed to save project. Check console for details.");
     } finally {
       setLoading(false);
     }
@@ -273,305 +189,192 @@ export default function Admin() {
 
   if (!user) {
     return (
-      <div className="pt-40 px-6 flex flex-col items-center">
-        <h1 className="text-4xl font-bold mb-8">Admin Access</h1>
-        <button
-          onClick={handleLogin}
-          className="px-8 py-4 bg-black text-white rounded-full font-medium uppercase tracking-widest"
-        >
-          Login with Google
-        </button>
+      <div className="min-h-screen flex items-center justify-center bg-white px-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full text-center">
+          <div className="w-20 h-20 bg-neutral-50 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-neutral-100">
+            <Shield size={32} className="text-black" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tighter mb-4">Admin Access</h1>
+          <p className="text-neutral-500 mb-12">Please sign in with an authorized Google account to manage your portfolio.</p>
+          <button onClick={handleLogin} className="w-full py-4 bg-black text-white rounded-2xl font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors">
+            Sign in with Google
+          </button>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="pt-40 px-6 md:px-12 lg:px-24 pb-40">
-      <div className="flex justify-between items-center mb-12">
+    <div className="pt-32 px-6 md:px-12 lg:px-24 pb-40 max-w-7xl mx-auto">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
         <div>
-          <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-          <p className="text-sm opacity-40 mt-2">Manage your portfolio projects</p>
+          <h1 className="text-4xl font-bold tracking-tighter">Dashboard</h1>
+          <p className="text-neutral-400 mt-1">Welcome back, {user.displayName?.split(" ")[0]}</p>
         </div>
-        <div className="flex items-center gap-6">
-          <button 
-            onClick={() => setShowForm(!showForm)} 
-            className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest"
-          >
-            {showForm ? <X size={16} /> : <Plus size={16} />}
-            {showForm ? "Cancel" : "New Project"}
+        <div className="flex items-center gap-4">
+          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors">
+            {showForm ? <X size={16} /> : <Plus size={16} />} {showForm ? "Cancel" : "New Project"}
           </button>
-          <button onClick={handleLogout} className="text-sm font-medium uppercase tracking-widest opacity-40 hover:opacity-100">
-            Logout
+          <button onClick={() => signOut(auth)} className="p-3 text-neutral-400 hover:text-black transition-colors" title="Logout">
+            <LogOut size={20} />
           </button>
         </div>
-      </div>
+      </header>
 
       <AnimatePresence>
         {showForm && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden mb-20"
-          >
-            <form onSubmit={handleUpload} className="max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 bg-neutral-50 p-8 md:p-12 rounded-3xl">
-              <div className="md:col-span-2">
-                <h2 className="text-2xl font-bold mb-4">{editingId ? "Edit Project" : "Create New Project"}</h2>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Project Title</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors bg-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Short Description</label>
-                <input
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors bg-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors bg-transparent"
-                >
-                  <option>Artificial Intelligence</option>
-                  <option>Digital Marketing</option>
-                  <option>Interactive Experience</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Role</label>
-                <input
-                  type="text"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors bg-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Timeline</label>
-                <input
-                  type="text"
-                  value={timeline}
-                  onChange={(e) => setTimeline(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors bg-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Tools (comma separated)</label>
-                <input
-                  type="text"
-                  value={tools}
-                  onChange={(e) => setTools(e.target.value)}
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors bg-transparent"
-                  required
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">1. Introduction</label>
-                <ReactQuill 
-                  theme="snow" 
-                  value={introduction} 
-                  onChange={setIntroduction} 
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-xl overflow-hidden"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">2. The Challenge</label>
-                <ReactQuill 
-                  theme="snow" 
-                  value={challenge} 
-                  onChange={setChallenge} 
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-xl overflow-hidden"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">3. The Approach</label>
-                <ReactQuill 
-                  theme="snow" 
-                  value={approach} 
-                  onChange={setApproach} 
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-xl overflow-hidden"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">4. Understanding</label>
-                <ReactQuill 
-                  theme="snow" 
-                  value={understanding} 
-                  onChange={setUnderstanding} 
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-xl overflow-hidden"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">5. Define</label>
-                <ReactQuill 
-                  theme="snow" 
-                  value={define} 
-                  onChange={setDefine} 
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-xl overflow-hidden"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">6. Develop & Deliver</label>
-                <ReactQuill 
-                  theme="snow" 
-                  value={developDeliver} 
-                  onChange={setDevelopDeliver} 
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-xl overflow-hidden"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">7. Reflection</label>
-                <ReactQuill 
-                  theme="snow" 
-                  value={reflection} 
-                  onChange={setReflection} 
-                  modules={quillModules}
-                  formats={quillFormats}
-                  className="bg-white rounded-xl overflow-hidden"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2">Project Password (Optional)</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Leave blank for public access"
-                  className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors bg-transparent"
-                />
-              </div>
-              
-              <div className="md:col-span-2 space-y-8 mt-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest mb-2">Image URL</label>
-                  <input
-                    type="url"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://example.com/my-image.jpg"
-                    className="w-full border-b border-black/10 py-4 focus:border-black outline-none transition-colors bg-transparent"
-                  />
-                </div>
-
-                <div className="relative py-4">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-black/10"></span></div>
-                  <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-neutral-50 px-2 text-black/40">Or Upload File</span></div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-widest mb-2">Screenshot</label>
-                  <input
-                    type="file"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="w-full py-4"
-                    accept="image/*"
-                  />
-                </div>
-                
-                <div className="flex gap-4">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="mb-24">
+            <div className="bg-neutral-50 rounded-[2.5rem] p-8 md:p-12 border border-neutral-100">
+              <div className="flex items-center gap-8 mb-12 border-b border-neutral-200 pb-4">
+                {[
+                  { id: "general", label: "General Info", icon: Layout },
+                  { id: "content", label: "Case Study Content", icon: FileText },
+                  { id: "settings", label: "Settings", icon: Settings }
+                ].map((tab) => (
                   <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 py-6 bg-black text-white rounded-2xl font-bold uppercase tracking-widest disabled:opacity-50"
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest pb-4 relative transition-colors ${
+                      activeTab === tab.id ? "text-black" : "text-neutral-400 hover:text-neutral-600"
+                    }`}
                   >
-                    {loading ? "Processing..." : editingId ? "Update Project" : "Create Project"}
+                    <tab.icon size={14} /> {tab.label}
+                    {activeTab === tab.id && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1 bg-black rounded-full" />}
+                  </button>
+                ))}
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-12">
+                {activeTab === "general" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Title</label>
+                      <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Short Description</label>
+                      <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors h-32 resize-none" required />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Category</label>
+                      <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors appearance-none">
+                        <option>Artificial Intelligence</option>
+                        <option>Digital Marketing</option>
+                        <option>Interactive Experience</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Role</label>
+                      <input type="text" value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Timeline</label>
+                      <input type="text" value={formData.timeline} onChange={(e) => setFormData({...formData, timeline: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Tools (Comma Separated)</label>
+                      <input type="text" value={formData.tools} onChange={(e) => setFormData({...formData, tools: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "content" && (
+                  <div className="space-y-12">
+                    {[
+                      { id: "introduction", label: "01. Introduction" },
+                      { id: "challenge", label: "02. The Challenge" },
+                      { id: "approach", label: "03. The Approach" },
+                      { id: "understanding", label: "04. Understanding" },
+                      { id: "define", label: "05. Define" },
+                      { id: "developDeliver", label: "06. Develop & Deliver" },
+                      { id: "reflection", label: "07. Reflection" }
+                    ].map((section) => (
+                      <div key={section.id}>
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">{section.label}</label>
+                        <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
+                          <ReactQuill theme="snow" value={(formData as any)[section.id]} onChange={(val) => setFormData({...formData, [section.id]: val})} modules={quillModules} formats={quillFormats} className="admin-quill" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === "settings" && (
+                  <div className="space-y-8">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Project Cover Image</label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                          <input type="url" value={formData.imageUrl} onChange={(e) => setFormData({...formData, imageUrl: e.target.value})} placeholder="Image URL (https://...)" className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors mb-4" />
+                          <div className="relative flex items-center py-4">
+                            <div className="flex-grow border-t border-neutral-200"></div>
+                            <span className="flex-shrink mx-4 text-[10px] font-bold uppercase tracking-widest text-neutral-300">Or</span>
+                            <div className="flex-grow border-t border-neutral-200"></div>
+                          </div>
+                          <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="w-full text-sm text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-widest file:bg-black file:text-white hover:file:bg-neutral-800" accept="image/*" />
+                        </div>
+                        <div className="aspect-video bg-neutral-100 rounded-2xl overflow-hidden border border-neutral-200 flex items-center justify-center">
+                          {formData.imageUrl || file ? (
+                            <img src={file ? URL.createObjectURL(file) : formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <ImageIcon size={40} className="text-neutral-300" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Password (Optional)</label>
+                      <input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Leave blank for public access" className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" />
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-12 border-t border-neutral-200 flex gap-4">
+                  <button type="submit" disabled={loading} className="flex-1 py-6 bg-black text-white rounded-2xl font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                    <Save size={18} /> {loading ? "Saving..." : editingId ? "Update Project" : "Create Project"}
                   </button>
                   {editingId && (
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="px-12 py-6 border border-black/10 rounded-2xl font-bold uppercase tracking-widest"
-                    >
+                    <button type="button" onClick={resetForm} className="px-12 py-6 border border-neutral-200 rounded-2xl font-bold uppercase tracking-widest hover:bg-neutral-50 transition-colors">
                       Cancel
                     </button>
                   )}
                 </div>
-              </div>
-            </form>
+              </form>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 gap-6">
-        <h2 className="text-2xl font-bold mb-4">Existing Projects</h2>
-        {projects.length === 0 ? (
-          <p className="text-black/40 italic">No projects found. Create your first one!</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project) => (
-              <motion.div 
-                key={project.id}
-                layout
-                className="group bg-neutral-50 rounded-3xl overflow-hidden border border-black/5 hover:border-black/20 transition-all"
-              >
-                <div className="aspect-video overflow-hidden bg-neutral-200">
-                  <img 
-                    src={project.image} 
-                    alt={project.title} 
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                    referrerPolicy="no-referrer"
-                  />
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold tracking-tighter">Existing Projects</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {projects.map((p) => (
+            <motion.div key={p.id} layout className="group bg-white rounded-[2rem] overflow-hidden border border-neutral-100 hover:shadow-xl transition-all">
+              <div className="aspect-video relative overflow-hidden bg-neutral-100">
+                <img src={p.image} alt={p.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />
+                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => handleEdit(p)} className="p-3 bg-white text-black rounded-full shadow-lg hover:scale-110 transition-transform"><Edit2 size={16} /></button>
+                  <button onClick={async () => {
+                    if (window.confirm("Delete this project?")) {
+                      await deleteDoc(doc(db, "projects", p.id));
+                    }
+                  }} className="p-3 bg-white text-red-500 rounded-full shadow-lg hover:scale-110 transition-transform"><Trash2 size={16} /></button>
                 </div>
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-lg">{project.title}</h3>
-                    {project.password && (
-                      <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded-full uppercase tracking-widest">Locked</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-black/60 line-clamp-2 mb-6">{project.description}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-black/40">{project.category}</span>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleEdit(project)}
-                        className="p-2 hover:bg-black hover:text-white rounded-full transition-colors"
-                        title="Edit Project"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(project.id)}
-                        className="p-2 hover:bg-red-500 hover:text-white rounded-full transition-colors"
-                        title="Delete Project"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
+              </div>
+              <div className="p-8">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="font-bold text-xl tracking-tight">{p.title}</h3>
+                  <Link to={`/projects/${p.id}`} target="_blank" className="text-neutral-300 hover:text-black transition-colors"><ExternalLink size={16} /></Link>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
+                <p className="text-sm text-neutral-500 line-clamp-2 mb-6">{p.description}</p>
+                <div className="flex justify-between items-center pt-6 border-t border-neutral-50">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400">{p.category}</span>
+                  {p.password && <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-1 bg-neutral-100 rounded">Locked</span>}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
