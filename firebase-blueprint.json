@@ -18,7 +18,14 @@
         "impact": { "type": "string", "description": "Impact and metrics." },
         "createdAt": { "type": "string", "format": "date-time", "description": "The creation timestamp." },
         "authorId": { "type": "string", "description": "The UID of the author." },
-        "password": { "type": "string", "description": "Optional password for project access." }
+        "password": { "type": "string", "description": "Optional password for project access." },
+        "introduction": { "type": "string", "description": "Introduction content." },
+        "challenge": { "type": "string", "description": "Challenge content." },
+        "approach": { "type": "string", "description": "Approach content." },
+        "understanding": { "type": "string", "description": "Understanding content." },
+        "define": { "type": "string", "description": "Define content." },
+        "developDeliver": { "type": "string", "description": "Develop & Deliver content." },
+        "reflection": { "type": "string", "description": "Reflection content." }
       },
       "required": ["title", "description", "category", "image", "createdAt", "authorId"]
     },
