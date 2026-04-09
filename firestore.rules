@@ -37,7 +37,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
          (request.auth.token.email == "dicky.chu.ibm@gmail.com" && request.auth.token.email_verified == true));
     }
 
@@ -47,7 +47,9 @@ service cloud.firestore {
 
     function isValidProject(data) {
       let requiredFields = ['title', 'description', 'category', 'image', 'createdAt', 'authorId'];
-      let allowedFields = requiredFields.concat(['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact']);
+      let newFields = ['introduction', 'challenge', 'approach', 'understanding', 'define', 'developDeliver', 'reflection'];
+      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt'].concat(newFields);
+      let allowedFields = requiredFields.concat(optionalFields);
       
       return data.keys().hasAll(requiredFields) &&
              data.keys().hasOnly(allowedFields) &&
@@ -56,14 +58,23 @@ service cloud.firestore {
              data.category in ['Artificial Intelligence', 'Digital Marketing', 'Interactive Experience'] &&
              data.image is string && data.image.matches("^https?://.*") &&
              data.createdAt is timestamp &&
-             data.authorId == request.auth.uid &&
+             data.authorId is string &&
              (!('role' in data) || (data.role is string && data.role.size() <= 100)) &&
              (!('timeline' in data) || (data.timeline is string && data.timeline.size() <= 100)) &&
              (!('tools' in data) || (data.tools is list && data.tools.size() <= 20)) &&
+             (!('introduction' in data) || (data.introduction is string && data.introduction.size() <= 10000)) &&
+             (!('challenge' in data) || (data.challenge is string && data.challenge.size() <= 10000)) &&
+             (!('approach' in data) || (data.approach is string && data.approach.size() <= 10000)) &&
+             (!('understanding' in data) || (data.understanding is string && data.understanding.size() <= 10000)) &&
+             (!('define' in data) || (data.define is string && data.define.size() <= 10000)) &&
+             (!('developDeliver' in data) || (data.developDeliver is string && data.developDeliver.size() <= 10000)) &&
+             (!('reflection' in data) || (data.reflection is string && data.reflection.size() <= 10000)) &&
              (!('overview' in data) || (data.overview is string && data.overview.size() <= 5000)) &&
              (!('problem' in data) || (data.problem is string && data.problem.size() <= 5000)) &&
              (!('solution' in data) || (data.solution is string && data.solution.size() <= 5000)) &&
-             (!('impact' in data) || (data.impact is string && data.impact.size() <= 5000));
+             (!('impact' in data) || (data.impact is string && data.impact.size() <= 5000)) &&
+             (!('password' in data) || (data.password == null || (data.password is string && data.password.size() <= 100))) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp));
     }
 
     // ===============================================================
@@ -72,8 +83,13 @@ service cloud.firestore {
 
     match /projects/{projectId} {
       allow read: if true; // Publicly readable
-      allow create: if isAdmin() && isValidProject(request.resource.data);
-      allow update: if isAdmin() && isValidProject(request.resource.data);
+      allow create: if isAdmin() && 
+                      isValidProject(request.resource.data) && 
+                      request.resource.data.authorId == request.auth.uid;
+      allow update: if isAdmin() && 
+                      isValidProject(request.resource.data) &&
+                      request.resource.data.authorId == resource.data.authorId &&
+                      request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if isAdmin();
     }
 
