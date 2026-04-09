@@ -118,7 +118,7 @@ export default function Admin() {
 
       // If any projects don't have an order, fix them
       const needsOrder = fetchedProjects.some(p => p.order === undefined);
-      if (needsOrder) {
+      if (needsOrder && auth.currentUser) {
         const batch = writeBatch(db);
         fetchedProjects.forEach((p, index) => {
           if (p.order === undefined) {
