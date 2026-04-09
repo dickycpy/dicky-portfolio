@@ -56,13 +56,13 @@ export default function ProjectDetail() {
     if (!isAuthorized) return;
 
     const handleScroll = () => {
-      const sections = ["overview", "discover", "define", "develop", "deliver", "outcome", "learning"];
-      for (const section of sections) {
-        const element = document.getElementById(section);
+      const sectionIds = sections.map(s => s.id);
+      for (const sectionId of sectionIds) {
+        const element = document.getElementById(sectionId);
         if (element) {
           const rect = element.getBoundingClientRect();
           if (rect.top >= 0 && rect.top <= 300) {
-            setActiveSection(section);
+            setActiveSection(sectionId);
             break;
           }
         }
@@ -129,13 +129,13 @@ export default function ProjectDetail() {
   }
 
   const sections = [
-    { id: "overview", label: "Overview" },
-    { id: "discover", label: "Discover" },
+    { id: "introduction", label: "Introduction" },
+    { id: "challenge", label: "Challenge" },
+    { id: "approach", label: "Approach" },
+    { id: "understanding", label: "Understanding" },
     { id: "define", label: "Define" },
-    { id: "develop", label: "Develop" },
-    { id: "deliver", label: "Deliver" },
-    { id: "outcome", label: "Outcome" },
-    { id: "learning", label: "Learning" },
+    { id: "developDeliver", label: "Develop & Deliver" },
+    { id: "reflection", label: "Reflection" },
   ];
 
   return (
@@ -176,10 +176,10 @@ export default function ProjectDetail() {
         </aside>
 
         {/* Content */}
-        <div className="lg:col-span-9 space-y-40 pb-40">
-          <section id="overview" className="scroll-mt-40">
+        <div className="lg:col-span-9 space-y-40 pb-40 overflow-hidden">
+          <section id="introduction" className="scroll-mt-40">
             <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
-              01 <ChevronRight size={14} /> Overview
+              01 <ChevronRight size={14} /> Introduction
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
               <div>
@@ -196,86 +196,69 @@ export default function ProjectDetail() {
               </div>
             </div>
             <div 
-              className="rich-text-content rich-text-xl max-w-none"
-              dangerouslySetInnerHTML={{ __html: project.overview || "<p class='opacity-40 italic'>No overview provided.</p>" }}
+              className="rich-text-content rich-text-xl max-w-full overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: project.introduction || project.overview || "<p class='opacity-40 italic'>No introduction provided.</p>" }}
             />
           </section>
 
-          <section id="discover" className="scroll-mt-40">
+          <section id="challenge" className="scroll-mt-40">
             <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
-              02 <ChevronRight size={14} /> Discover
+              02 <ChevronRight size={14} /> The Challenge
             </h2>
-            <h3 className="text-4xl font-bold tracking-tighter mb-8">Problem Statement</h3>
             <div 
-              className="rich-text-content rich-text-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: project.problem || "<p class='opacity-40 italic'>No problem statement provided.</p>" }}
+              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: project.challenge || project.problem || "<p class='opacity-40 italic'>No challenge description provided.</p>" }}
+            />
+          </section>
+
+          <section id="approach" className="scroll-mt-40">
+            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
+              03 <ChevronRight size={14} /> The Approach
+            </h2>
+            <div 
+              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: project.approach || "<p class='opacity-40 italic'>No approach description provided.</p>" }}
+            />
+          </section>
+
+          <section id="understanding" className="scroll-mt-40">
+            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
+              04 <ChevronRight size={14} /> Understanding
+            </h2>
+            <div 
+              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: project.understanding || "<p class='opacity-40 italic'>No understanding description provided.</p>" }}
             />
           </section>
 
           <section id="define" className="scroll-mt-40">
             <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
-              03 <ChevronRight size={14} /> Define
+              05 <ChevronRight size={14} /> Define
             </h2>
-            <h3 className="text-4xl font-bold tracking-tighter mb-8">Key Insights</h3>
-            <div className="aspect-[16/10] bg-neutral-100 rounded-2xl overflow-hidden mb-8">
-              <img src="https://picsum.photos/seed/define/1200/800" alt="Define" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            </div>
-          </section>
-
-          <section id="develop" className="scroll-mt-40">
-            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
-              04 <ChevronRight size={14} /> Develop
-            </h2>
-            <h3 className="text-4xl font-bold tracking-tighter mb-8">Ideation & Wireframes</h3>
-            <p className="text-xl text-neutral-600 leading-relaxed mb-12">
-              Exploring multiple directions to find the most intuitive path for the user.
-            </p>
-            <div className="grid grid-cols-2 gap-8">
-              <div className="aspect-square bg-neutral-100 rounded-2xl"></div>
-              <div className="aspect-square bg-neutral-100 rounded-2xl"></div>
-            </div>
-          </section>
-
-          <section id="deliver" className="scroll-mt-40">
-            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
-              05 <ChevronRight size={14} /> Deliver
-            </h2>
-            <h3 className="text-4xl font-bold tracking-tighter mb-8">Final Solution</h3>
             <div 
-              className="rich-text-content rich-text-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: project.solution || "<p class='opacity-40 italic'>No solution provided.</p>" }}
-            />
-            <div className="space-y-8">
-              <img src="https://picsum.photos/seed/deliver1/1200/800" alt="Deliver 1" className="w-full rounded-2xl" referrerPolicy="no-referrer" />
-              <img src="https://picsum.photos/seed/deliver2/1200/800" alt="Deliver 2" className="w-full rounded-2xl" referrerPolicy="no-referrer" />
-            </div>
-          </section>
-
-          <section id="outcome" className="scroll-mt-40">
-            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
-              06 <ChevronRight size={14} /> Outcome
-            </h2>
-            <h3 className="text-4xl font-bold tracking-tighter mb-8">Impact & Metrics</h3>
-            <div 
-              className="rich-text-content rich-text-2xl max-w-none"
-              dangerouslySetInnerHTML={{ __html: project.impact || "<p class='opacity-40 italic'>No impact metrics provided.</p>" }}
+              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: project.define || "<p class='opacity-40 italic'>No definition provided.</p>" }}
             />
           </section>
 
-          <section id="learning" className="scroll-mt-40">
+          <section id="developDeliver" className="scroll-mt-40">
             <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
-              07 <ChevronRight size={14} /> Learning
+              06 <ChevronRight size={14} /> Develop & Deliver
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              <div>
-                <h4 className="text-lg font-bold mb-4">What worked</h4>
-                <p className="text-neutral-600">The iterative testing approach allowed us to catch usability issues early.</p>
-              </div>
-              <div>
-                <h4 className="text-lg font-bold mb-4">What didn't</h4>
-                <p className="text-neutral-600">Initial assumptions about user tech-savviness were slightly off.</p>
-              </div>
-            </div>
+            <div 
+              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: project.developDeliver || project.solution || "<p class='opacity-40 italic'>No development or delivery details provided.</p>" }}
+            />
+          </section>
+
+          <section id="reflection" className="scroll-mt-40">
+            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
+              07 <ChevronRight size={14} /> Reflection
+            </h2>
+            <div 
+              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: project.reflection || project.impact || "<p class='opacity-40 italic'>No reflection provided.</p>" }}
+            />
           </section>
         </div>
       </div>
