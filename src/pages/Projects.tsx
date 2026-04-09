@@ -10,21 +10,13 @@ export default function Projects() {
   const [projects, setProjects] = useState(mockProjects);
 
   useEffect(() => {
-    const q = query(collection(db, "projects"));
+    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedProjects = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as any[];
-      
       if (fetchedProjects.length > 0) {
-        // Sort by order if available, otherwise by createdAt desc
-        fetchedProjects.sort((a, b) => {
-          if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
-          if (a.order !== undefined) return -1;
-          if (b.order !== undefined) return 1;
-          return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
-        });
         setProjects(fetchedProjects);
       }
     }, (error) => {
