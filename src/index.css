@@ -10,6 +10,8 @@
 @layer components {
   .rich-text-content {
     @apply text-neutral-800 leading-relaxed;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
   
   .rich-text-content h1 {
