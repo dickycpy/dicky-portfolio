@@ -26,10 +26,19 @@ interface Project {
   role: string;
   timeline: string;
   tools: string[];
-  overview: string;
-  problem: string;
-  solution: string;
-  impact: string;
+  // New Sections
+  introduction?: string;
+  challenge?: string;
+  approach?: string;
+  understanding?: string;
+  define?: string;
+  developDeliver?: string;
+  reflection?: string;
+  // Legacy fields (keeping for compatibility)
+  overview?: string;
+  problem?: string;
+  solution?: string;
+  impact?: string;
   password?: string;
   createdAt: any;
 }
@@ -108,10 +117,13 @@ export default function Admin() {
   const [role, setRole] = useState("Lead Designer");
   const [timeline, setTimeline] = useState("3 Months");
   const [tools, setTools] = useState("Figma, React, Tailwind");
-  const [overview, setOverview] = useState("");
-  const [problem, setProblem] = useState("");
-  const [solution, setSolution] = useState("");
-  const [impact, setImpact] = useState("");
+  const [introduction, setIntroduction] = useState("");
+  const [challenge, setChallenge] = useState("");
+  const [approach, setApproach] = useState("");
+  const [understanding, setUnderstanding] = useState("");
+  const [define, setDefine] = useState("");
+  const [developDeliver, setDevelopDeliver] = useState("");
+  const [reflection, setReflection] = useState("");
   const [password, setPassword] = useState("");
 
   useEffect(() => {
@@ -158,10 +170,13 @@ export default function Admin() {
     setRole("Lead Designer");
     setTimeline("3 Months");
     setTools("Figma, React, Tailwind");
-    setOverview("");
-    setProblem("");
-    setSolution("");
-    setImpact("");
+    setIntroduction("");
+    setChallenge("");
+    setApproach("");
+    setUnderstanding("");
+    setDefine("");
+    setDevelopDeliver("");
+    setReflection("");
     setImageUrl("");
     setPassword("");
     setFile(null);
@@ -176,10 +191,13 @@ export default function Admin() {
     setRole(project.role || "");
     setTimeline(project.timeline || "");
     setTools(project.tools?.join(", ") || "");
-    setOverview(project.overview || "");
-    setProblem(project.problem || "");
-    setSolution(project.solution || "");
-    setImpact(project.impact || "");
+    setIntroduction(project.introduction || "");
+    setChallenge(project.challenge || "");
+    setApproach(project.approach || "");
+    setUnderstanding(project.understanding || "");
+    setDefine(project.define || "");
+    setDevelopDeliver(project.developDeliver || "");
+    setReflection(project.reflection || "");
     setImageUrl(project.image || "");
     setPassword(project.password || "");
     setEditingId(project.id);
@@ -222,10 +240,13 @@ export default function Admin() {
         role,
         timeline,
         tools: tools.split(",").map(t => t.trim()),
-        overview,
-        problem,
-        solution,
-        impact,
+        introduction,
+        challenge,
+        approach,
+        understanding,
+        define,
+        developDeliver,
+        reflection,
         password: password.trim() || null,
         updatedAt: serverTimestamp(),
       };
@@ -361,44 +382,77 @@ export default function Admin() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">Overview</label>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">1. Introduction</label>
                 <ReactQuill 
                   theme="snow" 
-                  value={overview} 
-                  onChange={setOverview} 
+                  value={introduction} 
+                  onChange={setIntroduction} 
                   modules={quillModules}
                   formats={quillFormats}
                   className="bg-white rounded-xl overflow-hidden"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">Problem Statement</label>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">2. The Challenge</label>
                 <ReactQuill 
                   theme="snow" 
-                  value={problem} 
-                  onChange={setProblem} 
+                  value={challenge} 
+                  onChange={setChallenge} 
                   modules={quillModules}
                   formats={quillFormats}
                   className="bg-white rounded-xl overflow-hidden"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">Final Solution</label>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">3. The Approach</label>
                 <ReactQuill 
                   theme="snow" 
-                  value={solution} 
-                  onChange={setSolution} 
+                  value={approach} 
+                  onChange={setApproach} 
                   modules={quillModules}
                   formats={quillFormats}
                   className="bg-white rounded-xl overflow-hidden"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-4">Impact & Metrics</label>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">4. Understanding</label>
                 <ReactQuill 
                   theme="snow" 
-                  value={impact} 
-                  onChange={setImpact} 
+                  value={understanding} 
+                  onChange={setUnderstanding} 
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-xl overflow-hidden"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">5. Define</label>
+                <ReactQuill 
+                  theme="snow" 
+                  value={define} 
+                  onChange={setDefine} 
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-xl overflow-hidden"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">6. Develop & Deliver</label>
+                <ReactQuill 
+                  theme="snow" 
+                  value={developDeliver} 
+                  onChange={setDevelopDeliver} 
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="bg-white rounded-xl overflow-hidden"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-widest mb-4">7. Reflection</label>
+                <ReactQuill 
+                  theme="snow" 
+                  value={reflection} 
+                  onChange={setReflection} 
                   modules={quillModules}
                   formats={quillFormats}
                   className="bg-white rounded-xl overflow-hidden"
