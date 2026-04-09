@@ -176,7 +176,7 @@ export default function ProjectDetail() {
         </aside>
 
         {/* Content */}
-        <div className="lg:col-span-9 space-y-40 pb-40 overflow-hidden">
+        <div className="lg:col-span-9 space-y-40 pb-40">
           <section id="introduction" className="scroll-mt-40">
             <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8 flex items-center gap-2">
               01 <ChevronRight size={14} /> Introduction
@@ -196,7 +196,7 @@ export default function ProjectDetail() {
               </div>
             </div>
             <div 
-              className="rich-text-content rich-text-xl max-w-full overflow-hidden"
+              className="rich-text-content rich-text-xl max-w-full"
               dangerouslySetInnerHTML={{ __html: project.introduction || project.overview || "<p class='opacity-40 italic'>No introduction provided.</p>" }}
             />
           </section>
@@ -206,7 +206,7 @@ export default function ProjectDetail() {
               02 <ChevronRight size={14} /> The Challenge
             </h2>
             <div 
-              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              className="rich-text-content rich-text-lg max-w-full"
               dangerouslySetInnerHTML={{ __html: project.challenge || project.problem || "<p class='opacity-40 italic'>No challenge description provided.</p>" }}
             />
           </section>
@@ -216,7 +216,7 @@ export default function ProjectDetail() {
               03 <ChevronRight size={14} /> The Approach
             </h2>
             <div 
-              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              className="rich-text-content rich-text-lg max-w-full"
               dangerouslySetInnerHTML={{ __html: project.approach || "<p class='opacity-40 italic'>No approach description provided.</p>" }}
             />
           </section>
@@ -226,7 +226,7 @@ export default function ProjectDetail() {
               04 <ChevronRight size={14} /> Understanding
             </h2>
             <div 
-              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              className="rich-text-content rich-text-lg max-w-full"
               dangerouslySetInnerHTML={{ __html: project.understanding || "<p class='opacity-40 italic'>No understanding description provided.</p>" }}
             />
           </section>
@@ -236,7 +236,7 @@ export default function ProjectDetail() {
               05 <ChevronRight size={14} /> Define
             </h2>
             <div 
-              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              className="rich-text-content rich-text-lg max-w-full"
               dangerouslySetInnerHTML={{ __html: project.define || "<p class='opacity-40 italic'>No definition provided.</p>" }}
             />
           </section>
@@ -246,7 +246,7 @@ export default function ProjectDetail() {
               06 <ChevronRight size={14} /> Develop & Deliver
             </h2>
             <div 
-              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              className="rich-text-content rich-text-lg max-w-full"
               dangerouslySetInnerHTML={{ __html: project.developDeliver || project.solution || "<p class='opacity-40 italic'>No development or delivery details provided.</p>" }}
             />
           </section>
@@ -256,7 +256,7 @@ export default function ProjectDetail() {
               07 <ChevronRight size={14} /> Reflection
             </h2>
             <div 
-              className="rich-text-content rich-text-lg max-w-full overflow-hidden"
+              className="rich-text-content rich-text-lg max-w-full"
               dangerouslySetInnerHTML={{ __html: project.reflection || project.impact || "<p class='opacity-40 italic'>No reflection provided.</p>" }}
             />
           </section>
