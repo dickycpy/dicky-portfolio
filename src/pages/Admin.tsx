@@ -248,32 +248,32 @@ export default function Admin() {
                 {activeTab === "general" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="md:col-span-2">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Title</label>
-                      <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
+                      <label htmlFor="project-title" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Title</label>
+                      <input id="project-title" name="title" type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Short Description</label>
-                      <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors h-32 resize-none" required />
+                      <label htmlFor="project-description" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Short Description</label>
+                      <textarea id="project-description" name="description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors h-32 resize-none" required />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Category</label>
-                      <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors appearance-none">
+                      <label htmlFor="project-category" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Category</label>
+                      <select id="project-category" name="category" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors appearance-none">
                         <option>Artificial Intelligence</option>
                         <option>Digital Marketing</option>
                         <option>Interactive Experience</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Role</label>
-                      <input type="text" value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
+                      <label htmlFor="project-role" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Role</label>
+                      <input id="project-role" name="role" type="text" value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Timeline</label>
-                      <input type="text" value={formData.timeline} onChange={(e) => setFormData({...formData, timeline: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
+                      <label htmlFor="project-timeline" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Timeline</label>
+                      <input id="project-timeline" name="timeline" type="text" value={formData.timeline} onChange={(e) => setFormData({...formData, timeline: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Tools (Comma Separated)</label>
-                      <input type="text" value={formData.tools} onChange={(e) => setFormData({...formData, tools: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
+                      <label htmlFor="project-tools" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Tools (Comma Separated)</label>
+                      <input id="project-tools" name="tools" type="text" value={formData.tools} onChange={(e) => setFormData({...formData, tools: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" required />
                     </div>
                   </div>
                 )}
@@ -323,8 +323,8 @@ export default function Admin() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Password (Optional)</label>
-                      <input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Leave blank for public access" className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" />
+                      <label htmlFor="project-password" title="Project Password (Optional)" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Password (Optional)</label>
+                      <input id="project-password" name="password" type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Leave blank for public access" className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" />
                     </div>
                   </div>
                 )}
