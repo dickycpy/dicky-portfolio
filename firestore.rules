@@ -18,7 +18,7 @@ service cloud.firestore {
     //   - problem: string (optional, 1-5000 chars)
     //   - solution: string (optional, 1-5000 chars)
     //   - impact: string (optional, 1-5000 chars)
-    //   - order: number (required for display sorting)
+    //   - order: number (optional, for display sorting)
     //   - imageUrl: string (optional, temporary field)
     //   - challenge: string (optional, 1-10000 chars)
     //   - approach: string (optional, 1-10000 chars)
@@ -54,9 +54,9 @@ service cloud.firestore {
     }
 
     function isValidProject(data) {
-      let requiredFields = ['title', 'description', 'category', 'image', 'createdAt', 'authorId', 'order'];
+      let requiredFields = ['title', 'description', 'category', 'image', 'createdAt', 'authorId'];
       let newFields = ['introduction', 'challenge', 'approach', 'understanding', 'define', 'developDeliver', 'reflection'];
-      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl'].concat(newFields);
+      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl', 'order'].concat(newFields);
       let allowedFields = requiredFields.concat(optionalFields);
       
       return data.keys().hasAll(requiredFields) &&
@@ -67,7 +67,7 @@ service cloud.firestore {
              data.image is string && data.image.matches("^https?://.*") &&
              data.createdAt is timestamp &&
              data.authorId is string &&
-             data.order is number &&
+             (!('order' in data) || (data.order is number)) &&
              (!('imageUrl' in data) || (data.imageUrl is string)) &&
              (!('role' in data) || (data.role is string && data.role.size() <= 100)) &&
              (!('timeline' in data) || (data.timeline is string && data.timeline.size() <= 100)) &&
