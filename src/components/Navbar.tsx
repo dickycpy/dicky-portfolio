@@ -15,6 +15,16 @@ const links = [
 export default function Navbar() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Close menu on route change
   useEffect(() => {
@@ -23,63 +33,141 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 w-full z-50 px-6 md:px-12 py-8 flex justify-between items-center mix-blend-difference text-white">
-        <Link to="/" className="text-xl font-bold tracking-tighter uppercase">
-          Dicky.
-        </Link>
-        
-        {/* Desktop Menu */}
-        <div className="hidden md:flex gap-8">
-          {links.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={cn(
-                "text-sm font-medium tracking-tight transition-opacity hover:opacity-100",
-                location.pathname === link.path ? "opacity-100" : "opacity-50"
-              )}
-            >
-              {link.name}
-              {location.pathname === link.path && (
-                <motion.div
-                  layoutId="nav-underline"
-                  className="h-px bg-white w-full mt-0.5"
-                />
-              )}
-            </Link>
-          ))}
-        </div>
-
-        {/* Mobile Toggle */}
-        <button 
-          className="md:hidden p-2"
-          onClick={() => setIsOpen(!isOpen)}
+      <header 
+        className={cn(
+          "fixed top-0 left-0 w-full z-50 transition-all duration-500 ease-in-out px-6 md:px-12",
+          scrolled ? "py-4" : "py-8"
+        )}
+      >
+        <nav 
+          className={cn(
+            "max-w-7xl mx-auto flex justify-between items-center transition-all duration-500 ease-in-out rounded-[2rem] px-8 py-4",
+            scrolled 
+              ? "bg-white/60 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)]" 
+              : "bg-transparent border border-transparent"
+          )}
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </nav>
+          <Link 
+            to="/" 
+            className="text-xl font-bold tracking-tighter uppercase group flex items-center gap-2"
+          >
+            <motion.span 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative"
+            >
+              Dicky.
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full" />
+            </motion.span>
+          </Link>
+          
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-1">
+            {links.map((link) => {
+              const isActive = location.pathname === link.path;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={cn(
+                    "relative px-5 py-2 text-sm font-medium tracking-tight transition-all duration-300 rounded-full",
+                    isActive 
+                      ? "text-black" 
+                      : "text-neutral-500 hover:text-black hover:bg-black/5"
+                  )}
+                >
+                  <span className="relative z-10">{link.name}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-pill"
+                      className="absolute inset-0 bg-white shadow-sm border border-neutral-100 rounded-full"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Mobile Toggle */}
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            className="md:hidden p-3 bg-black/5 hover:bg-black/10 rounded-2xl transition-colors"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? <X size={20} /> : <Menu size={20} />}
+          </motion.button>
+        </nav>
+      </header>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-white flex flex-col items-center justify-center gap-8 md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] md:hidden"
           >
-            {links.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={cn(
-                  "text-4xl font-bold tracking-tighter uppercase transition-colors",
-                  location.pathname === link.path ? "text-black" : "text-neutral-300 hover:text-black"
-                )}
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            />
+            
+            {/* Menu Content */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute top-0 right-0 w-[80%] h-full bg-white/80 backdrop-blur-2xl border-l border-white/20 shadow-2xl p-12 flex flex-col justify-center gap-10"
+            >
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="absolute top-8 right-8 p-4 bg-black/5 rounded-2xl"
               >
-                {link.name}
-              </Link>
-            ))}
+                <X size={24} />
+              </button>
+
+              <div className="flex flex-col gap-6">
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-4">Navigation</p>
+                {links.map((link, index) => (
+                  <motion.div
+                    key={link.path}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Link
+                      to={link.path}
+                      className={cn(
+                        "text-4xl font-bold tracking-tighter transition-all duration-300 block",
+                        location.pathname === link.path 
+                          ? "text-black translate-x-4" 
+                          : "text-neutral-300 hover:text-black hover:translate-x-2"
+                      )}
+                    >
+                      {link.name}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="mt-auto pt-12 border-t border-neutral-100">
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-6">Social</p>
+                <div className="flex gap-6">
+                  {["Twitter", "LinkedIn", "GitHub"].map((social) => (
+                    <a key={social} href="#" className="text-sm font-medium text-neutral-500 hover:text-black transition-colors">
+                      {social}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
