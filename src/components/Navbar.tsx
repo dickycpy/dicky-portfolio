@@ -36,33 +36,33 @@ export default function Navbar() {
       <header 
         className={cn(
           "fixed top-0 left-0 w-full z-50 transition-all duration-500 ease-in-out px-6 md:px-12",
-          scrolled ? "py-2 md:py-4" : "py-4 md:py-8"
+          scrolled ? "py-4 md:py-6" : "py-6 md:py-10"
         )}
       >
         <nav 
           className={cn(
-            "max-w-7xl mx-auto flex justify-between items-center transition-all duration-500 ease-in-out rounded-full px-5 py-1.5 md:py-2.5",
+            "max-w-7xl mx-auto flex justify-between items-center transition-all duration-500 ease-in-out rounded-full px-6 py-3 md:py-4",
             scrolled 
-              ? "bg-white/50 backdrop-blur-md border border-white/10 shadow-sm" 
-              : "bg-white/5 backdrop-blur-sm border border-black/5"
+              ? "bg-white/60 backdrop-blur-xl border border-white/20 shadow-md" 
+              : "bg-white/10 backdrop-blur-md border border-black/5"
           )}
         >
           <Link 
             to="/" 
-            className="text-base font-bold tracking-tighter uppercase group flex items-center gap-2"
+            className="text-xl font-bold tracking-tighter uppercase group flex items-center gap-2"
           >
             <motion.span 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               className="relative"
             >
               Dicky.
-              <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full" />
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full" />
             </motion.span>
           </Link>
           
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-2">
             {links.map((link) => {
               const isActive = location.pathname === link.path;
               return (
@@ -70,10 +70,10 @@ export default function Navbar() {
                   key={link.path}
                   to={link.path}
                   className={cn(
-                    "relative px-3 py-1 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 rounded-full",
+                    "relative px-5 py-2 text-sm font-medium tracking-tight transition-all duration-300 rounded-full",
                     isActive 
                       ? "text-black" 
-                      : "text-neutral-400 hover:text-black hover:bg-black/5"
+                      : "text-neutral-500 hover:text-black hover:bg-black/5"
                   )}
                 >
                   <span className="relative z-10">{link.name}</span>
@@ -92,10 +92,10 @@ export default function Navbar() {
           {/* Mobile Toggle */}
           <motion.button 
             whileTap={{ scale: 0.9 }}
-            className="md:hidden p-2 hover:bg-black/5 rounded-xl transition-colors"
+            className="md:hidden p-3 bg-black/5 hover:bg-black/10 rounded-2xl transition-colors"
             onClick={() => setIsOpen(!isOpen)}
           >
-            {isOpen ? <X size={18} /> : <Menu size={18} />}
+            <Menu size={22} />
           </motion.button>
         </nav>
       </header>
@@ -126,13 +126,6 @@ export default function Navbar() {
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="absolute top-0 right-0 w-[80%] h-full bg-white/80 backdrop-blur-2xl border-l border-white/20 shadow-2xl p-12 flex flex-col justify-center gap-10"
             >
-              <button 
-                onClick={() => setIsOpen(false)}
-                className="absolute top-8 right-8 p-4 bg-black/5 rounded-2xl"
-              >
-                <X size={24} />
-              </button>
-
               <div className="flex flex-col gap-6">
                 {links.map((link, index) => (
                   <motion.div
