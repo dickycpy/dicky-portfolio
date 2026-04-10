@@ -39,7 +39,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="pt-32">
+    <div className="pt-24 md:pt-32">
       {/* Hero Section */}
       <section className="px-6 md:px-12 lg:px-24 mb-40">
         <motion.p
