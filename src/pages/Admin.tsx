@@ -206,7 +206,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="pt-32 px-6 md:px-12 lg:px-24 pb-40 max-w-7xl mx-auto">
+    <div className="pt-24 md:pt-32 px-6 md:px-12 lg:px-24 pb-40 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
         <div>
           <h1 className="text-4xl font-bold tracking-tighter">Dashboard</h1>
@@ -396,4 +396,3 @@ export default function Admin() {
     </div>
   );
 }
- 
