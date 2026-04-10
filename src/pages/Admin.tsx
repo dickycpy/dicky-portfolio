@@ -162,8 +162,9 @@ export default function Admin() {
         finalImageUrl = await getDownloadURL(storageRef);
       }
 
+      const { imageUrl, ...rest } = formData;
       const projectData = {
-        ...formData,
+        ...rest,
         image: finalImageUrl,
         tools: formData.tools.split(",").map(t => t.trim()).filter(t => t),
         updatedAt: serverTimestamp(),
