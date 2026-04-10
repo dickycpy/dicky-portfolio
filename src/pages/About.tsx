@@ -67,7 +67,7 @@ export default function About() {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
   return (
-    <div className="pt-32 px-6 md:px-12 lg:px-24 pb-40">
+    <div className="pt-24 md:pt-32 px-6 md:px-12 lg:px-24 pb-40">
       <section className="mb-40">
         <motion.h1
           initial={{ y: 40, opacity: 0 }}
