@@ -5,9 +5,29 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield } from "lucide-react";
+import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield, GripVertical } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  defaultDropAnimationSideEffects,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { writeBatch } from "firebase/firestore";
 
 enum OperationType {
   CREATE = 'create',
@@ -35,6 +55,7 @@ interface Project {
   developDeliver?: string;
   reflection?: string;
   password?: string;
+  order: number;
   createdAt: any;
 }
 
@@ -54,6 +75,116 @@ const quillFormats = [
   'link'
 ];
 
+interface SortableProjectProps {
+  project: Project;
+  onEdit: (p: Project) => void;
+  onDelete: (id: string) => Promise<void> | void;
+  key?: any;
+}
+
+function SortableProject({ project, onEdit, onDelete }: SortableProjectProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: project.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group bg-white rounded-[2.5rem] overflow-hidden border transition-all duration-300 relative ${
+        isDragging 
+          ? "border-black ring-4 ring-black/5 opacity-40 scale-95" 
+          : "border-neutral-100 hover:border-neutral-200 hover:shadow-2xl hover:-translate-y-1"
+      }`}
+    >
+      <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
+        <img 
+          src={project.image} 
+          alt={project.title} 
+          className={`w-full h-full object-cover transition-all duration-700 ${
+            isDragging ? "grayscale-0" : "grayscale group-hover:grayscale-0"
+          }`}
+          referrerPolicy="no-referrer" 
+        />
+        
+        {/* Drag Handle */}
+        <div 
+          {...attributes} 
+          {...listeners} 
+          className="absolute top-6 left-6 p-3 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl cursor-grab active:cursor-grabbing hover:scale-110 transition-all z-30"
+        >
+          <GripVertical size={18} />
+        </div>
+
+        {/* Actions */}
+        <div className="absolute top-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-30">
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEdit(project);
+            }} 
+            className="p-4 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl hover:bg-black hover:text-white transition-all"
+          >
+            <Edit2 size={18} />
+          </button>
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete(project.id);
+            }} 
+            className="p-4 bg-white/90 backdrop-blur-md text-red-500 rounded-2xl shadow-xl hover:bg-red-500 hover:text-white transition-all"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
+        
+        {/* Category Badge */}
+        <div className="absolute bottom-6 left-6 px-4 py-2 bg-black/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest z-20">
+          {project.category}
+        </div>
+      </div>
+
+      <div className="p-10">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="font-bold text-2xl tracking-tight leading-tight">{project.title}</h3>
+          <Link 
+            to={`/projects/${project.id}`} 
+            target="_blank" 
+            className="p-2 text-neutral-300 hover:text-black transition-colors"
+          >
+            <ExternalLink size={18} />
+          </Link>
+        </div>
+        <p className="text-neutral-500 text-sm leading-relaxed line-clamp-2 mb-8">{project.description}</p>
+        <div className="flex items-center gap-4">
+          {project.password && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-lg text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+              <Shield size={12} /> Locked
+            </div>
+          )}
+          <div className="flex-grow h-px bg-neutral-100" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-300">
+            #{project.order + 1}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
   const [user, setUser] = useState(auth.currentUser);
   const [loading, setLoading] = useState(false);
@@ -61,6 +192,18 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"general" | "content" | "settings">("general");
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Form State
   const [formData, setFormData] = useState({
@@ -84,7 +227,7 @@ export default function Admin() {
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
-    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "projects"), orderBy("order", "asc"));
     const unsubscribeProjects = onSnapshot(q, (snapshot) => {
       setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Project[]);
     });
@@ -124,6 +267,36 @@ export default function Admin() {
     setEditingId(null);
     setShowForm(false);
     setActiveTab("general");
+  };
+
+  const handleDragStart = (event: any) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (over && active.id !== over.id) {
+      const oldIndex = projects.findIndex((p) => p.id === active.id);
+      const newIndex = projects.findIndex((p) => p.id === over.id);
+
+      const newProjects = arrayMove(projects, oldIndex, newIndex);
+      setProjects(newProjects);
+
+      // Update Firestore
+      const batch = writeBatch(db);
+      newProjects.forEach((project: Project, index: number) => {
+        const docRef = doc(db, "projects", project.id);
+        batch.update(docRef, { order: index });
+      });
+
+      try {
+        await batch.commit();
+      } catch (error) {
+        console.error("Failed to update project order", error);
+      }
+    }
   };
 
   const handleEdit = (project: Project) => {
@@ -177,6 +350,7 @@ export default function Admin() {
           ...projectData,
           createdAt: serverTimestamp(),
           authorId: user.uid,
+          order: projects.length,
         });
       }
       resetForm();
@@ -346,36 +520,60 @@ export default function Admin() {
         )}
       </AnimatePresence>
 
-      <div className="space-y-8">
-        <h2 className="text-2xl font-bold tracking-tighter">Existing Projects</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.map((p) => (
-            <motion.div key={p.id} layout className="group bg-white rounded-[2rem] overflow-hidden border border-neutral-100 hover:shadow-xl transition-all">
-              <div className="aspect-video relative overflow-hidden bg-neutral-100">
-                <img src={p.image} alt={p.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(p)} className="p-3 bg-white text-black rounded-full shadow-lg hover:scale-110 transition-transform"><Edit2 size={16} /></button>
-                  <button onClick={async () => {
-                    if (window.confirm("Delete this project?")) {
-                      await deleteDoc(doc(db, "projects", p.id));
-                    }
-                  }} className="p-3 bg-white text-red-500 rounded-full shadow-lg hover:scale-110 transition-transform"><Trash2 size={16} /></button>
-                </div>
-              </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-bold text-xl tracking-tight">{p.title}</h3>
-                  <Link to={`/projects/${p.id}`} target="_blank" className="text-neutral-300 hover:text-black transition-colors"><ExternalLink size={16} /></Link>
-                </div>
-                <p className="text-sm text-neutral-500 line-clamp-2 mb-6">{p.description}</p>
-                <div className="flex justify-between items-center pt-6 border-t border-neutral-50">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-400">{p.category}</span>
-                  {p.password && <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-1 bg-neutral-100 rounded">Locked</span>}
-                </div>
-              </div>
-            </motion.div>
-          ))}
+      <div className="space-y-12">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tighter">Existing Projects</h2>
+          <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest">Drag handle to reorder</p>
         </div>
+        
+        <DndContext 
+          sensors={sensors} 
+          collisionDetection={closestCenter} 
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={projects.map(p => p.id)} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+              {projects.map((p) => (
+                <SortableProject
+                  key={p.id}
+                  project={p}
+                  onEdit={handleEdit}
+                  onDelete={async (id) => {
+                    if (window.confirm("Delete this project?")) {
+                      await deleteDoc(doc(db, "projects", id));
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          </SortableContext>
+
+          <DragOverlay adjustScale={true}>
+            {activeId ? (
+              <div className="bg-white rounded-[2.5rem] overflow-hidden border border-black shadow-2xl scale-105 opacity-90 cursor-grabbing">
+                {(() => {
+                  const p = projects.find(proj => proj.id === activeId);
+                  if (!p) return null;
+                  return (
+                    <>
+                      <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
+                        <img src={p.image} alt={p.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <div className="absolute top-6 left-6 p-3 bg-black text-white rounded-2xl shadow-xl">
+                          <GripVertical size={18} />
+                        </div>
+                      </div>
+                      <div className="p-10">
+                        <h3 className="font-bold text-2xl tracking-tight mb-2">{p.title}</h3>
+                        <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest">{p.category}</p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </div>
     </div>
   );
