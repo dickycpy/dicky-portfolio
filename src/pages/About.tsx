@@ -1,6 +1,7 @@
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { useState, useRef } from "react";
 import { ChevronDown, ChevronUp, ExternalLink, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const introText = "Adaptable designer turning challenges into creative, user-centered solutions with clarity, teamwork, and impact.";
 
@@ -8,14 +9,14 @@ function RevealText({ text }: { text: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start 80%", "end 20%"],
+    offset: ["start 95%", "end 40%"],
   });
 
   const words = text.split(" ");
 
   return (
     <div ref={containerRef} className="relative">
-      <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-tight mb-12 flex flex-wrap gap-x-[0.2em] gap-y-[0.1em]">
+      <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-12 flex flex-wrap gap-x-[0.2em] gap-y-[0.1em]">
         {words.map((word, i) => {
           const start = i / words.length;
           const end = (i + 1) / words.length;
@@ -28,7 +29,12 @@ function RevealText({ text }: { text: string }) {
             <motion.span
               key={i}
               style={{ opacity }}
-              className={isHighlight ? "text-black" : "text-neutral-400"}
+              whileHover={{ color: "#0d9488", scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+              className={cn(
+                "cursor-default transition-colors",
+                isHighlight ? "text-teal-950" : "text-neutral-400"
+              )}
             >
               {word}
             </motion.span>
