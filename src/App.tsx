@@ -6,6 +6,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import FancyCursor from "./components/FancyCursor";
+import BackgroundLines from "./components/BackgroundLines";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -18,6 +19,7 @@ export default function App() {
   return (
     <Router>
       <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white cursor-none">
+        <BackgroundLines />
         <FancyCursor />
         <Navbar />
         <main>
