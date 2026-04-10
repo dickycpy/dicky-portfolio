@@ -175,8 +175,8 @@ export default function Home() {
             className="aspect-square rounded-3xl overflow-hidden grayscale hover:grayscale-0 transition-all duration-700"
           >
             <img
-              src="https://picsum.photos/seed/dicky/1000/1000"
-              alt="Dicky"
+              src="https://media.licdn.com/dms/image/v2/D4E22AQGkSwuqrPQ1Cg/feedshare-shrink_2048_1536/B4EZcwSfOgHQAo-/0/1748861862406?e=1777507200&v=beta&t=ROx_jE8Eb2O_8muzZhn6WSAk_4ewNWn4-1OsZ2AqCqg"
+              alt="Creato!"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
@@ -186,7 +186,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="px-6 md:px-12 lg:px-24 py-20 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-8">
-        <p className="text-sm opacity-40">© 2026 Dicky Portfolio. All rights reserved.</p>
+        <p className="text-sm opacity-40">© 2026 Dicky Chu's Portfolio. All rights reserved.</p>
         <div className="flex gap-8">
           <a 
             href="https://www.linkedin.com/in/dicky-chu/" 
