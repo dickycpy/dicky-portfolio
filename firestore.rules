@@ -56,7 +56,7 @@ service cloud.firestore {
     function isValidProject(data) {
       let requiredFields = ['title', 'description', 'category', 'image', 'createdAt', 'authorId'];
       let newFields = ['introduction', 'challenge', 'approach', 'understanding', 'define', 'developDeliver', 'reflection'];
-      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'order'].concat(newFields);
+      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'order', 'imageUrl'].concat(newFields);
       let allowedFields = requiredFields.concat(optionalFields);
       
       return data.keys().hasAll(requiredFields) &&
@@ -67,6 +67,7 @@ service cloud.firestore {
              data.image is string && data.image.matches("^https?://.*") &&
              data.createdAt is timestamp &&
              data.authorId is string &&
+             (!('imageUrl' in data) || (data.imageUrl is string)) &&
              (!('order' in data) || (data.order is number)) &&
              (!('role' in data) || (data.role is string && data.role.size() <= 100)) &&
              (!('timeline' in data) || (data.timeline is string && data.timeline.size() <= 100)) &&
