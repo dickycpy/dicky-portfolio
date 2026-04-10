@@ -1,6 +1,43 @@
-import { motion, AnimatePresence } from "motion/react";
-import { useState } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
+import { useState, useRef } from "react";
 import { ChevronDown, ChevronUp, ExternalLink, ArrowRight } from "lucide-react";
+
+const introText = "Adaptable designer turning challenges into creative, user-centered solutions with clarity, teamwork, and impact.";
+
+function RevealText({ text }: { text: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start 80%", "end 20%"],
+  });
+
+  const words = text.split(" ");
+
+  return (
+    <div ref={containerRef} className="relative">
+      <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-tight mb-12 flex flex-wrap gap-x-[0.2em] gap-y-[0.1em]">
+        {words.map((word, i) => {
+          const start = i / words.length;
+          const end = (i + 1) / words.length;
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          const opacity = useTransform(scrollYProgress, [start, end], [0.15, 1]);
+          
+          const isHighlight = ["creative,", "user-centered", "clarity,", "teamwork,", "impact."].includes(word);
+
+          return (
+            <motion.span
+              key={i}
+              style={{ opacity }}
+              className={isHighlight ? "text-black" : "text-neutral-400"}
+            >
+              {word}
+            </motion.span>
+          );
+        })}
+      </h1>
+    </div>
+  );
+}
 
 const timeline = [
   {
@@ -69,13 +106,7 @@ export default function About() {
   return (
     <div className="pt-24 md:pt-32 px-6 md:px-12 lg:px-24 pb-40">
       <section className="mb-40">
-        <motion.h1
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-tight mb-12"
-        >
-          Adaptable designer turning challenges into creative, user-centered solutions with clarity, teamwork, and impact.
-        </motion.h1>
+        <RevealText text={introText} />
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-20">
