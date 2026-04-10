@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { ArrowDownRight } from "lucide-react";
 import LogoWall from "@/components/LogoWall";
 import ProjectCard from "@/components/ProjectCard";
@@ -7,8 +7,49 @@ import { projects as mockProjects } from "@/lib/data";
 import { Link } from "react-router-dom";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase";
+import { cn } from "@/lib/utils";
 
 const focusAreas = ["digital marketing", "Artificial intelligence", "interactive experience"];
+
+function RevealText({ text, className, highlightWords = [] }: { text: string; className?: string; highlightWords?: string[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start 95%", "end 40%"],
+  });
+
+  const words = text.split(" ");
+
+  return (
+    <div ref={containerRef} className="relative">
+      <p className={cn("flex flex-wrap gap-x-[0.2em] gap-y-[0.1em]", className)}>
+        {words.map((word, i) => {
+          const start = i / words.length;
+          const end = (i + 1) / words.length;
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          const opacity = useTransform(scrollYProgress, [start, end], [0.15, 1]);
+          
+          const isHighlight = highlightWords.some(h => word.toLowerCase().includes(h.toLowerCase()));
+
+          return (
+            <motion.span
+              key={i}
+              style={{ opacity }}
+              whileHover={{ color: "#0d9488", scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+              className={cn(
+                "cursor-default transition-colors",
+                isHighlight ? "text-teal-950" : "text-neutral-400"
+              )}
+            >
+              {word}
+            </motion.span>
+          );
+        })}
+      </p>
+    </div>
+  );
+}
 
 export default function Home() {
   const [focusIndex, setFocusIndex] = useState(0);
@@ -41,14 +82,29 @@ export default function Home() {
   return (
     <div className="pt-24 md:pt-32">
       {/* Hero Section */}
-      <section className="px-6 md:px-12 lg:px-24 mb-40">
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-xl font-medium mb-4"
-        >
-          Hey, I'm Dicky.
-        </motion.p>
+      <section className="px-6 md:px-12 lg:px-24 mb-40 pt-20 md:pt-32">
+        <div className="flex items-center gap-4 mb-6">
+          <motion.p
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-xl font-medium"
+          >
+            Hey, I'm Dicky.
+          </motion.p>
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 20 }}
+            className="w-16 h-8 rounded-full overflow-hidden border border-black/5 bg-neutral-100"
+          >
+            <img 
+              src="https://framerusercontent.com/images/VtheqcjE8jjlcVh3YVQXB4ymA.png?width=286&height=286" 
+              alt="Dicky Headshot" 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </motion.div>
+        </div>
         <h1 className="text-4xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-12">
           a digital product designer <br />
           with focus on <br />
@@ -99,14 +155,11 @@ export default function Home() {
       <section className="px-6 md:px-12 lg:px-24 py-40 bg-neutral-50">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div>
-            <motion.p
-              initial={{ y: 40, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
+            <RevealText 
+              text="I excel at investigating problems and designing solutions that go beyond just the user interface. My approach involves suggesting innovative solutions through various channel, bridging the gap between human to human, and or human to objects."
               className="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-12"
-            >
-              I excel at investigating problems and designing solutions that go beyond just the user interface. My approach involves suggesting innovative solutions through various channel, bridging the gap between human to human, and or human to objects.
-            </motion.p>
+              highlightWords={["investigating", "problems", "designing", "solutions", "innovative", "human"]}
+            />
             <Link
               to="/about"
               className="inline-block px-8 py-4 bg-black text-white rounded-full text-sm font-medium uppercase tracking-widest hover:scale-105 transition-transform"
