@@ -47,7 +47,7 @@ function RevealText({ text }: { text: string }) {
 
 const timeline = [
   {
-    year: "2024 - Present",
+    year: "2025 - Present",
     title: "Digital Operation Analyst",
     company: "IBM Consulting",
     handle: "ibm.com",
@@ -63,21 +63,18 @@ const timeline = [
       "Philosophy: if it repeats, automate it — for the customer and for the team."
     ],
     clients: [
-      { name: "Marriott", logo: "https://cdn.worldvectorlogo.com/logos/marriott-international.svg" },
-      { name: "Huawei", logo: "https://cdn.worldvectorlogo.com/logos/huawei-logo.svg" },
-      { name: "Heineken", logo: "https://cdn.worldvectorlogo.com/logos/heineken-2.svg" },
-      { name: "Microsoft", logo: "https://cdn.worldvectorlogo.com/logos/microsoft-5.svg" }
+      { name: "Hong Kong Jockey Club", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Hong_Kong_Jockey_Club_logo.svg/1280px-Hong_Kong_Jockey_Club_logo.svg.png" }
     ],
-    caseStudy: { title: "AI Operations Framework", link: "/projects/ai-ops" }
+    caseStudy: { title: "Gen-AI digital racing experience", link: "/projects/ai-ops" }
   },
   {
-    year: "2022 - 2024",
+    year: "2023 - 2025",
     title: "Product Designer",
     company: "ESSAA Limited",
     handle: "creatogether.app",
     location: "Hong Kong",
     industry: "SASS Digital Marketing / STEM Education",
-    logo: "hhttps://static.wixstatic.com/media/526703_ce072d7e5dd141b98b8327ea1ebbfa27~mv2.png/v1/fill/w_33,h_30,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/creato%20logo_orange.png",
+    logo: "https://static.wixstatic.com/media/6e47aa_bd763a11882242e0b0c85f29a32be46c~mv2.png",
     description: "Focused on digital marketing tools and interactive web experiences.",
     bullets: [
       "Designed end-to-end mobile applications and design systems.",
@@ -85,8 +82,9 @@ const timeline = [
       "Managed multiple client projects from discovery to delivery."
     ],
     clients: [
-      { name: "Adobe", logo: "https://cdn.worldvectorlogo.com/logos/adobe-2.svg" },
-      { name: "Spotify", logo: "https://cdn.worldvectorlogo.com/logos/spotify-1.svg" }
+      { name: "STARLUX Airlines", logo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAJ1BMVEVHcEyXak2Ob02Ic02Xak2Xak2EdU2TbE2EdU2Xak2Ob02Xak2EdU2Z9D7zAAAADHRSTlMA/x0TsDTcdvRQj8fnoB3qAAAAbUlEQVQokdXS0Q6AIAgFUARKRf//e8vCtgb0Ui/dN3d2FZ0AHwXPLGSFk6YaWybxWDwY5NgIGDDqgaQW9eqYjDO6vf3IJMGeIwwU2jWtZ/OeVanZZ7lFSj9SLJFSXx3r/zeMjUSpZKensZ/xTTZjvwXsKgulDgAAAABJRU5ErkJggg==" },
+      { name: "HKU iDendron", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvKwjcCnJapeWjOqfAZZc6Z84hOEX2D6ZA2w&s" },
+      { name: "Findie", logo: "https://media.licdn.com/dms/image/v2/C4E0BAQF3HNPhVdvR1w/company-logo_200_200/company-logo_200_200/0/1647875333903/findieonline_logo?e=1777507200&v=beta&t=kcuau-Z7XfJoG9XasDa_ffNejVQBKeSfeTXmleYKkXU" }
     ]
   },
   {
