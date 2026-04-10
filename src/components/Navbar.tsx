@@ -36,28 +36,28 @@ export default function Navbar() {
       <header 
         className={cn(
           "fixed top-0 left-0 w-full z-50 transition-all duration-500 ease-in-out px-6 md:px-12",
-          scrolled ? "py-4" : "py-8"
+          scrolled ? "py-2 md:py-4" : "py-4 md:py-8"
         )}
       >
         <nav 
           className={cn(
-            "max-w-7xl mx-auto flex justify-between items-center transition-all duration-500 ease-in-out rounded-[2rem] px-8 py-4",
+            "max-w-7xl mx-auto flex justify-between items-center transition-all duration-500 ease-in-out rounded-full px-5 py-1.5 md:py-2.5",
             scrolled 
-              ? "bg-white/60 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)]" 
-              : "bg-transparent border border-transparent"
+              ? "bg-white/50 backdrop-blur-md border border-white/10 shadow-sm" 
+              : "bg-white/5 backdrop-blur-sm border border-black/5"
           )}
         >
           <Link 
             to="/" 
-            className="text-xl font-bold tracking-tighter uppercase group flex items-center gap-2"
+            className="text-base font-bold tracking-tighter uppercase group flex items-center gap-2"
           >
             <motion.span 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className="relative"
             >
               Dicky.
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full" />
+              <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full" />
             </motion.span>
           </Link>
           
@@ -70,10 +70,10 @@ export default function Navbar() {
                   key={link.path}
                   to={link.path}
                   className={cn(
-                    "relative px-5 py-2 text-sm font-medium tracking-tight transition-all duration-300 rounded-full",
+                    "relative px-3 py-1 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 rounded-full",
                     isActive 
                       ? "text-black" 
-                      : "text-neutral-500 hover:text-black hover:bg-black/5"
+                      : "text-neutral-400 hover:text-black hover:bg-black/5"
                   )}
                 >
                   <span className="relative z-10">{link.name}</span>
@@ -92,10 +92,10 @@ export default function Navbar() {
           {/* Mobile Toggle */}
           <motion.button 
             whileTap={{ scale: 0.9 }}
-            className="md:hidden p-3 bg-black/5 hover:bg-black/10 rounded-2xl transition-colors"
+            className="md:hidden p-2 hover:bg-black/5 rounded-xl transition-colors"
             onClick={() => setIsOpen(!isOpen)}
           >
-            {isOpen ? <X size={20} /> : <Menu size={20} />}
+            {isOpen ? <X size={18} /> : <Menu size={18} />}
           </motion.button>
         </nav>
       </header>
@@ -134,7 +134,6 @@ export default function Navbar() {
               </button>
 
               <div className="flex flex-col gap-6">
-                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-4">Navigation</p>
                 {links.map((link, index) => (
                   <motion.div
                     key={link.path}
@@ -158,13 +157,15 @@ export default function Navbar() {
               </div>
 
               <div className="mt-auto pt-12 border-t border-neutral-100">
-                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-400 mb-6">Social</p>
                 <div className="flex gap-6">
-                  {["Twitter", "LinkedIn", "GitHub"].map((social) => (
-                    <a key={social} href="#" className="text-sm font-medium text-neutral-500 hover:text-black transition-colors">
-                      {social}
-                    </a>
-                  ))}
+                  <a 
+                    href="https://www.linkedin.com/in/dicky-chu/" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+                  >
+                    LinkedIn
+                  </a>
                 </div>
               </div>
             </motion.div>
