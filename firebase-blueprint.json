@@ -19,6 +19,7 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "The creation timestamp." },
         "authorId": { "type": "string", "description": "The UID of the author." },
         "password": { "type": "string", "description": "Optional password for project access." },
+        "imageUrl": { "type": "string", "description": "Temporary image URL used in form." },
         "introduction": { "type": "string", "description": "Introduction content." },
         "challenge": { "type": "string", "description": "Challenge content." },
         "approach": { "type": "string", "description": "Approach content." },
