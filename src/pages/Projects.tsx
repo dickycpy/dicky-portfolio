@@ -10,7 +10,7 @@ export default function Projects() {
   const [projects, setProjects] = useState(mockProjects);
 
   useEffect(() => {
-    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "projects"), orderBy("order", "asc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedProjects = snapshot.docs.map(doc => ({
         id: doc.id,
