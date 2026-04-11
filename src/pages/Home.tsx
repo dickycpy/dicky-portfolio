@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { ArrowDownRight } from "lucide-react";
 import LogoWall from "@/components/LogoWall";
-import ProjectCard from "@/components/ProjectCard";
+import StackedProjectShowcase from "@/components/StackedProjectShowcase";
 import Footer from "@/components/Footer";
 import { projects as mockProjects } from "@/lib/data";
 import { Link } from "react-router-dom";
@@ -129,28 +129,8 @@ export default function Home() {
       {/* Logo Wall */}
       <LogoWall />
 
-      {/* Featured Projects */}
-      <section className="px-6 md:px-12 lg:px-24 py-40">
-        <div className="flex justify-between items-end mb-20">
-          <h2 className="text-4xl font-bold tracking-tighter uppercase">Featured Projects</h2>
-          <Link to="/projects" className="flex items-center gap-2 text-sm font-medium uppercase tracking-widest hover:opacity-60 transition-opacity">
-            View All <ArrowDownRight size={16} />
-          </Link>
-        </div>
-        <div className="flex flex-col">
-          {projects.map((project, i) => (
-            <Link key={project.id} to={`/projects/${project.id}`}>
-              <ProjectCard
-                index={i}
-                title={project.title}
-                category={project.category}
-                image={project.image}
-                isLocked={!!project.password}
-              />
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* Featured Projects - Stacked Wallet Style */}
+      <StackedProjectShowcase projects={projects} />
 
       {/* About Section */}
       <section className="px-6 md:px-12 lg:px-24 py-40">
