@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import FancyCursor from "./components/FancyCursor";
 import BackgroundLines from "./components/BackgroundLines";
 import Footer from "./components/Footer";
+import SplashScreen from "./components/SplashScreen";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -20,6 +21,7 @@ export default function App() {
   return (
     <Router>
       <div className="min-h-screen text-black font-sans selection:bg-black selection:text-white cursor-none">
+        <SplashScreen />
         <BackgroundLines />
         <FancyCursor />
         <Navbar />
