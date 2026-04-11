@@ -96,7 +96,7 @@ export default function ProjectDetail() {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 bg-white">
+      <div className="min-h-screen flex items-center justify-center px-6">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -148,7 +148,7 @@ export default function ProjectDetail() {
   }
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="min-h-screen">
       {/* Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-black z-[100] origin-left"
@@ -284,8 +284,8 @@ export default function ProjectDetail() {
             );
           })}
 
-          {/* Footer Navigation */}
-          <footer className="pt-20 border-t border-neutral-100 flex justify-between items-center">
+          {/* Section Navigation */}
+          <nav className="pt-20 border-t border-neutral-100 flex justify-between items-center">
             <Link to="/projects" className="text-xs font-bold uppercase tracking-widest hover:opacity-50 transition-opacity flex items-center gap-2">
               <ArrowLeft size={14} /> All Projects
             </Link>
@@ -295,7 +295,7 @@ export default function ProjectDetail() {
             >
               Back to Top
             </button>
-          </footer>
+          </nav>
         </div>
       </main>
     </div>
