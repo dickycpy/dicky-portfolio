@@ -71,7 +71,7 @@ export default function SplashScreen() {
                 className="w-1.5 h-1.5 rounded-full bg-teal-600"
               />
               <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-teal-600 font-bold">
-                My work, at a glance
+                Initializing Experience
               </span>
             </motion.div>
 
@@ -114,7 +114,7 @@ export default function SplashScreen() {
                 transition={{ delay: 1.6 }}
                 className="mt-4 text-[9px] font-mono uppercase tracking-[0.3em]"
               >
-                Initializing Experience
+                My work, at a glance
               </motion.div>
             </div>
           </motion.div>
