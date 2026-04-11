@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { ArrowDownRight } from "lucide-react";
 import LogoWall from "@/components/LogoWall";
 import ProjectCard from "@/components/ProjectCard";
+import Footer from "@/components/Footer";
 import { projects as mockProjects } from "@/lib/data";
 import { Link } from "react-router-dom";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
@@ -116,7 +117,7 @@ export default function Home() {
                 animate={{ y: 0 }}
                 exit={{ y: "-100%" }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="block italic text-neutral-400 whitespace-nowrap leading-[1.3] py-1"
+                className="block italic text-teal-600 whitespace-nowrap leading-[1.3] py-1"
               >
                 {focusAreas[focusIndex]}
               </motion.span>
@@ -152,7 +153,7 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section className="px-6 md:px-12 lg:px-24 py-40 bg-neutral-50">
+      <section className="px-6 md:px-12 lg:px-24 py-40">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div>
             <RevealText 
@@ -170,11 +171,15 @@ export default function Home() {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="aspect-square rounded-3xl overflow-hidden grayscale hover:grayscale-0 transition-all duration-700"
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            className="aspect-square rounded-3xl overflow-hidden transition-all duration-700 md:hover:scale-105"
           >
-            <img
+            <motion.img
+              initial={{ filter: "grayscale(100%)" }}
+              whileInView={{ filter: "grayscale(0%)" }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1.5, delay: 0.2 }}
               src="https://media.licdn.com/dms/image/v2/D4E22AQGkSwuqrPQ1Cg/feedshare-shrink_2048_1536/B4EZcwSfOgHQAo-/0/1748861862406?e=1777507200&v=beta&t=ROx_jE8Eb2O_8muzZhn6WSAk_4ewNWn4-1OsZ2AqCqg"
               alt="Creato!"
               className="w-full h-full object-cover"
@@ -183,21 +188,6 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="px-6 md:px-12 lg:px-24 py-20 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-8">
-        <p className="text-sm opacity-40">© 2026 Dicky Chu's Portfolio. All rights reserved.</p>
-        <div className="flex gap-8">
-          <a 
-            href="https://www.linkedin.com/in/dicky-chu/" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-sm font-medium uppercase tracking-widest hover:opacity-60"
-          >
-            LinkedIn
-          </a>
-        </div>
-      </footer>
     </div>
   );
-} 
+}
