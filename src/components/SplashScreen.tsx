@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -6,9 +6,6 @@ export default function SplashScreen() {
   const [isVisible, setIsVisible] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const location = useLocation();
-  
-  // Virtual scroll progress (0 to 600)
-  const splashProgress = useMotionValue(0);
 
   // Hide on admin panel
   useEffect(() => {
@@ -16,72 +13,15 @@ export default function SplashScreen() {
 
     if (!isAdmin) {
       setIsVisible(true);
-      // Lock scroll while splash is active
-      document.body.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [location]);
-
-  const handleComplete = () => {
-    setIsComplete(true);
-    document.body.style.overflow = "auto";
-  };
-
-  // Virtual Scroll Logic
-  useEffect(() => {
-    if (!isVisible || isComplete) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      const current = splashProgress.get();
-      const next = Math.min(Math.max(current + e.deltaY, 0), 650);
-      splashProgress.set(next);
       
-      if (next >= 600) {
-        handleComplete();
-      }
-    };
+      // Auto-complete after animations finish (Progress bar is 1.2s + some buffer)
+      const timer = setTimeout(() => {
+        setIsComplete(true);
+      }, 2500);
 
-    let touchStart = 0;
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStart = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      const touchCurrent = e.touches[0].clientY;
-      const delta = touchStart - touchCurrent;
-      touchStart = touchCurrent;
-
-      const current = splashProgress.get();
-      const next = Math.min(Math.max(current + delta * 2, 0), 650);
-      splashProgress.set(next);
-
-      if (next >= 600) {
-        handleComplete();
-      }
-    };
-
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-
-    return () => {
-      window.removeEventListener("wheel", handleWheel);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
-    };
-  }, [isVisible, isComplete, splashProgress]);
-
-  const clipPath = useTransform(
-    splashProgress,
-    [0, 600],
-    ["inset(0% 0% 0% 0%)", "inset(0% 0% 100% 0%)"]
-  );
-
-  const contentOpacity = useTransform(splashProgress, [0, 300], [1, 0]);
-  const contentScale = useTransform(splashProgress, [0, 300], [1, 0.9]);
+      return () => clearTimeout(timer);
+    }
+  }, [location]);
 
   if (!isVisible) return null;
 
@@ -90,8 +30,12 @@ export default function SplashScreen() {
       {!isComplete && (
         <motion.div
           key="splash-screen"
-          style={{ clipPath }}
-          className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center overflow-hidden touch-none"
+          initial={{ opacity: 1 }}
+          exit={{ 
+            y: "-100%",
+            transition: { duration: 1, ease: [0.22, 1, 0.36, 1] }
+          }}
+          className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center overflow-hidden"
         >
           {/* Static Grid Background (Matching the site) */}
           <div 
@@ -110,7 +54,9 @@ export default function SplashScreen() {
 
           {/* Main Content */}
           <motion.div 
-            style={{ opacity: contentOpacity, scale: contentScale }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.05, transition: { duration: 0.8 } }}
             className="relative z-10 text-center"
           >
             <motion.div
@@ -151,34 +97,24 @@ export default function SplashScreen() {
               </motion.h1>
             </div>
 
-            <div className="flex flex-col items-center gap-12">
+            <div className="flex flex-col items-center">
               {/* Progress Bar */}
               <div className="w-48 h-[2px] bg-black/5 relative overflow-hidden rounded-full">
                 <motion.div
                   initial={{ x: "-100%" }}
                   animate={{ x: "0%" }}
-                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  transition={{ duration: 1.5, ease: "easeInOut" }}
                   className="absolute inset-0 bg-teal-600"
                 />
               </div>
-
-              {/* Scroll Indicator */}
+              
               <motion.div
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.2 }}
-                className="flex flex-col items-center gap-4"
+                animate={{ opacity: 0.4 }}
+                transition={{ delay: 1.6 }}
+                className="mt-4 text-[9px] font-mono uppercase tracking-[0.3em]"
               >
-                <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-neutral-400">
-                  Scroll to Explore
-                </div>
-                <div className="w-[1px] h-12 bg-gradient-to-b from-teal-600 to-transparent relative overflow-hidden">
-                  <motion.div 
-                    animate={{ y: ["-100%", "100%"] }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                    className="absolute inset-0 bg-white/50"
-                  />
-                </div>
+                Initializing Experience
               </motion.div>
             </div>
           </motion.div>
