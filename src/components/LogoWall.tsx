@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 
 const logos = [
-  "https://framerusercontent.com/images/2yzk4oh8i7AXOuW4AYGYIDklOM.png?scale-down-to=512&width=2560&height=956",
+  "https://i.postimg.cc/HL9M79k7/HKSTP.png",
   "https://cdn.worldvectorlogo.com/logos/apple.svg",
   "https://cdn.worldvectorlogo.com/logos/meta-1.svg",
   "https://cdn.worldvectorlogo.com/logos/amazon-2.svg",
