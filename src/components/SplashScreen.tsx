@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform, AnimatePresence } from "motion/react";
+import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -6,7 +6,9 @@ export default function SplashScreen() {
   const [isVisible, setIsVisible] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const location = useLocation();
-  const { scrollY } = useScroll();
+  
+  // Virtual scroll progress (0 to 600)
+  const splashProgress = useMotionValue(0);
 
   // Hide on admin panel
   useEffect(() => {
@@ -14,140 +16,173 @@ export default function SplashScreen() {
 
     if (!isAdmin) {
       setIsVisible(true);
+      // Lock scroll while splash is active
+      document.body.style.overflow = "hidden";
     }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [location]);
 
   const handleComplete = () => {
     setIsComplete(true);
+    document.body.style.overflow = "auto";
   };
 
-  // Scroll-based reveal logic
+  // Virtual Scroll Logic
   useEffect(() => {
     if (!isVisible || isComplete) return;
 
-    const unsubscribe = scrollY.on("change", (latest) => {
-      if (latest > 600) {
+    const handleWheel = (e: WheelEvent) => {
+      const current = splashProgress.get();
+      const next = Math.min(Math.max(current + e.deltaY, 0), 650);
+      splashProgress.set(next);
+      
+      if (next >= 600) {
         handleComplete();
       }
-    });
+    };
 
-    return () => unsubscribe();
-  }, [isVisible, isComplete, scrollY]);
+    let touchStart = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStart = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touchCurrent = e.touches[0].clientY;
+      const delta = touchStart - touchCurrent;
+      touchStart = touchCurrent;
+
+      const current = splashProgress.get();
+      const next = Math.min(Math.max(current + delta * 2, 0), 650);
+      splashProgress.set(next);
+
+      if (next >= 600) {
+        handleComplete();
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [isVisible, isComplete, splashProgress]);
 
   const clipPath = useTransform(
-    scrollY,
+    splashProgress,
     [0, 600],
     ["inset(0% 0% 0% 0%)", "inset(0% 0% 100% 0%)"]
   );
 
-  const contentOpacity = useTransform(scrollY, [0, 300], [1, 0]);
-  const contentScale = useTransform(scrollY, [0, 300], [1, 0.9]);
+  const contentOpacity = useTransform(splashProgress, [0, 300], [1, 0]);
+  const contentScale = useTransform(splashProgress, [0, 300], [1, 0.9]);
 
   if (!isVisible) return null;
 
   return (
     <AnimatePresence>
       {!isComplete && (
-        <>
-          {/* Spacer to allow scrolling on top of the fixed splash */}
-          <div className="absolute top-0 left-0 w-full h-[160vh] pointer-events-none z-[-1]" />
-          
-          <motion.div
-            key="splash-screen"
-            style={{ clipPath }}
-            className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center overflow-hidden"
+        <motion.div
+          key="splash-screen"
+          style={{ clipPath }}
+          className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center overflow-hidden touch-none"
+        >
+          {/* Static Grid Background (Matching the site) */}
+          <div 
+            className="absolute inset-0 opacity-[0.05] pointer-events-none"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, rgba(0,0,0,1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,1) 1px, transparent 1px)
+              `,
+              backgroundSize: '40px 40px',
+            }}
+          />
+
+          {/* Noise Texture */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] filter contrast-150 brightness-100" />
+
+          {/* Main Content */}
+          <motion.div 
+            style={{ opacity: contentOpacity, scale: contentScale }}
+            className="relative z-10 text-center"
           >
-            {/* Static Grid Background (Matching the site) */}
-            <div 
-              className="absolute inset-0 opacity-[0.05] pointer-events-none"
-              style={{
-                backgroundImage: `
-                  linear-gradient(to right, rgba(0,0,0,1) 1px, transparent 1px),
-                  linear-gradient(to bottom, rgba(0,0,0,1) 1px, transparent 1px)
-                `,
-                backgroundSize: '40px 40px',
-              }}
-            />
-
-            {/* Noise Texture */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] filter contrast-150 brightness-100" />
-
-            {/* Main Content */}
-            <motion.div 
-              style={{ opacity: contentOpacity, scale: contentScale }}
-              className="relative z-10 text-center"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="mb-4 flex items-center justify-center gap-2"
             >
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="mb-4 flex items-center justify-center gap-2"
-              >
-                <motion.div 
-                  animate={{ opacity: [0, 1, 0] }}
-                  transition={{ repeat: Infinity, duration: 1, times: [0, 0.5, 1] }}
-                  className="w-1.5 h-1.5 rounded-full bg-teal-600"
-                />
-                <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-teal-600 font-bold">
-                  My work, at a glance
-                </span>
-              </motion.div>
+              <motion.div 
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{ repeat: Infinity, duration: 1, times: [0, 0.5, 1] }}
+                className="w-1.5 h-1.5 rounded-full bg-teal-600"
+              />
+              <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-teal-600 font-bold">
+                My work, at a glance
+              </span>
+            </motion.div>
 
-              <div className="overflow-hidden mb-12">
-                <motion.h1
-                  className="text-6xl md:text-8xl font-bold tracking-tighter leading-none flex justify-center"
-                >
-                  {"DICKY CHU".split("").map((char, index) => (
-                    <motion.span
-                      key={index}
-                      initial={{ y: "100%" }}
-                      animate={{ y: 0 }}
-                      transition={{ 
-                        duration: 0.8, 
-                        delay: 0.1 + (index * 0.03), 
-                        ease: [0.22, 1, 0.36, 1] 
-                      }}
-                      className={char === " " ? "mr-4" : ""}
-                    >
-                      {char}
-                    </motion.span>
-                  ))}
-                </motion.h1>
+            <div className="overflow-hidden mb-12">
+              <motion.h1
+                className="text-6xl md:text-8xl font-bold tracking-tighter leading-none flex justify-center"
+              >
+                {"DICKY CHU".split("").map((char, index) => (
+                  <motion.span
+                    key={index}
+                    initial={{ y: "100%" }}
+                    animate={{ y: 0 }}
+                    transition={{ 
+                      duration: 0.8, 
+                      delay: 0.1 + (index * 0.03), 
+                      ease: [0.22, 1, 0.36, 1] 
+                    }}
+                    className={char === " " ? "mr-4" : ""}
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+              </motion.h1>
+            </div>
+
+            <div className="flex flex-col items-center gap-12">
+              {/* Progress Bar */}
+              <div className="w-48 h-[2px] bg-black/5 relative overflow-hidden rounded-full">
+                <motion.div
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "0%" }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  className="absolute inset-0 bg-teal-600"
+                />
               </div>
 
-              <div className="flex flex-col items-center gap-12">
-                {/* Progress Bar */}
-                <div className="w-48 h-[2px] bg-black/5 relative overflow-hidden rounded-full">
-                  <motion.div
-                    initial={{ x: "-100%" }}
-                    animate={{ x: "0%" }}
-                    transition={{ duration: 1.2, ease: "easeInOut" }}
-                    className="absolute inset-0 bg-teal-600"
+              {/* Scroll Indicator */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+                className="flex flex-col items-center gap-4"
+              >
+                <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-neutral-400">
+                  Scroll to Explore
+                </div>
+                <div className="w-[1px] h-12 bg-gradient-to-b from-teal-600 to-transparent relative overflow-hidden">
+                  <motion.div 
+                    animate={{ y: ["-100%", "100%"] }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                    className="absolute inset-0 bg-white/50"
                   />
                 </div>
-
-                {/* Scroll Indicator */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.2 }}
-                  className="flex flex-col items-center gap-4"
-                >
-                  <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-neutral-400">
-                    Scroll to Explore
-                  </div>
-                  <div className="w-[1px] h-12 bg-gradient-to-b from-teal-600 to-transparent relative overflow-hidden">
-                    <motion.div 
-                      animate={{ y: ["-100%", "100%"] }}
-                      transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                      className="absolute inset-0 bg-white/50"
-                    />
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );
