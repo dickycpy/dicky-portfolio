@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import FancyCursor from "./components/FancyCursor";
 import BackgroundLines from "./components/BackgroundLines";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -18,7 +19,7 @@ import Admin from "./pages/Admin";
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white cursor-none">
+      <div className="min-h-screen text-black font-sans selection:bg-black selection:text-white cursor-none">
         <BackgroundLines />
         <FancyCursor />
         <Navbar />
@@ -33,8 +34,9 @@ export default function App() {
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
+        <Footer />
       </div>
     </Router>
   );
-} 
+}
 
