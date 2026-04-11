@@ -13,7 +13,7 @@ const logos = [
 
 export default function LogoWall() {
   return (
-    <div className="w-full overflow-hidden py-20 border-y border-black/5">
+    <div className="w-full overflow-hidden py-20">
       <motion.div
         className="flex whitespace-nowrap items-center"
         animate={{ x: [0, -1000] }}
