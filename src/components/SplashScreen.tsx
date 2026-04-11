@@ -14,142 +14,140 @@ export default function SplashScreen() {
 
     if (!isAdmin) {
       setIsVisible(true);
-      // Lock scroll initially to force the "first scroll" to be the trigger
-      document.body.style.overflow = "hidden";
     }
   }, [location]);
 
   const handleComplete = () => {
     setIsComplete(true);
-    document.body.style.overflow = "auto";
   };
 
   // Scroll-based reveal logic
   useEffect(() => {
     if (!isVisible || isComplete) return;
 
-    const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY > 0) handleComplete();
-    };
-
-    const handleTouch = (e: TouchEvent) => {
-      // Simple touch start/move logic could be added, but wheel/scroll is often enough
-      // for basic "intent" detection. Let's use a global listener for any scroll intent.
-    };
-
-    window.addEventListener("wheel", handleWheel);
-    window.addEventListener("touchstart", () => {}, { passive: true }); // Just to enable touch
-    
-    // Fallback: if they somehow scroll (e.g. spacebar)
     const unsubscribe = scrollY.on("change", (latest) => {
-      if (latest > 10) handleComplete();
+      if (latest > 600) {
+        handleComplete();
+      }
     });
 
-    return () => {
-      window.removeEventListener("wheel", handleWheel);
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [isVisible, isComplete, scrollY]);
+
+  const clipPath = useTransform(
+    scrollY,
+    [0, 600],
+    ["inset(0% 0% 0% 0%)", "inset(0% 0% 100% 0%)"]
+  );
+
+  const contentOpacity = useTransform(scrollY, [0, 300], [1, 0]);
+  const contentScale = useTransform(scrollY, [0, 300], [1, 0.9]);
 
   if (!isVisible) return null;
 
   return (
     <AnimatePresence>
       {!isComplete && (
-        <motion.div
-          key="splash-screen"
-          initial={{ y: 0 }}
-          exit={{ y: "-100%" }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center overflow-hidden"
-        >
-          {/* Static Grid Background (Matching the site) */}
-          <div 
-            className="absolute inset-0 opacity-[0.05] pointer-events-none"
-            style={{
-              backgroundImage: `
-                linear-gradient(to right, rgba(0,0,0,1) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0,0,0,1) 1px, transparent 1px)
-              `,
-              backgroundSize: '40px 40px',
-            }}
-          />
+        <>
+          {/* Spacer to allow scrolling on top of the fixed splash */}
+          <div className="absolute top-0 left-0 w-full h-[160vh] pointer-events-none z-[-1]" />
+          
+          <motion.div
+            key="splash-screen"
+            style={{ clipPath }}
+            className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center overflow-hidden"
+          >
+            {/* Static Grid Background (Matching the site) */}
+            <div 
+              className="absolute inset-0 opacity-[0.05] pointer-events-none"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, rgba(0,0,0,1) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(0,0,0,1) 1px, transparent 1px)
+                `,
+                backgroundSize: '40px 40px',
+              }}
+            />
 
-          {/* Noise Texture */}
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] filter contrast-150 brightness-100" />
+            {/* Noise Texture */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] filter contrast-150 brightness-100" />
 
-          {/* Main Content */}
-          <div className="relative z-10 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="mb-4 flex items-center justify-center gap-2"
+            {/* Main Content */}
+            <motion.div 
+              style={{ opacity: contentOpacity, scale: contentScale }}
+              className="relative z-10 text-center"
             >
-              <motion.div 
-                animate={{ opacity: [0, 1, 0] }}
-                transition={{ repeat: Infinity, duration: 1, times: [0, 0.5, 1] }}
-                className="w-1.5 h-1.5 rounded-full bg-teal-600"
-              />
-              <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-teal-600 font-bold">
-                My work, at a glance
-              </span>
-            </motion.div>
-
-            <div className="overflow-hidden mb-12">
-              <motion.h1
-                className="text-6xl md:text-8xl font-bold tracking-tighter leading-none flex justify-center"
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="mb-4 flex items-center justify-center gap-2"
               >
-                {"DICKY CHU".split("").map((char, index) => (
-                  <motion.span
-                    key={index}
-                    initial={{ y: "100%" }}
-                    animate={{ y: 0 }}
-                    transition={{ 
-                      duration: 1, 
-                      delay: 0.2 + (index * 0.05), 
-                      ease: [0.22, 1, 0.36, 1] 
-                    }}
-                    className={char === " " ? "mr-4" : ""}
-                  >
-                    {char}
-                  </motion.span>
-                ))}
-              </motion.h1>
-            </div>
-
-            <div className="flex flex-col items-center gap-12">
-              {/* Progress Bar */}
-              <div className="w-48 h-[2px] bg-black/5 relative overflow-hidden rounded-full">
-                <motion.div
-                  initial={{ x: "-100%" }}
-                  animate={{ x: "0%" }}
-                  transition={{ duration: 2, ease: "easeInOut" }}
-                  className="absolute inset-0 bg-teal-600"
+                <motion.div 
+                  animate={{ opacity: [0, 1, 0] }}
+                  transition={{ repeat: Infinity, duration: 1, times: [0, 0.5, 1] }}
+                  className="w-1.5 h-1.5 rounded-full bg-teal-600"
                 />
+                <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-teal-600 font-bold">
+                  My work, at a glance
+                </span>
+              </motion.div>
+
+              <div className="overflow-hidden mb-12">
+                <motion.h1
+                  className="text-6xl md:text-8xl font-bold tracking-tighter leading-none flex justify-center"
+                >
+                  {"DICKY CHU".split("").map((char, index) => (
+                    <motion.span
+                      key={index}
+                      initial={{ y: "100%" }}
+                      animate={{ y: 0 }}
+                      transition={{ 
+                        duration: 0.8, 
+                        delay: 0.1 + (index * 0.03), 
+                        ease: [0.22, 1, 0.36, 1] 
+                      }}
+                      className={char === " " ? "mr-4" : ""}
+                    >
+                      {char}
+                    </motion.span>
+                  ))}
+                </motion.h1>
               </div>
 
-              {/* Scroll Indicator */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2.2 }}
-                className="flex flex-col items-center gap-4"
-              >
-                <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-neutral-400">
-                  Scroll to Explore
-                </div>
-                <div className="w-[1px] h-12 bg-gradient-to-b from-teal-600 to-transparent relative overflow-hidden">
-                  <motion.div 
-                    animate={{ y: ["-100%", "100%"] }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                    className="absolute inset-0 bg-white/50"
+              <div className="flex flex-col items-center gap-12">
+                {/* Progress Bar */}
+                <div className="w-48 h-[2px] bg-black/5 relative overflow-hidden rounded-full">
+                  <motion.div
+                    initial={{ x: "-100%" }}
+                    animate={{ x: "0%" }}
+                    transition={{ duration: 1.2, ease: "easeInOut" }}
+                    className="absolute inset-0 bg-teal-600"
                   />
                 </div>
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
+
+                {/* Scroll Indicator */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.2 }}
+                  className="flex flex-col items-center gap-4"
+                >
+                  <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-neutral-400">
+                    Scroll to Explore
+                  </div>
+                  <div className="w-[1px] h-12 bg-gradient-to-b from-teal-600 to-transparent relative overflow-hidden">
+                    <motion.div 
+                      animate={{ y: ["-100%", "100%"] }}
+                      transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                      className="absolute inset-0 bg-white/50"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   );
