@@ -15,14 +15,12 @@ export default function SplashScreen() {
 
     if (!hasSeenSplash && !isAdmin) {
       setIsVisible(true);
-      // Prevent scrolling while splash is active
-      document.body.style.overflow = "hidden";
+      // We DON'T lock overflow here anymore to allow scroll-based reveal
     }
   }, [location]);
 
   const handleComplete = () => {
     setIsComplete(true);
-    document.body.style.overflow = "auto";
     sessionStorage.setItem("hasSeenSplash", "true");
   };
 
@@ -31,10 +29,6 @@ export default function SplashScreen() {
     if (!isVisible || isComplete) return;
 
     const unsubscribe = scrollY.on("change", (latest) => {
-      if (latest > 100) {
-        // Once they start scrolling, we allow the body to scroll and eventually complete
-        document.body.style.overflow = "auto";
-      }
       if (latest > 450) {
         handleComplete();
       }
@@ -45,51 +39,58 @@ export default function SplashScreen() {
 
   const clipPath = useTransform(
     scrollY,
-    [0, 500],
+    [0, 450],
     ["inset(0% 0% 0% 0%)", "inset(0% 0% 100% 0%)"]
   );
+
+  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+  const scale = useTransform(scrollY, [0, 300], [1, 0.9]);
 
   if (!isVisible) return null;
 
   return (
     <AnimatePresence>
       {!isComplete && (
-        <motion.div
-          style={{ clipPath }}
-          className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center overflow-hidden"
-        >
-          {/* Static Grid Background (Matching the site) */}
-          <div 
-            className="absolute inset-0 opacity-[0.05] pointer-events-none"
-            style={{
-              backgroundImage: `
-                linear-gradient(to right, rgba(0,0,0,1) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0,0,0,1) 1px, transparent 1px)
-              `,
-              backgroundSize: '40px 40px',
-            }}
-          />
+        <>
+          {/* Spacer to allow scrolling even if content is short */}
+          <div className="absolute top-0 left-0 w-full h-[150vh] pointer-events-none z-[-1]" />
+          
+          <motion.div
+            style={{ clipPath }}
+            className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center overflow-hidden"
+          >
+            {/* Static Grid Background (Matching the site) */}
+            <div 
+              className="absolute inset-0 opacity-[0.05] pointer-events-none"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, rgba(0,0,0,1) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(0,0,0,1) 1px, transparent 1px)
+                `,
+                backgroundSize: '40px 40px',
+              }}
+            />
 
-          {/* Noise Texture */}
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] filter contrast-150 brightness-100" />
+            {/* Noise Texture */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] filter contrast-150 brightness-100" />
 
-          {/* Main Content */}
-          <div className="relative z-10 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="mb-4 flex items-center justify-center gap-2"
-            >
-              <motion.div 
-                animate={{ opacity: [0, 1, 0] }}
-                transition={{ repeat: Infinity, duration: 1, times: [0, 0.5, 1] }}
-                className="w-1.5 h-1.5 rounded-full bg-teal-600"
-              />
-              <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-teal-600 font-bold">
-                System Initialization
-              </span>
-            </motion.div>
+            {/* Main Content */}
+            <motion.div style={{ opacity, scale }} className="relative z-10 text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                className="mb-4 flex items-center justify-center gap-2"
+              >
+                <motion.div 
+                  animate={{ opacity: [0, 1, 0] }}
+                  transition={{ repeat: Infinity, duration: 1, times: [0, 0.5, 1] }}
+                  className="w-1.5 h-1.5 rounded-full bg-teal-600"
+                />
+                <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-teal-600 font-bold">
+                  My work, at a glance
+                </span>
+              </motion.div>
 
             <div className="overflow-hidden mb-12">
               <motion.h1
@@ -143,27 +144,10 @@ export default function SplashScreen() {
                 </div>
               </motion.div>
             </div>
-          </div>
-
-          {/* Decorative Elements */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="absolute top-12 left-12 text-[10px] font-mono opacity-20"
-          >
-            VER: 2.0.26
-          </motion.div>
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-            className="absolute bottom-12 right-12 text-[10px] font-mono opacity-20"
-          >
-            LOC: 22.3193° N, 114.1694° E
           </motion.div>
         </motion.div>
-      )}
-    </AnimatePresence>
-  );
+      </>
+    )}
+  </AnimatePresence>
+);
 }
