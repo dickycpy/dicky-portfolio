@@ -9,6 +9,7 @@ import FancyCursor from "./components/FancyCursor";
 import BackgroundLines from "./components/BackgroundLines";
 import Footer from "./components/Footer";
 import SplashScreen from "./components/SplashScreen";
+import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -20,6 +21,7 @@ import Admin from "./pages/Admin";
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen text-black font-sans selection:bg-black selection:text-white cursor-none">
         <SplashScreen />
         <BackgroundLines />
