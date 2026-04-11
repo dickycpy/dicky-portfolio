@@ -35,7 +35,7 @@ export default function Navbar() {
     <>
       <header 
         className={cn(
-          "fixed top-0 left-0 w-full z-50 transition-all duration-500 ease-in-out px-6 md:px-12",
+          "fixed top-0 left-0 w-full z-[100] transition-all duration-500 ease-in-out px-6 md:px-12",
           scrolled ? "py-4 md:py-6" : "py-6 md:py-10"
         )}
       >
@@ -107,7 +107,7 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] md:hidden"
+            className="fixed inset-0 z-[110] md:hidden"
           >
             {/* Backdrop */}
             <motion.div 
