@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
-import { ArrowUpRight, Lock, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "motion/react";
+import { ArrowUpRight, Lock, X, ArrowRight, Tag, Calendar, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
@@ -9,6 +9,10 @@ interface Project {
   title: string;
   category: string;
   image: string;
+  description?: string;
+  role?: string;
+  timeline?: string;
+  tools?: string[];
   password?: string;
 }
 
@@ -17,15 +21,8 @@ interface StackedProjectShowcaseProps {
 }
 
 export default function StackedProjectShowcase({ projects }: StackedProjectShowcaseProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Ensure the first project is expanded by default when projects are loaded
-  useEffect(() => {
-    if (projects.length > 0 && !expandedId) {
-      setExpandedId(projects[0].id);
-    }
-  }, [projects, expandedId]);
 
   return (
     <section ref={containerRef} className="px-6 md:px-12 lg:px-24 py-40 relative">
@@ -46,149 +43,207 @@ export default function StackedProjectShowcase({ projects }: StackedProjectShowc
         </Link>
       </div>
 
-      <div className="relative space-y-0">
+      <div className="relative flex flex-col gap-0">
         {projects.map((project, index) => (
           <ProjectCard 
             key={project.id}
             project={project}
             index={index}
             total={projects.length}
-            isExpanded={expandedId === project.id}
-            onToggle={() => setExpandedId(expandedId === project.id ? null : project.id)}
+            onExpand={() => setSelectedProject(project)}
           />
         ))}
       </div>
+
+      <AnimatePresence>
+        {selectedProject && (
+          <ExpandedCard 
+            project={selectedProject} 
+            onClose={() => setSelectedProject(null)} 
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
-}
-
-interface ProjectCardProps {
-  key?: string | number;
-  project: Project;
-  index: number;
-  total: number;
-  isExpanded: boolean;
-  onToggle: () => void;
 }
 
 function ProjectCard({ 
   project, 
   index, 
   total,
-  isExpanded,
-  onToggle 
-}: ProjectCardProps) {
+  onExpand 
+}: { 
+  project: Project; 
+  index: number; 
+  total: number;
+  onExpand: () => void;
+}) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: cardRef,
-    offset: ["start end", "start start"]
-  });
-
-  // Subtle scale and opacity based on scroll
-  const scale = useTransform(scrollYProgress, [0, 1], [0.95, 1]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
   
-  // Apple Wallet style: cards stick with an offset to show the top area
-  const topOffset = 100 + (index * 64);
+  // Apple Wallet stacking logic:
+  // Each card is sticky and has an offset from the top.
+  // As you scroll, the next card slides over the previous one.
+  const topOffset = 100 + (index * 60);
 
   return (
     <motion.div
       ref={cardRef}
       style={{ 
         top: `${topOffset}px`,
-        scale,
-        opacity,
-        marginBottom: index === total - 1 ? "0" : "15vh"
+        // We add a bit of margin at the bottom of the last card to allow scrolling past the stack
+        marginBottom: index === total - 1 ? "20vh" : "0"
       }}
       className={cn(
-        "sticky w-full rounded-[2.5rem] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
-        "bg-neutral-900 shadow-[0_-20px_80px_-20px_rgba(0,0,0,0.15)]",
-        "hover:shadow-[0_-20px_80px_-10px_rgba(0,0,0,0.2)]",
-        isExpanded ? "z-40 ring-1 ring-white/10" : "z-10",
-        "group/card"
+        "sticky w-full h-[60vh] md:h-[70vh] rounded-[2.5rem] overflow-hidden transition-shadow duration-500",
+        "bg-neutral-900 shadow-[0_-20px_80px_-20px_rgba(0,0,0,0.3)]",
+        "hover:shadow-[0_-20px_80px_-10px_rgba(0,0,0,0.4)]",
+        "group cursor-pointer"
       )}
+      onClick={onExpand}
+      layoutId={`card-${project.id}`}
     >
-      {/* Background Image (The "under" part) */}
-      <div className="absolute inset-0 z-0">
+      {/* Background Image */}
+      <motion.div className="absolute inset-0 z-0" layoutId={`image-container-${project.id}`}>
         <img 
           src={project.image} 
-          alt="" 
-          className={cn(
-            "w-full h-full object-cover transition-all duration-1000",
-            isExpanded ? "opacity-100 scale-105" : "opacity-40 grayscale group-hover/card:opacity-60 group-hover/card:grayscale-0"
-          )}
+          alt={project.title} 
+          className="w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700"
           referrerPolicy="no-referrer"
         />
-        <div className={cn(
-          "absolute inset-0 transition-opacity duration-700",
-          isExpanded ? "bg-black/20" : "bg-black/40"
-        )} />
-      </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      </motion.div>
 
-      {/* Card Header (Glassmorphic) */}
-      <div 
-        onClick={onToggle}
-        className="h-20 md:h-24 px-8 md:px-12 flex items-center justify-between cursor-pointer group relative overflow-hidden z-10 backdrop-blur-md border-b border-white/10"
-      >
-        {/* Subtle hover background */}
-        <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-        
-        <div className="flex items-center gap-6 relative z-10">
-          <span className="text-[10px] font-mono text-white/40 font-bold">0{index + 1}</span>
-          <div className="space-y-0.5">
-            <h3 className="text-lg md:text-xl font-bold tracking-tight text-white group-hover:translate-x-1 transition-transform duration-500">
-              {project.title}
-            </h3>
-            <p className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-bold">
-              {project.category}
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-4 relative z-10">
+      {/* Card Content (Collapsed) */}
+      <div className="absolute inset-0 z-10 p-8 md:p-12 flex flex-col justify-between">
+        <div className="flex justify-between items-start">
+          <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
+            {project.category}
+          </motion.div>
           {project.password && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full">
-              <Lock size={10} className="text-white/40" />
-              <span className="text-[8px] font-bold uppercase tracking-wider text-white/40">Private Access</span>
+            <div className="p-2 bg-white/10 backdrop-blur-md rounded-full text-white border border-white/10">
+              <Lock size={14} />
             </div>
           )}
-          <motion.div 
-            animate={{ rotate: isExpanded ? 90 : 0 }}
-            className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-500"
-          >
-            <ChevronRight size={20} />
-          </motion.div>
+        </div>
+
+        <div className="space-y-2">
+          <motion.h3 layoutId={`title-${project.id}`} className="text-3xl md:text-5xl font-bold tracking-tighter text-white">
+            {project.title}
+          </motion.h3>
+          <motion.p layoutId={`description-${project.id}`} className="text-white/60 text-sm md:text-lg max-w-xl line-clamp-2">
+            {project.description || "Explore the intersection of design and technology through this comprehensive case study."}
+          </motion.p>
         </div>
       </div>
 
-      {/* Card Content (Details) */}
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden relative z-10"
+      {/* Tap to Expand Indicator */}
+      <div className="absolute bottom-8 right-8 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="flex items-center gap-2 text-white text-[10px] font-bold uppercase tracking-widest">
+          Tap to expand <ArrowRight size={14} />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function ExpandedCard({ project, onClose }: { project: Project; onClose: () => void }) {
+  // Prevent body scroll when expanded
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 lg:p-12">
+      {/* Backdrop Blur */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+      />
+
+      <motion.div
+        layoutId={`card-${project.id}`}
+        className="relative w-full h-full max-w-6xl bg-white md:rounded-[3rem] overflow-hidden shadow-2xl flex flex-col md:flex-row"
+      >
+        {/* Close Button */}
+        <button 
+          onClick={onClose}
+          className="absolute top-8 right-8 z-50 p-4 bg-black text-white rounded-full hover:scale-110 transition-transform shadow-xl"
+        >
+          <X size={24} />
+        </button>
+
+        {/* Left Side: Visuals */}
+        <div className="w-full md:w-1/2 h-[40vh] md:h-full relative overflow-hidden">
+          <motion.div className="absolute inset-0" layoutId={`image-container-${project.id}`}>
+            <img 
+              src={project.image} 
+              alt={project.title} 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </motion.div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden" />
+          
+          <div className="absolute bottom-8 left-8 md:hidden">
+            <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-white border border-white/20 mb-4 inline-block">
+              {project.category}
+            </motion.div>
+            <motion.h3 layoutId={`title-${project.id}`} className="text-3xl font-bold tracking-tighter text-white">
+              {project.title}
+            </motion.h3>
+          </div>
+        </div>
+
+        {/* Right Side: Details */}
+        <div className="w-full md:w-1/2 h-full overflow-y-auto p-8 md:p-16 lg:p-20 bg-white custom-scrollbar">
+          <div className="hidden md:block mb-12">
+            <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-neutral-100 rounded-full text-[10px] font-bold uppercase tracking-widest text-neutral-500 border border-neutral-200 mb-6 inline-block">
+              {project.category}
+            </motion.div>
+            <motion.h3 layoutId={`title-${project.id}`} className="text-5xl lg:text-6xl font-bold tracking-tighter text-black mb-8">
+              {project.title}
+            </motion.h3>
+          </div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="space-y-12"
           >
-            <div className="px-8 md:px-12 pb-12 pt-8 flex flex-col items-start gap-8">
-              <div className="max-w-2xl">
-                <p className="text-white/80 text-lg md:text-xl leading-relaxed mb-8">
-                  {/* We could add a description here if available in the data */}
-                  Explore the intersection of design and technology through this comprehensive case study.
-                </p>
-                <Link 
-                  to={`/projects/${project.id}`}
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl"
-                >
-                  Explore Case Study
-                  <ArrowUpRight size={18} />
-                </Link>
+            <div className="grid grid-cols-2 gap-8 py-8 border-y border-neutral-100">
+              <div>
+                <span className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Role</span>
+                <span className="text-sm font-medium">{project.role || "Lead Designer"}</span>
+              </div>
+              <div>
+                <span className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Timeline</span>
+                <span className="text-sm font-medium">{project.timeline || "3 Months"}</span>
               </div>
             </div>
+
+            <div className="space-y-6">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-black">Overview</h4>
+              <motion.p layoutId={`description-${project.id}`} className="text-neutral-500 text-lg leading-relaxed">
+                {project.description || "A comprehensive redesign focusing on making complex data more accessible through intuitive UX and modern visual language."}
+              </motion.p>
+            </div>
+
+            <div className="pt-8">
+              <Link 
+                to={`/projects/${project.id}`}
+                className="group w-full py-6 bg-black text-white rounded-2xl font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-neutral-800 transition-all shadow-xl"
+              >
+                View Full Case Study <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Link>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+        </div>
+      </motion.div>
+    </div>
   );
 }
