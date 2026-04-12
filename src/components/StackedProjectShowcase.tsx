@@ -23,36 +23,54 @@ interface StackedProjectShowcaseProps {
 export default function StackedProjectShowcase({ projects }: StackedProjectShowcaseProps) {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // The total height of the scrollable area for the stacking effect
+  // We use a factor of 50vh per project to give enough scroll room
+  const scrollHeight = `${100 + (projects.length * 50)}vh`;
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
 
   return (
-    <section ref={containerRef} className="px-6 md:px-12 lg:px-24 py-40 relative">
-      <div className="flex justify-between items-end mb-32">
-        <div className="space-y-4">
-          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter uppercase leading-none">
-            Selected <br /> <span className="text-neutral-400 italic">Works</span>
-          </h2>
-        </div>
-        <Link 
-          to="/projects" 
-          className="group flex items-center gap-3 text-sm font-medium uppercase tracking-widest hover:text-teal-600 transition-colors"
-        >
-          View Archive 
-          <div className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all">
-            <ArrowUpRight size={18} />
+    <section 
+      ref={containerRef} 
+      className="relative" 
+      style={{ height: scrollHeight }}
+    >
+      {/* Sticky Wrapper: This stays fixed while the cards animate inside */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col pt-20 md:pt-24 px-6 md:px-12 lg:px-24 z-10">
+        <div className="flex justify-between items-end mb-6 md:mb-8">
+          <div className="space-y-2">
+            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400">
+              Selected Works
+            </h2>
           </div>
-        </Link>
-      </div>
+          <Link 
+            to="/projects" 
+            className="group flex items-center gap-3 text-sm font-medium uppercase tracking-widest hover:text-teal-600 transition-colors"
+          >
+            <span className="hidden md:inline">View Archive</span>
+            <div className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all">
+              <ArrowUpRight size={18} />
+            </div>
+          </Link>
+        </div>
 
-      <div className="relative flex flex-col gap-0">
-        {projects.map((project, index) => (
-          <ProjectCard 
-            key={project.id}
-            project={project}
-            index={index}
-            total={projects.length}
-            onExpand={() => setSelectedProject(project)}
-          />
-        ))}
+        {/* Cards Container */}
+        <div className="relative flex-grow">
+          {projects.map((project, index) => (
+            <ProjectCard 
+              key={project.id}
+              project={project}
+              index={index}
+              total={projects.length}
+              scrollYProgress={scrollYProgress}
+              onExpand={() => setSelectedProject(project)}
+            />
+          ))}
+        </div>
       </div>
 
       <AnimatePresence>
@@ -71,30 +89,53 @@ function ProjectCard({
   project, 
   index, 
   total,
+  scrollYProgress,
   onExpand 
 }: { 
   project: Project; 
   index: number; 
   total: number;
+  scrollYProgress: any;
   onExpand: () => void;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
+  // Animation logic:
+  // Each card starts below the viewport and slides up to its stacked position.
+  // The stacking position is 160px + (index * 40px) from the top of the viewport.
+  // However, since we are inside a container that is already padded (pt-32), 
+  // we calculate the Y relative to that.
   
-  // Apple Wallet stacking logic:
-  // Each card is sticky and has an offset from the top.
-  // As you scroll, the next card slides over the previous one.
-  const topOffset = 100 + (index * 60);
+  const startScroll = index / total;
+  const endScroll = (index + 1) / total;
+  
+  // The final stacked Y position relative to the container
+  const targetY = index * 40;
+  
+  // Each card slides from 100vh down to its targetY
+  // We use a spring for smoother motion
+  const yRaw = useTransform(
+    scrollYProgress, 
+    [0, startScroll, Math.min(endScroll, 1)], 
+    [index === 0 ? 0 : 1000, index === 0 ? 0 : 1000, targetY]
+  );
+  
+  const y = useSpring(yRaw, { stiffness: 100, damping: 20, restDelta: 0.001 });
+
+  // Scale down cards that are "behind"
+  const scale = useTransform(
+    scrollYProgress,
+    [endScroll, endScroll + 0.2],
+    [1, 0.95]
+  );
 
   return (
     <motion.div
-      ref={cardRef}
       style={{ 
-        top: `${topOffset}px`,
-        // We add a bit of margin at the bottom of the last card to allow scrolling past the stack
-        marginBottom: index === total - 1 ? "20vh" : "0"
+        y,
+        scale,
+        zIndex: index,
       }}
       className={cn(
-        "sticky w-full h-[60vh] md:h-[70vh] rounded-[2.5rem] overflow-hidden transition-shadow duration-500",
+        "absolute left-0 right-0 h-[50vh] md:h-[55vh] rounded-[2.5rem] overflow-hidden transition-shadow duration-500",
         "bg-neutral-900 shadow-[0_-20px_80px_-20px_rgba(0,0,0,0.3)]",
         "hover:shadow-[0_-20px_80px_-10px_rgba(0,0,0,0.4)]",
         "group cursor-pointer"
@@ -114,7 +155,7 @@ function ProjectCard({
       </motion.div>
 
       {/* Card Content (Collapsed) */}
-      <div className="absolute inset-0 z-10 p-8 md:p-12 flex flex-col justify-between">
+      <div className="absolute inset-0 z-10 p-8 md:p-12 md:pb-16 flex flex-col justify-between">
         <div className="flex justify-between items-start">
           <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
             {project.category}
@@ -147,15 +188,13 @@ function ProjectCard({
 }
 
 function ExpandedCard({ project, onClose }: { project: Project; onClose: () => void }) {
-  // Prevent body scroll when expanded
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'unset'; };
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 lg:p-12">
-      {/* Backdrop Blur */}
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-6 lg:p-12">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -168,7 +207,6 @@ function ExpandedCard({ project, onClose }: { project: Project; onClose: () => v
         layoutId={`card-${project.id}`}
         className="relative w-full h-full max-w-6xl bg-white md:rounded-[3rem] overflow-hidden shadow-2xl flex flex-col md:flex-row"
       >
-        {/* Close Button */}
         <button 
           onClick={onClose}
           className="absolute top-8 right-8 z-50 p-4 bg-black text-white rounded-full hover:scale-110 transition-transform shadow-xl"
@@ -176,7 +214,6 @@ function ExpandedCard({ project, onClose }: { project: Project; onClose: () => v
           <X size={24} />
         </button>
 
-        {/* Left Side: Visuals */}
         <div className="w-full md:w-1/2 h-[40vh] md:h-full relative overflow-hidden">
           <motion.div className="absolute inset-0" layoutId={`image-container-${project.id}`}>
             <img 
@@ -198,7 +235,6 @@ function ExpandedCard({ project, onClose }: { project: Project; onClose: () => v
           </div>
         </div>
 
-        {/* Right Side: Details */}
         <div className="w-full md:w-1/2 h-full overflow-y-auto p-8 md:p-16 lg:p-20 bg-white custom-scrollbar">
           <div className="hidden md:block mb-12">
             <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-neutral-100 rounded-full text-[10px] font-bold uppercase tracking-widest text-neutral-500 border border-neutral-200 mb-6 inline-block">
