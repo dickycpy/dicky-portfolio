@@ -51,7 +51,7 @@ export default function StackedProjectShowcase({ projects }: StackedProjectShowc
             to="/projects" 
             className="group flex items-center gap-3 text-sm font-medium uppercase tracking-widest hover:text-teal-600 transition-colors"
           >
-            <span className="hidden md:inline">View Archive</span>
+            <span className="hidden md:inline">Browse all projects</span>
             <div className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all">
               <ArrowUpRight size={18} />
             </div>
