@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "motion/react";
 import { ArrowUpRight, Lock, X, ArrowRight, Tag, Calendar, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -85,19 +85,19 @@ export default function StackedProjectShowcase({ projects }: StackedProjectShowc
   );
 }
 
-function ProjectCard({ 
-  project, 
-  index, 
-  total,
-  scrollYProgress,
-  onExpand 
-}: { 
+const ProjectCard: React.FC<{ 
   project: Project; 
   index: number; 
   total: number;
   scrollYProgress: any;
   onExpand: () => void;
-}) {
+}> = ({ 
+  project, 
+  index, 
+  total,
+  scrollYProgress,
+  onExpand 
+}) => {
   // Animation logic:
   // Each card starts below the viewport and slides up to its stacked position.
   // The stacking position is 160px + (index * 40px) from the top of the viewport.
@@ -184,7 +184,7 @@ function ProjectCard({
       </div>
     </motion.div>
   );
-}
+};
 
 function ExpandedCard({ project, onClose }: { project: Project; onClose: () => void }) {
   useEffect(() => {
