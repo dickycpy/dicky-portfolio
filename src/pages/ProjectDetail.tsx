@@ -8,6 +8,7 @@ import { db } from "@/firebase";
 
 export default function ProjectDetail() {
   const { id } = useParams();
+  console.log("ProjectDetail rendering with ID:", id);
   const [project, setProject] = useState<any>(mockProjects.find((p) => p.id === id));
   const [passwordInput, setPasswordInput] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
