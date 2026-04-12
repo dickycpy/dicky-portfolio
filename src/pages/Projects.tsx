@@ -29,17 +29,18 @@ export default function Projects() {
   return (
     <div className="pt-24 md:pt-32 px-6 md:px-12 lg:px-24 pb-40">
       <h1 className="text-6xl md:text-8xl font-bold tracking-tighter mb-20">Projects</h1>
-      <div className="flex flex-col">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {projects.map((project, i) => (
-          <Link key={project.id} to={`/projects/${project.id}`}>
-            <ProjectCard
-              index={i}
-              title={project.title}
-              category={project.category}
-              image={project.image}
-              isLocked={!!project.password}
-            />
-          </Link>
+          <ProjectCard
+            key={project.id}
+            id={project.id}
+            index={i}
+            title={project.title}
+            category={project.category}
+            image={project.image}
+            description={project.description}
+            isLocked={!!project.password}
+          />
         ))}
       </div>
     </div>
