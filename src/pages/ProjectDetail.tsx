@@ -92,7 +92,13 @@ export default function ProjectDetail() {
       .replace(/&nbsp;/g, " "); // Replace HTML non-breaking space entities
   };
 
-  if (!project) return <div className="pt-40 px-6 text-center">Project not found</div>;
+  if (!project) return (
+    <div className="pt-40 px-6 text-center">
+      <p className="text-2xl font-bold mb-4">Project not found</p>
+      <p className="text-sm text-neutral-400">Attempted to fetch ID: <span className="font-mono text-black">{id}</span></p>
+      <Link to="/" className="inline-block mt-8 text-sm font-bold uppercase tracking-widest underline underline-offset-8">Back to Home</Link>
+    </div>
+  );
 
   if (!isAuthorized) {
     return (
