@@ -104,8 +104,8 @@ function ProjectCard({
   // However, since we are inside a container that is already padded (pt-32), 
   // we calculate the Y relative to that.
   
-  const startScroll = index / total;
-  const endScroll = (index + 1) / total;
+  const startScroll = (index * 0.5) / total;
+  const endScroll = ((index + 1) * 0.5) / total;
   
   // The final stacked Y position relative to the container
   const targetY = index * 40;
@@ -135,9 +135,8 @@ function ProjectCard({
         zIndex: index,
       }}
       className={cn(
-        "absolute left-0 right-0 h-[50vh] md:h-[55vh] rounded-[2.5rem] overflow-hidden transition-shadow duration-500",
-        "bg-neutral-900 shadow-[0_-20px_80px_-20px_rgba(0,0,0,0.3)]",
-        "hover:shadow-[0_-20px_80px_-10px_rgba(0,0,0,0.4)]",
+        "absolute left-0 right-0 h-[50vh] md:h-[55vh] rounded-[2.5rem] overflow-hidden",
+        "bg-neutral-900",
         "group cursor-pointer"
       )}
       onClick={onExpand}
