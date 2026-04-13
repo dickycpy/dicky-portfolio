@@ -1,12 +1,24 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-teal: oklch(60% .118 184.704);
+  --color-brand-pink: #F472B6;
+  --color-brand-white: #FFFFFF;
+
+  --color-teal-50: oklch(98.4% .014 180.72);
+  --color-teal-100: oklch(95.3% .051 180.801);
+  --color-teal-600: oklch(60% .118 184.704);
+  --color-teal-700: oklch(51.1% .096 186.391);
+  --color-teal-950: oklch(27.7% .046 192.524);
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
   }
   
   body {
-    @apply bg-white text-black antialiased;
+    @apply bg-brand-white text-black antialiased;
   }
 }
 
@@ -79,15 +91,15 @@
 
   .prose-content ul li::before {
     content: "";
-    @apply absolute left-0 top-[0.65em] w-1.5 h-1.5 rounded-sm bg-teal-600;
+    @apply absolute left-0 top-[0.65em] w-1.5 h-1.5 rounded-sm bg-brand-teal;
   }
 
   .prose-content a {
-    @apply text-teal-600 font-medium underline underline-offset-4 decoration-teal-600/20 hover:decoration-teal-600 transition-all;
+    @apply text-brand-teal font-medium underline underline-offset-4 decoration-brand-teal/20 hover:decoration-brand-teal transition-all;
   }
 
   .prose-content blockquote {
-    @apply border-l-2 border-teal-600 pl-8 italic my-12 text-neutral-500 text-xl md:text-2xl font-light;
+    @apply border-l-2 border-brand-teal pl-8 italic my-12 text-neutral-500 text-xl md:text-2xl font-light;
   }
 
   .prose-content img {
