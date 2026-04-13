@@ -1,20 +1,33 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Dicky Chu's Portfolio - A Vibe Coding Project 🚀
 
-# Run and deploy your AI Studio app
+Welcome to my digital space. This portfolio is a **Vibe Coding** project, built with a focus on high-end design aesthetics, fluid motion, and meaningful user interactions.
 
-This contains everything you need to run your app locally.
+## 🎨 The Vibe
+This project isn't just about code; it's about the *feeling*. It draws inspiration from top-tier design studios to create a premium digital experience.
 
-View your app in AI Studio: https://ai.studio/apps/80e96b04-d065-43f0-8f3c-e3d300cf58e7
+- **Fluid Transitions**: Custom SVG path morphing and multi-layered horizontal wipes using Bezier curves (`[0.76, 0, 0.24, 1]`).
+- **Magnetic Interactions**: Subtle cursor-reactive elements that bring the UI to life.
+- **Minimalist Aesthetic**: Bold typography, intentional whitespace, and a clean grayscale-to-color visual language.
+- **Real-time Data**: Powered by Firebase for dynamic project management and content updates.
 
-## Run Locally
+## 🛠️ Tech Stack
+- **Frontend**: React 18 + Vite
+- **Styling**: Tailwind CSS
+- **Animation**: Framer Motion (motion/react)
+- **Backend**: Firebase (Firestore & Auth)
+- **Icons**: Lucide React
 
-**Prerequisites:**  Node.js
+## ✨ Key Features
+- **Stacked Project Showcase**: A unique "wallet-style" project navigation on the home page.
+- **Admin Dashboard**: A secure, private space to manage projects and content.
+- **Responsive Design**: Meticulously crafted for everything from mobile to ultra-wide displays.
+- **Page Transitions**: Seamless navigation with custom-built transition components.
 
+## 🚀 Getting Started
+1. Clone the repository.
+2. Install dependencies: `npm install`.
+3. Set up your Firebase configuration in `firebase-applet-config.json`.
+4. Run the dev server: `npm run dev`.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+---
+*Built with passion and a focus on the vibe. 🇭🇰*
