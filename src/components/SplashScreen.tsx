@@ -35,7 +35,7 @@ export default function SplashScreen() {
             y: "-100%",
             transition: { duration: 1, ease: [0.22, 1, 0.36, 1] }
           }}
-          className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9999] bg-brand-white flex flex-col items-center justify-center overflow-hidden"
         >
           {/* Static Grid Background (Matching the site) */}
           <div 
@@ -74,9 +74,9 @@ export default function SplashScreen() {
               <motion.div 
                 animate={{ opacity: [0, 1, 0] }}
                 transition={{ repeat: Infinity, duration: 1, times: [0, 0.5, 1] }}
-                className="w-1.5 h-1.5 rounded-full bg-teal-600"
+                className="w-1.5 h-1.5 rounded-full bg-brand-teal"
               />
-              <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-teal-600 font-bold">
+              <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-brand-teal font-bold">
                 Initializing Experience
               </span>
             </motion.div>
@@ -110,7 +110,7 @@ export default function SplashScreen() {
                   initial={{ x: "-100%" }}
                   animate={{ x: "0%" }}
                   transition={{ duration: 1.5, ease: "easeInOut" }}
-                  className="absolute inset-0 bg-teal-600"
+                  className="absolute inset-0 bg-brand-teal"
                 />
               </div>
               
