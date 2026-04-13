@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import Magnetic from "./Magnetic";
 
 const links = [
   { name: "Home", path: "/" },
@@ -47,44 +48,46 @@ export default function Navbar() {
               : "bg-white/10 backdrop-blur-md border border-black/5"
           )}
         >
-          <Link 
-            to="/" 
-            className="text-xl font-bold tracking-tighter uppercase group flex items-center gap-2"
-          >
-            <motion.span 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative"
+          <Magnetic strength={0.2}>
+            <Link 
+              to="/" 
+              className="text-xl font-bold tracking-tighter uppercase group flex items-center gap-2"
             >
-              Dicky.
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full" />
-            </motion.span>
-          </Link>
+              <motion.span 
+                whileTap={{ scale: 0.95 }}
+                className="relative"
+              >
+                Dicky.
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full" />
+              </motion.span>
+            </Link>
+          </Magnetic>
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-2">
             {links.map((link) => {
               const isActive = location.pathname === link.path;
               return (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={cn(
-                    "relative px-5 py-2 text-sm font-medium tracking-tight transition-all duration-300 rounded-full",
-                    isActive 
-                      ? "text-black" 
-                      : "text-neutral-500 hover:text-black hover:bg-black/5"
-                  )}
-                >
-                  <span className="relative z-10">{link.name}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-pill"
-                      className="absolute inset-0 bg-white shadow-sm border border-neutral-100 rounded-full"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                </Link>
+                <Magnetic key={link.path} strength={0.3}>
+                  <Link
+                    to={link.path}
+                    className={cn(
+                      "relative px-5 py-2 text-sm font-medium tracking-tight transition-all duration-300 rounded-full",
+                      isActive 
+                        ? "text-black" 
+                        : "text-neutral-500 hover:text-black"
+                    )}
+                  >
+                    <span className="relative z-10">{link.name}</span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-pill"
+                        className="absolute inset-0 bg-white shadow-sm border border-neutral-100 rounded-full"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                  </Link>
+                </Magnetic>
               );
             })}
           </div>
@@ -92,10 +95,10 @@ export default function Navbar() {
           {/* Mobile Toggle */}
           <motion.button 
             whileTap={{ scale: 0.9 }}
-            className="md:hidden p-3 bg-black/5 hover:bg-black/10 rounded-2xl transition-colors"
+            className="md:hidden p-3 rounded-2xl transition-colors"
             onClick={() => setIsOpen(!isOpen)}
           >
-            <Menu size={22} />
+            {isOpen ? <X size={22} /> : <Menu size={22} />}
           </motion.button>
         </nav>
       </header>
@@ -123,7 +126,7 @@ export default function Navbar() {
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
               className="absolute top-0 right-0 w-[80%] h-full bg-white/80 backdrop-blur-2xl border-l border-white/20 shadow-2xl p-12 flex flex-col justify-center gap-10"
             >
               <div className="flex flex-col gap-6">
