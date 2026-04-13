@@ -5,9 +5,10 @@ const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const transition = { duration: 0.8, ease: [0.76, 0, 0.24, 1] };
 
   const layers = [
-    { color: "bg-teal-600", delay: 0 },
-    { color: "bg-neutral-800", delay: 0.05 },
-    { color: "bg-white", delay: 0.1 },
+    { color: "bg-brand-teal", delay: 0 },
+    { color: "bg-brand-pink", delay: 0.05 },
+    { color: "bg-neutral-800", delay: 0.1 },
+    { color: "bg-brand-white", delay: 0.15 },
   ];
 
   return (
