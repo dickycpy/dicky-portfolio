@@ -20,7 +20,7 @@ export default function Contact() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-end">
           <div>
             <p className="text-2xl md:text-3xl font-medium tracking-tight leading-tight text-neutral-500 mb-12 max-w-xl">
-              I'm always open to new challenges and interesting projects. Whether you have a question or just want to say hi, my inbox is always open.
+              I'm always open to new challenges and interesting projects. Whether you have a question or just want to have a chat, my inbox is always open.
             </p>
             
             <div className="space-y-8">
@@ -28,10 +28,10 @@ export default function Contact() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Email</p>
                 <Magnetic strength={0.1}>
                   <a 
-                    href="mailto:dicky.chu.ibm@gmail.com" 
+                    href="mailto:chu.dicky@outlook.com" 
                     className="text-3xl md:text-5xl font-bold tracking-tighter hover:text-teal-600 transition-colors flex items-center gap-4"
                   >
-                    dicky.chu.ibm@gmail.com
+                    chu.dicky@outlook.com
                     <ArrowUpRight size={32} className="text-neutral-200 group-hover:text-teal-600 group-hover:translate-x-2 group-hover:-translate-y-2 transition-all" />
                   </a>
                 </Magnetic>
