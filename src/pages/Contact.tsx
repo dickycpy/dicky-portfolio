@@ -1,77 +1,173 @@
-import { motion } from "motion/react";
-import { ArrowUpRight, Mail, Linkedin } from "lucide-react";
-import Magnetic from "@/components/Magnetic";
+import { Link, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
+import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { Menu, X } from "lucide-react";
+import Magnetic from "./Magnetic";
 
-export default function Contact() {
+const links = [
+  { name: "Home", path: "/" },
+  { name: "Projects", path: "/projects" },
+  { name: "About", path: "/about" },
+  { name: "Blogs", path: "/blogs" },
+  { name: "Contact", path: "/contact" },
+];
+
+export default function Navbar() {
+  const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close menu on route change
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
   return (
-    <div className="pt-40 md:pt-60 px-6 md:px-12 lg:px-24 pb-40">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+    <>
+      <header 
+        className={cn(
+          "fixed top-0 left-0 w-full z-[100] transition-all duration-500 ease-in-out px-6 md:px-12",
+          scrolled ? "py-4 md:py-6" : "py-6 md:py-10"
+        )}
+      >
+        <nav 
+          className={cn(
+            "max-w-7xl mx-auto flex justify-between items-center transition-all duration-500 ease-in-out rounded-full px-6 py-3 md:py-4",
+            scrolled 
+              ? "bg-white/60 backdrop-blur-xl border border-white/20 shadow-md" 
+              : "bg-white/10 backdrop-blur-md border border-black/5"
+          )}
         >
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400 mb-8">Get in touch</p>
-          <h1 className="text-7xl md:text-9xl font-bold tracking-tighter leading-none mb-20">
-            SAY <br /> HELLO.
-          </h1>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-end">
-          <div>
-            <p className="text-2xl md:text-3xl font-medium tracking-tight leading-tight text-neutral-500 mb-12 max-w-xl">
-              I'm always open to new challenges and interesting projects. Whether you have a question or just want to say hi, my inbox is always open.
-            </p>
-            
-            <div className="space-y-8">
-              <div className="group">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Email</p>
-                <Magnetic strength={0.1}>
-                  <a 
-                    href="mailto:dicky.chu.ibm@gmail.com" 
-                    className="text-3xl md:text-5xl font-bold tracking-tighter hover:text-teal-600 transition-colors flex items-center gap-4"
+          <Magnetic strength={0.2}>
+            <Link 
+              to="/" 
+              className="text-xl font-bold tracking-tighter uppercase group flex items-center gap-2"
+            >
+              <motion.span 
+                whileTap={{ scale: 0.95 }}
+                className="relative"
+              >
+                Dicky.
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full" />
+              </motion.span>
+            </Link>
+          </Magnetic>
+          
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-2">
+            {links.map((link) => {
+              const isActive = location.pathname === link.path;
+              return (
+                <Magnetic key={link.path} strength={0.3}>
+                  <Link
+                    to={link.path}
+                    className={cn(
+                      "relative px-5 py-2 text-sm font-medium tracking-tight transition-all duration-300 rounded-full",
+                      isActive 
+                        ? "text-black" 
+                        : "text-neutral-500 hover:text-black"
+                    )}
                   >
-                    dicky.chu.ibm@gmail.com
-                    <ArrowUpRight size={32} className="text-neutral-200 group-hover:text-teal-600 group-hover:translate-x-2 group-hover:-translate-y-2 transition-all" />
-                  </a>
+                    <span className="relative z-10">{link.name}</span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-pill"
+                        className="absolute inset-0 bg-white shadow-sm border border-neutral-100 rounded-full"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                  </Link>
                 </Magnetic>
+              );
+            })}
+          </div>
+
+          {/* Mobile Toggle */}
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            className="md:hidden p-3 rounded-2xl transition-colors"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? <X size={22} /> : <Menu size={22} />}
+          </motion.button>
+        </nav>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] md:hidden"
+          >
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            />
+            
+            {/* Menu Content */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+              className="absolute top-0 right-0 w-[80%] h-full bg-white/80 backdrop-blur-2xl border-l border-white/20 shadow-2xl p-12 flex flex-col justify-center gap-10"
+            >
+              <div className="flex flex-col gap-6">
+                {links.map((link, index) => (
+                  <motion.div
+                    key={link.path}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Link
+                      to={link.path}
+                      className={cn(
+                        "text-4xl font-bold tracking-tighter transition-all duration-300 block",
+                        location.pathname === link.path 
+                          ? "text-black translate-x-4" 
+                          : "text-neutral-300 hover:text-black hover:translate-x-2"
+                      )}
+                    >
+                      {link.name}
+                    </Link>
+                  </motion.div>
+                ))}
               </div>
 
-              <div className="group">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Social</p>
-                <Magnetic strength={0.1}>
+              <div className="mt-auto pt-12 border-t border-neutral-100">
+                <div className="flex gap-6">
                   <a 
                     href="https://www.linkedin.com/in/dicky-chu/" 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="text-3xl md:text-5xl font-bold tracking-tighter hover:text-teal-600 transition-colors flex items-center gap-4"
+                    className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
                   >
                     LinkedIn
-                    <ArrowUpRight size={32} className="text-neutral-200 group-hover:text-teal-600 group-hover:translate-x-2 group-hover:-translate-y-2 transition-all" />
                   </a>
-                </Magnetic>
-              </div>
-            </div>
-          </div>
-
-          <div className="hidden lg:block">
-            <div className="aspect-square w-full max-w-md bg-neutral-50 rounded-[3rem] border border-black/5 p-12 flex flex-col justify-between relative overflow-hidden group">
-              <div className="absolute inset-0 bg-teal-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <div className="relative z-10">
-                <Mail size={40} className="text-black mb-6" />
-                <h3 className="text-2xl font-bold tracking-tight">Based in Hong Kong</h3>
-                <p className="text-neutral-500 mt-2">Available for projects worldwide.</p>
-              </div>
-              <div className="relative z-10 flex justify-between items-end">
-                <p className="text-sm font-medium opacity-40">© 2026</p>
-                <div className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center">
-                  <ArrowUpRight size={20} />
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
