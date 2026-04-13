@@ -29,11 +29,11 @@ function RevealText({ text }: { text: string }) {
             <motion.span
               key={i}
               style={{ opacity }}
-              whileHover={{ color: "#0d9488", scale: 1.05 }}
+              whileHover={{ color: "#0F7B77", scale: 1.05 }}
               transition={{ duration: 0.2 }}
               className={cn(
                 "cursor-default transition-colors",
-                isHighlight ? "text-teal-950" : "text-neutral-400"
+                isHighlight ? "text-black" : "text-neutral-400"
               )}
             >
               {word}
@@ -153,14 +153,14 @@ export default function About() {
                   <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-16">
                     <span className="text-sm font-medium text-neutral-400 w-32 shrink-0">{item.year}</span>
                     <div className="flex flex-col">
-                      <span className={`text-2xl md:text-3xl font-bold tracking-tight transition-colors ${expandedIndex === i ? "text-teal-600" : "text-black"}`}>
+                      <span className={`text-2xl md:text-3xl font-bold tracking-tight transition-colors ${expandedIndex === i ? "text-brand-teal" : "text-black"}`}>
                         {item.title}
                       </span>
                       <span className="text-sm font-medium uppercase tracking-widest opacity-40 mt-1">{item.company}</span>
                     </div>
                   </div>
                   <div className={`transition-transform duration-500 ${expandedIndex === i ? "rotate-180" : ""}`}>
-                    <ChevronDown size={24} className={expandedIndex === i ? "text-teal-600" : "opacity-20"} />
+                    <ChevronDown size={24} className={expandedIndex === i ? "text-brand-teal" : "opacity-20"} />
                   </div>
                 </div>
               </button>
@@ -181,7 +181,7 @@ export default function About() {
                           <img src={item.logo} alt={item.company} className="w-full h-full object-contain p-1.5" referrerPolicy="no-referrer" />
                         </div>
                         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                          <span className="text-teal-600 font-bold flex items-center gap-1.5">
+                          <span className="text-brand-teal font-bold flex items-center gap-1.5">
                             {item.handle} <ExternalLink size={14} />
                           </span>
                           <span className="text-neutral-400 font-medium">{item.location}</span>
@@ -195,7 +195,7 @@ export default function About() {
                       <ul className="space-y-4 mb-12">
                         {item.bullets.map((bullet, idx) => (
                           <li key={idx} className="flex gap-4 text-neutral-600 leading-relaxed">
-                            <span className="w-1.5 h-1.5 rounded-sm bg-teal-600 mt-2.5 shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-sm bg-brand-teal mt-2.5 shrink-0" />
                             {bullet}
                           </li>
                         ))}
@@ -221,7 +221,7 @@ export default function About() {
                         <div className="mt-12">
                           <a 
                             href={item.caseStudy.link}
-                            className="inline-flex items-center gap-3 px-6 py-3 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold hover:bg-teal-100 transition-colors group/btn"
+                            className="inline-flex items-center gap-3 px-6 py-3 bg-brand-teal/5 text-brand-teal rounded-xl text-sm font-bold hover:bg-brand-teal/10 transition-colors group/btn"
                           >
                             Case Study: {item.caseStudy.title}
                             <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
@@ -239,4 +239,3 @@ export default function About() {
     </div>
   );
 }
- 
