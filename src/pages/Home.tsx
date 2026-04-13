@@ -12,7 +12,59 @@ import { cn } from "@/lib/utils";
 
 import Magnetic from "@/components/Magnetic";
 
-const focusAreas = ["digital marketing", "Artificial intelligence", "interactive experience"];
+const pairings = [
+  { role: "Business Analyst", focus: "Interactive Experience", color: "text-brand-pink", cursorColor: "bg-brand-pink" },
+  { role: "Product Designer", focus: "Digital Marketing", color: "text-brand-pink", cursorColor: "bg-brand-pink" },
+  { role: "Digital Marketer", focus: "Artificial Intelligence", color: "text-brand-pink", cursorColor: "bg-brand-pink" }
+];
+
+function Typewriter({ text, colorClass, cursorClass }: { text: string; colorClass: string; cursorClass: string }) {
+  const [displayText, setDisplayText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [speed, setSpeed] = useState(100);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+
+    const handleTyping = () => {
+      if (isDeleting) {
+        if (displayText.length > 0) {
+          setDisplayText((prev) => prev.substring(0, prev.length - 1));
+          setSpeed(40);
+        } else {
+          setIsDeleting(false);
+          setSpeed(100);
+        }
+      } else {
+        if (displayText !== text) {
+          setDisplayText(text.substring(0, displayText.length + 1));
+          setSpeed(100);
+        }
+      }
+    };
+
+    timer = setTimeout(handleTyping, speed);
+    return () => clearTimeout(timer);
+  }, [displayText, isDeleting, text, speed]);
+
+  // When the target text changes, start deleting first
+  useEffect(() => {
+    if (displayText !== "" && displayText !== text) {
+      setIsDeleting(true);
+    }
+  }, [text]);
+
+  return (
+    <span className={cn("relative transition-colors duration-500", colorClass)}>
+      {displayText}
+      <motion.span
+        animate={{ opacity: [0, 1, 0] }}
+        transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+        className={cn("inline-block w-[2px] h-[0.8em] ml-1 align-middle transition-colors duration-500", cursorClass)}
+      />
+    </span>
+  );
+}
 
 function RevealText({ text, className, highlightWords = [] }: { text: string; className?: string; highlightWords?: string[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -38,11 +90,11 @@ function RevealText({ text, className, highlightWords = [] }: { text: string; cl
             <motion.span
               key={i}
               style={{ opacity }}
-              whileHover={{ color: "#0d9488", scale: 1.05 }}
+              whileHover={{ color: "#0F7B77", scale: 1.05 }}
               transition={{ duration: 0.2 }}
               className={cn(
                 "cursor-default transition-colors",
-                isHighlight ? "text-teal-950" : "text-neutral-400"
+                isHighlight ? "text-black" : "text-neutral-400"
               )}
             >
               {word}
@@ -60,8 +112,8 @@ export default function Home() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setFocusIndex((prev) => (prev + 1) % focusAreas.length);
-    }, 3000);
+      setFocusIndex((prev) => (prev + 1) % pairings.length);
+    }, 4000); // Increased time to allow typewriter to finish
     return () => clearInterval(interval);
   }, []);
 
@@ -85,7 +137,7 @@ export default function Home() {
   return (
     <div className="pt-24 md:pt-32">
       {/* Hero Section */}
-      <section className="px-6 md:px-12 lg:px-24 mb-40 pt-20 md:pt-32">
+      <section className="px-6 md:px-12 lg:px-24 mb-48 md:mb-40 pt-20 md:pt-32 min-h-[60vh] md:min-h-0">
         <div className="flex items-center gap-4 mb-6">
           <motion.p
             initial={{ y: 20, opacity: 0 }}
@@ -101,30 +153,36 @@ export default function Home() {
             className="w-16 h-8 rounded-full overflow-hidden border border-black/5 bg-neutral-100"
           >
             <img 
-              src="https://framerusercontent.com/images/VtheqcjE8jjlcVh3YVQXB4ymA.png?width=286&height=286" 
+              src="https://media.licdn.com/dms/image/v2/D5603AQFEbtlamY8BwQ/profile-displayphoto-scale_400_400/B56Z0GLjlSH8Ao-/0/1773925187634?e=1777507200&v=beta&t=ogAGWebh6mQjr-mM7geJcg-bbIMxNiBD6WUjSPvmwzM" 
               alt="Dicky Headshot" 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
           </motion.div>
         </div>
-        <h1 className="text-4xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-12">
-          a digital product designer <br />
-          with focus on <br />
-          <span className="relative inline-block h-[1.3em] overflow-hidden align-bottom px-2 -ml-2">
+        <h1 className="text-3xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-12">
+          a <span className="relative inline-block h-[1.4em] overflow-hidden align-baseline px-2 -ml-2 translate-y-[0.3em]">
             <AnimatePresence mode="wait">
               <motion.span
-                key={focusAreas[focusIndex]}
+                key={pairings[focusIndex].role}
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 exit={{ y: "-100%" }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="block italic text-teal-600 whitespace-nowrap leading-[1.3] py-1"
+                className="block italic text-brand-teal whitespace-nowrap leading-[1.4]"
               >
-                {focusAreas[focusIndex]}
+                {pairings[focusIndex].role}
               </motion.span>
             </AnimatePresence>
-          </span>
+          </span> <br />
+          with focus on <br />
+          <div className="min-h-[1.2em] md:min-h-0 whitespace-nowrap">
+            <Typewriter 
+              text={pairings[focusIndex].focus} 
+              colorClass={pairings[focusIndex].color}
+              cursorClass={pairings[focusIndex].cursorColor}
+            />
+          </div>
         </h1>
       </section>
 
@@ -143,14 +201,12 @@ export default function Home() {
               className="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-12"
               highlightWords={["investigating", "problems", "designing", "solutions", "innovative", "human"]}
             />
-            <Magnetic strength={0.2}>
-              <Link
-                to="/about"
-                className="inline-block px-8 py-4 bg-black text-white rounded-full text-sm font-medium uppercase tracking-widest hover:scale-105 transition-transform"
-              >
-                About Me
-              </Link>
-            </Magnetic>
+            <Link
+              to="/about"
+              className="inline-block px-8 py-4 bg-black text-white rounded-full text-sm font-medium uppercase tracking-widest hover:bg-brand-teal transition-all duration-300"
+            >
+              About Me
+            </Link>
           </div>
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -175,4 +231,3 @@ export default function Home() {
     </div>
   );
 }
- 
