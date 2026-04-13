@@ -10,6 +10,8 @@ import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestor
 import { db } from "@/firebase";
 import { cn } from "@/lib/utils";
 
+import Magnetic from "@/components/Magnetic";
+
 const focusAreas = ["digital marketing", "Artificial intelligence", "interactive experience"];
 
 function RevealText({ text, className, highlightWords = [] }: { text: string; className?: string; highlightWords?: string[] }) {
@@ -141,12 +143,14 @@ export default function Home() {
               className="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-12"
               highlightWords={["investigating", "problems", "designing", "solutions", "innovative", "human"]}
             />
-            <Link
-              to="/about"
-              className="inline-block px-8 py-4 bg-black text-white rounded-full text-sm font-medium uppercase tracking-widest hover:scale-105 transition-transform"
-            >
-              About Me
-            </Link>
+            <Magnetic strength={0.2}>
+              <Link
+                to="/about"
+                className="inline-block px-8 py-4 bg-black text-white rounded-full text-sm font-medium uppercase tracking-widest hover:scale-105 transition-transform"
+              >
+                About Me
+              </Link>
+            </Magnetic>
           </div>
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
