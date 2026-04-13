@@ -49,7 +49,7 @@ export default function StackedProjectShowcase({ projects }: StackedProjectShowc
           </div>
           <Link 
             to="/projects" 
-            className="group flex items-center gap-3 text-sm font-medium uppercase tracking-widest hover:text-teal-600 transition-colors"
+            className="group flex items-center gap-3 text-sm font-medium uppercase tracking-widest hover:text-brand-teal transition-colors"
           >
             <span className="hidden md:inline">Browse all projects</span>
             <div className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all">
