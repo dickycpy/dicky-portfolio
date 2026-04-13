@@ -1,7 +1,7 @@
 # Dicky Chu's Portfolio - A Vibe Coding Project 🚀
 
 <div align="center">
-<img width="1200" height="475" alt="Banner" src="https://ais-dev-n23wlidm2zb6sk22bcj356-794420763709.asia-southeast1.run.app/" />
+<img width="1200" height="475" alt="Banner" src="https://i.postimg.cc/FHFZggKj/Screenshot-2026-04-12-at-12-19-38-PM.png" />
 </div>
 
 Welcome to my digital space. This portfolio is a **Vibe Coding** project, built with a focus on high-end design aesthetics, fluid motion, and meaningful user interactions.
