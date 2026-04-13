@@ -29,10 +29,10 @@ export default function Contact() {
                 <Magnetic strength={0.1}>
                   <a 
                     href="mailto:chu.dicky@outlook.com" 
-                    className="text-3xl md:text-5xl font-bold tracking-tighter hover:text-teal-600 transition-colors flex items-center gap-4"
+                    className="text-3xl md:text-5xl font-bold tracking-tighter hover:text-brand-teal transition-colors flex items-center gap-4"
                   >
                     chu.dicky@outlook.com
-                    <ArrowUpRight size={32} className="text-neutral-200 group-hover:text-teal-600 group-hover:translate-x-2 group-hover:-translate-y-2 transition-all" />
+                    <ArrowUpRight size={32} className="text-neutral-200 group-hover:text-brand-teal group-hover:translate-x-2 group-hover:-translate-y-2 transition-all" />
                   </a>
                 </Magnetic>
               </div>
@@ -44,10 +44,10 @@ export default function Contact() {
                     href="https://www.linkedin.com/in/dicky-chu/" 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="text-3xl md:text-5xl font-bold tracking-tighter hover:text-teal-600 transition-colors flex items-center gap-4"
+                    className="text-3xl md:text-5xl font-bold tracking-tighter hover:text-brand-teal transition-colors flex items-center gap-4"
                   >
                     LinkedIn
-                    <ArrowUpRight size={32} className="text-neutral-200 group-hover:text-teal-600 group-hover:translate-x-2 group-hover:-translate-y-2 transition-all" />
+                    <ArrowUpRight size={32} className="text-neutral-200 group-hover:text-brand-teal group-hover:translate-x-2 group-hover:-translate-y-2 transition-all" />
                   </a>
                 </Magnetic>
               </div>
@@ -56,7 +56,7 @@ export default function Contact() {
 
           <div className="hidden lg:block">
             <div className="aspect-square w-full max-w-md bg-neutral-50 rounded-[3rem] border border-black/5 p-12 flex flex-col justify-between relative overflow-hidden group">
-              <div className="absolute inset-0 bg-teal-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="absolute inset-0 bg-brand-teal/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <div className="relative z-10">
                 <Mail size={40} className="text-black mb-6" />
                 <h3 className="text-2xl font-bold tracking-tight">Based in Hong Kong</h3>
