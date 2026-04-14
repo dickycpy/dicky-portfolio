@@ -278,8 +278,17 @@ export default function ProjectDetail() {
 
             const sectionImage = project[`${section.id}Image`];
             const sectionVideo = project[`${section.id}Video`];
+            const sectionImageDescription = project[`${section.id}ImageDescription`];
+            const subSections = project.subSections?.[section.id] || [];
             const ytUrl = getYouTubeEmbedUrl(sectionVideo);
             const vimeoUrl = getVimeoEmbedUrl(sectionVideo);
+
+            // Check if section has any content at all
+            const hasTextContent = content && content.replace(/<[^>]*>/g, '').trim().length > 0;
+            const hasSubSections = subSections.length > 0;
+            const hasMedia = sectionImage || ytUrl || vimeoUrl;
+
+            if (!hasTextContent && !hasSubSections && !hasMedia) return null;
 
             return (
               <section key={section.id} id={section.id} className="scroll-mt-40 group">
@@ -293,29 +302,38 @@ export default function ProjectDetail() {
                   </h2>
                 </div>
                 
-                <div 
-                  className={`prose-content ${section.id === 'introduction' ? 'prose-xl' : 'prose-lg'} max-w-none`}
-                  dangerouslySetInnerHTML={{ 
-                    __html: cleanHtml(content || `<p class='opacity-30 italic'>No content provided for this section.</p>`) 
-                  }}
-                />
+                {hasTextContent && (
+                  <div 
+                    className={`prose-content ${section.id === 'introduction' ? 'prose-xl' : 'prose-lg'} max-w-none`}
+                    dangerouslySetInnerHTML={{ 
+                      __html: cleanHtml(content) 
+                    }}
+                  />
+                )}
 
                 {(sectionImage || ytUrl || vimeoUrl) && (
                   <div className="space-y-8 mt-16">
                     {sectionImage && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm"
-                      >
-                        <img 
-                          src={sectionImage} 
-                          alt={`${section.label} visual`} 
-                          className="w-full h-auto" 
-                          referrerPolicy="no-referrer"
-                        />
-                      </motion.div>
+                      <div className="space-y-4">
+                        <motion.div 
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          className="rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm"
+                        >
+                          <img 
+                            src={sectionImage} 
+                            alt={`${section.label} visual`} 
+                            className="w-full h-auto" 
+                            referrerPolicy="no-referrer"
+                          />
+                        </motion.div>
+                        {sectionImageDescription && (
+                          <p className="text-xs font-medium text-neutral-400 text-center italic px-12 leading-relaxed">
+                            {sectionImageDescription}
+                          </p>
+                        )}
+                      </div>
                     )}
                     
                     {(ytUrl || vimeoUrl) && (
@@ -334,6 +352,27 @@ export default function ProjectDetail() {
                         />
                       </motion.div>
                     )}
+                  </div>
+                )}
+
+                {hasSubSections && (
+                  <div className="mt-20 space-y-20">
+                    {subSections.map((sub: any, idx: number) => (
+                      <div key={idx} className="space-y-8">
+                        {sub.title && (
+                          <h3 className="text-2xl font-bold tracking-tight text-black flex items-center gap-4">
+                            <span className="w-8 h-[1px] bg-brand-teal" />
+                            {sub.title}
+                          </h3>
+                        )}
+                        {sub.content && (
+                          <div 
+                            className="prose-content prose-lg max-w-none"
+                            dangerouslySetInnerHTML={{ __html: cleanHtml(sub.content) }}
+                          />
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </section>
