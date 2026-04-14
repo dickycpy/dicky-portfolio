@@ -33,6 +33,11 @@ export default function Projects() {
     { id: "lab", label: "My Lab" }
   ];
 
+  const filteredProjects = projects.filter(p => {
+    if (activeTab === "main") return p.type === "main" || !p.type;
+    return p.type === "lab";
+  });
+
   return (
     <div className="pt-24 md:pt-32 px-6 md:px-12 lg:px-24 pb-40">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
@@ -61,34 +66,40 @@ export default function Projects() {
         </div>
       </div>
 
-      {activeTab === "main" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {projects.map((project, i) => (
-            <ProjectCard
-              key={project.id}
-              id={project.id}
-              index={i}
-              title={project.title}
-              category={project.category}
-              image={project.image}
-              description={project.description}
-              isLocked={!!project.password}
-            />
-          ))}
-        </div>
-      ) : (
-        <motion.div 
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center justify-center py-40 border-2 border-dashed border-black/5 rounded-[3rem]"
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4 }}
         >
-          <div className="w-20 h-20 rounded-full bg-brand-pink/10 flex items-center justify-center mb-6">
-            <div className="w-10 h-10 rounded-full bg-brand-pink animate-pulse" />
-          </div>
-          <h2 className="text-3xl font-bold tracking-tight mb-2">Coming Soon</h2>
-          <p className="text-black/40 font-medium">My Lab is currently under construction.</p>
+          {filteredProjects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+              {filteredProjects.map((project, i) => (
+                <ProjectCard
+                  key={project.id}
+                  id={project.id}
+                  index={i}
+                  title={project.title}
+                  category={project.category}
+                  image={project.image}
+                  description={project.description}
+                  isLocked={!!project.password}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-40 border-2 border-dashed border-black/5 rounded-[3rem]">
+              <div className="w-20 h-20 rounded-full bg-brand-pink/10 flex items-center justify-center mb-6">
+                <div className="w-10 h-10 rounded-full bg-brand-pink animate-pulse" />
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight mb-2">No Projects Found</h2>
+              <p className="text-black/40 font-medium">There are no projects in this category yet.</p>
+            </div>
+          )}
         </motion.div>
-      )}
+      </AnimatePresence>
     </div>
   );
 }
