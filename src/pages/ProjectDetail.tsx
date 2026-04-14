@@ -371,6 +371,50 @@ export default function ProjectDetail() {
                             dangerouslySetInnerHTML={{ __html: cleanHtml(sub.content) }}
                           />
                         )}
+                        
+                        {(sub.image || sub.video) && (
+                          <div className="space-y-8 mt-12">
+                            {sub.image && (
+                              <div className="space-y-4">
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 20 }}
+                                  whileInView={{ opacity: 1, y: 0 }}
+                                  viewport={{ once: true }}
+                                  className="rounded-[2rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm"
+                                >
+                                  <img 
+                                    src={sub.image} 
+                                    alt={sub.title || "Sub-section visual"} 
+                                    className="w-full h-auto" 
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </motion.div>
+                                {sub.imageDescription && (
+                                  <p className="text-[10px] font-medium text-neutral-400 text-center italic px-12 leading-relaxed">
+                                    {sub.imageDescription}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            
+                            {sub.video && (
+                              <motion.div 
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                className="aspect-video rounded-[2rem] overflow-hidden border border-neutral-100 bg-black shadow-xl"
+                              >
+                                <iframe
+                                  src={getYouTubeEmbedUrl(sub.video) || getVimeoEmbedUrl(sub.video) || ""}
+                                  className="w-full h-full"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  title={sub.title || "Sub-section video"}
+                                />
+                              </motion.div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
