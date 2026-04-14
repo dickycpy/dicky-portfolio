@@ -5,9 +5,10 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield } from "lucide-react";
+import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield, GripVertical } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 enum OperationType {
   CREATE = 'create',
@@ -28,6 +29,7 @@ interface Project {
   timeline: string;
   tools: string[];
   type: "main" | "lab";
+  sortOrder?: number;
   introduction?: string;
   challenge?: string;
   approach?: string;
@@ -86,9 +88,14 @@ export default function Admin() {
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
-    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "projects"), orderBy("sortOrder", "asc"));
     const unsubscribeProjects = onSnapshot(q, (snapshot) => {
-      setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Project[]);
+      const fetchedProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Project[];
+      // If none have sortOrder, they might be old projects. Sort them by createdAt and we'll assign sortOrder later if needed
+      if (fetchedProjects.every(p => p.sortOrder === undefined)) {
+        fetchedProjects.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      }
+      setProjects(fetchedProjects);
     }, (err) => {
       console.error("Firestore error in Admin:", err);
     });
@@ -183,6 +190,7 @@ export default function Admin() {
           ...projectData,
           createdAt: serverTimestamp(),
           authorId: user.uid,
+          sortOrder: projects.length
         });
       }
       resetForm();
@@ -191,6 +199,30 @@ export default function Admin() {
       alert("Failed to save project. Check console for details.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onDragEnd = async (result: any) => {
+    if (!result.destination) return;
+
+    const items = Array.from(projects) as Project[];
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Optimistic update
+    setProjects(items);
+
+    // Update Firestore
+    try {
+      const batch: Promise<void>[] = [];
+      items.forEach((item, index) => {
+        if (item.sortOrder !== index) {
+          batch.push(updateDoc(doc(db, "projects", item.id), { sortOrder: index }));
+        }
+      });
+      await Promise.all(batch);
+    } catch (error) {
+      console.error("Failed to update sort order", error);
     }
   };
 
@@ -360,56 +392,93 @@ export default function Admin() {
       </AnimatePresence>
 
       <div className="space-y-12">
-        <h2 className="text-3xl font-bold tracking-tighter">Existing Projects</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {projects.map((p) => (
-            <div key={p.id} className="group bg-white rounded-[2.5rem] overflow-hidden border border-neutral-100 hover:border-neutral-200 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative">
-              <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
-                <img src={p.image} alt={p.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />
-                <div className="absolute top-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-30">
-                  <button onClick={() => handleEdit(p)} className="p-4 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl hover:bg-black hover:text-white transition-all">
-                    <Edit2 size={18} />
-                  </button>
-                  <button 
-                    onClick={async () => {
-                      if (window.confirm("Delete this project?")) {
-                        await deleteDoc(doc(db, "projects", p.id));
-                      }
-                    }} 
-                    className="p-4 bg-white/90 backdrop-blur-md text-red-500 rounded-2xl shadow-xl hover:bg-red-500 hover:text-white transition-all"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-                <div className="absolute bottom-6 left-6 flex gap-2 z-20">
-                  <div className="px-4 py-2 bg-black/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
-                    {p.type === "lab" ? "My Lab" : "Main"}
-                  </div>
-                  <div className="px-4 py-2 bg-brand-teal/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
-                    {p.category}
-                  </div>
-                </div>
-              </div>
-              <div className="p-10">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-bold text-2xl tracking-tight leading-tight">{p.title}</h3>
-                  <Link to={`/projects/${p.id}`} target="_blank" className="p-2 text-neutral-300 hover:text-black transition-colors">
-                    <ExternalLink size={18} />
-                  </Link>
-                </div>
-                <p className="text-neutral-500 text-sm leading-relaxed line-clamp-2 mb-8">{p.description}</p>
-                <div className="flex items-center gap-4">
-                  {p.password && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-lg text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                      <Shield size={12} /> Locked
-                    </div>
-                  )}
-                  <div className="flex-grow h-px bg-neutral-100" />
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold tracking-tighter">Existing Projects</h2>
+          <p className="text-xs text-neutral-400 font-medium uppercase tracking-widest">Drag cards to reorder</p>
         </div>
+        
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="projects-list" direction="vertical">
+            {(provided) => (
+              <div 
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+              >
+                {projects.map((p, index) => {
+                  const DraggableComponent = Draggable as any;
+                  return (
+                    <DraggableComponent key={p.id} draggableId={p.id} index={index}>
+                      {(provided: any, snapshot: any) => (
+                        <div 
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`group bg-white rounded-[2.5rem] overflow-hidden border border-neutral-100 hover:border-neutral-200 hover:shadow-2xl transition-all duration-300 relative ${
+                            snapshot.isDragging ? "shadow-2xl scale-[1.02] z-50 ring-2 ring-brand-teal" : ""
+                          }`}
+                        >
+                          <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
+                            <img src={p.image} alt={p.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />
+                            
+                            {/* Drag Handle */}
+                            <div 
+                              {...provided.dragHandleProps}
+                              className="absolute top-6 left-6 p-3 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl opacity-0 group-hover:opacity-100 transition-all cursor-grab active:cursor-grabbing z-40"
+                            >
+                              <GripVertical size={18} />
+                            </div>
+
+                            <div className="absolute top-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-30">
+                              <button onClick={() => handleEdit(p)} className="p-4 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl hover:bg-black hover:text-white transition-all">
+                                <Edit2 size={18} />
+                              </button>
+                              <button 
+                                onClick={async () => {
+                                  if (window.confirm("Delete this project?")) {
+                                    await deleteDoc(doc(db, "projects", p.id));
+                                  }
+                                }} 
+                                className="p-4 bg-white/90 backdrop-blur-md text-red-500 rounded-2xl shadow-xl hover:bg-red-500 hover:text-white transition-all"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                            <div className="absolute bottom-6 left-6 flex gap-2 z-20">
+                              <div className="px-4 py-2 bg-black/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                {p.type === "lab" ? "My Lab" : "Main"}
+                              </div>
+                              <div className="px-4 py-2 bg-brand-teal/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                {p.category}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="p-10">
+                            <div className="flex justify-between items-start mb-4">
+                              <h3 className="font-bold text-2xl tracking-tight leading-tight">{p.title}</h3>
+                              <Link to={`/projects/${p.id}`} target="_blank" className="p-2 text-neutral-300 hover:text-black transition-colors">
+                                <ExternalLink size={18} />
+                              </Link>
+                            </div>
+                            <p className="text-neutral-500 text-sm leading-relaxed line-clamp-2 mb-8">{p.description}</p>
+                            <div className="flex items-center gap-4">
+                              {p.password && (
+                                <div className="flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-lg text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                                  <Shield size={12} /> Locked
+                                </div>
+                              )}
+                              <div className="flex-grow h-px bg-neutral-100" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </DraggableComponent>
+                  );
+                })}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
     </div>
   );
