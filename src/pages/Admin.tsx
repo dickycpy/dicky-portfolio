@@ -37,6 +37,20 @@ interface Project {
   define?: string;
   developDeliver?: string;
   reflection?: string;
+  introductionImage?: string;
+  introductionVideo?: string;
+  challengeImage?: string;
+  challengeVideo?: string;
+  approachImage?: string;
+  approachVideo?: string;
+  understandingImage?: string;
+  understandingVideo?: string;
+  defineImage?: string;
+  defineVideo?: string;
+  developDeliverImage?: string;
+  developDeliverVideo?: string;
+  reflectionImage?: string;
+  reflectionVideo?: string;
   password?: string;
   createdAt: any;
 }
@@ -83,9 +97,24 @@ export default function Admin() {
     understanding: "",
     define: "",
     developDeliver: "",
-    reflection: ""
+    reflection: "",
+    introductionImage: "",
+    introductionVideo: "",
+    challengeImage: "",
+    challengeVideo: "",
+    approachImage: "",
+    approachVideo: "",
+    understandingImage: "",
+    understandingVideo: "",
+    defineImage: "",
+    defineVideo: "",
+    developDeliverImage: "",
+    developDeliverVideo: "",
+    reflectionImage: "",
+    reflectionVideo: ""
   });
   const [file, setFile] = useState<File | null>(null);
+  const [sectionFiles, setSectionFiles] = useState<Record<string, File>>({});
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
@@ -143,9 +172,24 @@ export default function Admin() {
       understanding: "",
       define: "",
       developDeliver: "",
-      reflection: ""
+      reflection: "",
+      introductionImage: "",
+      introductionVideo: "",
+      challengeImage: "",
+      challengeVideo: "",
+      approachImage: "",
+      approachVideo: "",
+      understandingImage: "",
+      understandingVideo: "",
+      defineImage: "",
+      defineVideo: "",
+      developDeliverImage: "",
+      developDeliverVideo: "",
+      reflectionImage: "",
+      reflectionVideo: ""
     });
     setFile(null);
+    setSectionFiles({});
     setEditingId(null);
     setShowForm(false);
     setActiveTab("general");
@@ -168,7 +212,21 @@ export default function Admin() {
       understanding: project.understanding || "",
       define: project.define || "",
       developDeliver: project.developDeliver || "",
-      reflection: project.reflection || ""
+      reflection: project.reflection || "",
+      introductionImage: project.introductionImage || "",
+      introductionVideo: project.introductionVideo || "",
+      challengeImage: project.challengeImage || "",
+      challengeVideo: project.challengeVideo || "",
+      approachImage: project.approachImage || "",
+      approachVideo: project.approachVideo || "",
+      understandingImage: project.understandingImage || "",
+      understandingVideo: project.understandingVideo || "",
+      defineImage: project.defineImage || "",
+      defineVideo: project.defineVideo || "",
+      developDeliverImage: project.developDeliverImage || "",
+      developDeliverVideo: project.developDeliverVideo || "",
+      reflectionImage: project.reflectionImage || "",
+      reflectionVideo: project.reflectionVideo || ""
     });
     setEditingId(project.id);
     setShowForm(true);
@@ -189,8 +247,20 @@ export default function Admin() {
       }
 
       const { imageUrl, ...rest } = formData;
+      
+      // Upload section images
+      const sectionImageUrls: Record<string, string> = {};
+      for (const [sectionId, sectionFile] of Object.entries(sectionFiles)) {
+        const fileToUpload = sectionFile as File;
+        const sectionStorageRef = ref(storage, `projects/sections/${Date.now()}_${fileToUpload.name}`);
+        await uploadBytes(sectionStorageRef, fileToUpload);
+        const url = await getDownloadURL(sectionStorageRef);
+        sectionImageUrls[`${sectionId}Image`] = url;
+      }
+
       const projectData = {
         ...rest,
+        ...sectionImageUrls,
         image: finalImageUrl,
         tools: formData.tools.split(",").map(t => t.trim()).filter(t => t),
         updatedAt: serverTimestamp(),
@@ -367,10 +437,54 @@ export default function Admin() {
                       { id: "developDeliver", label: "06. Develop & Deliver" },
                       { id: "reflection", label: "07. Reflection" }
                     ].map((section) => (
-                      <div key={section.id}>
-                        <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">{section.label}</label>
+                      <div key={section.id} className="space-y-6">
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">{section.label}</label>
                         <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
                           <ReactQuill theme="snow" value={(formData as any)[section.id]} onChange={(val) => setFormData({...formData, [section.id]: val})} modules={quillModules} formats={quillFormats} className="admin-quill" />
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-neutral-50 rounded-3xl border border-neutral-100">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Section Image (Optional)</label>
+                            <input 
+                              type="url" 
+                              value={(formData as any)[`${section.id}Image`]} 
+                              onChange={(e) => setFormData({...formData, [`${section.id}Image`]: e.target.value})} 
+                              placeholder="Image URL (https://...)" 
+                              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors mb-4" 
+                            />
+                            <div className="flex items-center gap-4">
+                              <input 
+                                type="file" 
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) setSectionFiles(prev => ({ ...prev, [section.id]: file }));
+                                }} 
+                                className="flex-1 text-[10px] text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:uppercase file:bg-black file:text-white hover:file:bg-neutral-800 transition-all" 
+                                accept="image/*" 
+                              />
+                              {((formData as any)[`${section.id}Image`] || sectionFiles[section.id]) && (
+                                <div className="w-12 h-12 rounded-lg overflow-hidden border border-neutral-200 bg-white flex-shrink-0">
+                                  <img 
+                                    src={sectionFiles[section.id] ? URL.createObjectURL(sectionFiles[section.id]) : (formData as any)[`${section.id}Image`]} 
+                                    alt="Preview" 
+                                    className="w-full h-full object-cover" 
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Section Video (YouTube/Vimeo URL)</label>
+                            <input 
+                              type="url" 
+                              value={(formData as any)[`${section.id}Video`]} 
+                              onChange={(e) => setFormData({...formData, [`${section.id}Video`]: e.target.value})} 
+                              placeholder="https://www.youtube.com/watch?v=..." 
+                              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors" 
+                            />
+                            <p className="mt-4 text-[10px] text-neutral-400 leading-relaxed">Paste a YouTube or Vimeo link to embed a video player in this section.</p>
+                          </div>
                         </div>
                       </div>
                     ))}
