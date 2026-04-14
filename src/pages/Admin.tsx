@@ -51,6 +51,14 @@ interface Project {
   developDeliverVideo?: string;
   reflectionImage?: string;
   reflectionVideo?: string;
+  introductionImageDescription?: string;
+  challengeImageDescription?: string;
+  approachImageDescription?: string;
+  understandingImageDescription?: string;
+  defineImageDescription?: string;
+  developDeliverImageDescription?: string;
+  reflectionImageDescription?: string;
+  subSections?: Record<string, { title: string; content: string }[]>;
   password?: string;
   createdAt: any;
 }
@@ -111,7 +119,15 @@ export default function Admin() {
     developDeliverImage: "",
     developDeliverVideo: "",
     reflectionImage: "",
-    reflectionVideo: ""
+    reflectionVideo: "",
+    introductionImageDescription: "",
+    challengeImageDescription: "",
+    approachImageDescription: "",
+    understandingImageDescription: "",
+    defineImageDescription: "",
+    developDeliverImageDescription: "",
+    reflectionImageDescription: "",
+    subSections: {} as Record<string, { title: string; content: string }[]>
   });
   const [file, setFile] = useState<File | null>(null);
   const [sectionFiles, setSectionFiles] = useState<Record<string, File>>({});
@@ -186,7 +202,15 @@ export default function Admin() {
       developDeliverImage: "",
       developDeliverVideo: "",
       reflectionImage: "",
-      reflectionVideo: ""
+      reflectionVideo: "",
+      introductionImageDescription: "",
+      challengeImageDescription: "",
+      approachImageDescription: "",
+      understandingImageDescription: "",
+      defineImageDescription: "",
+      developDeliverImageDescription: "",
+      reflectionImageDescription: "",
+      subSections: {}
     });
     setFile(null);
     setSectionFiles({});
@@ -226,7 +250,15 @@ export default function Admin() {
       developDeliverImage: project.developDeliverImage || "",
       developDeliverVideo: project.developDeliverVideo || "",
       reflectionImage: project.reflectionImage || "",
-      reflectionVideo: project.reflectionVideo || ""
+      reflectionVideo: project.reflectionVideo || "",
+      introductionImageDescription: project.introductionImageDescription || "",
+      challengeImageDescription: project.challengeImageDescription || "",
+      approachImageDescription: project.approachImageDescription || "",
+      understandingImageDescription: project.understandingImageDescription || "",
+      defineImageDescription: project.defineImageDescription || "",
+      developDeliverImageDescription: project.developDeliverImageDescription || "",
+      reflectionImageDescription: project.reflectionImageDescription || "",
+      subSections: project.subSections || {}
     });
     setEditingId(project.id);
     setShowForm(true);
@@ -484,6 +516,107 @@ export default function Admin() {
                               className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors" 
                             />
                             <p className="mt-4 text-[10px] text-neutral-400 leading-relaxed">Paste a YouTube or Vimeo link to embed a video player in this section.</p>
+                          </div>
+                          
+                          <div className="md:col-span-2 pt-4 border-t border-neutral-100">
+                            <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Image Description / Caption (Optional)</label>
+                            <input 
+                              type="text" 
+                              value={(formData as any)[`${section.id}ImageDescription`] || ""} 
+                              onChange={(e) => setFormData({...formData, [`${section.id}ImageDescription`]: e.target.value})} 
+                              placeholder="Describe the image or provide a caption..." 
+                              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors" 
+                            />
+                          </div>
+                        </div>
+
+                        {/* Sub-sections Manager */}
+                        <div className="space-y-6 pt-6 border-t border-neutral-100">
+                          <div className="flex justify-between items-center">
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Sub-sections (Optional)</h4>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentSubSections = formData.subSections?.[section.id] || [];
+                                setFormData({
+                                  ...formData,
+                                  subSections: {
+                                    ...formData.subSections,
+                                    [section.id]: [...currentSubSections, { title: "", content: "" }]
+                                  }
+                                });
+                              }}
+                              className="text-[10px] font-bold uppercase tracking-widest text-brand-teal hover:opacity-60 transition-opacity"
+                            >
+                              + Add Sub-section
+                            </button>
+                          </div>
+
+                          <div className="space-y-8">
+                            {(formData.subSections?.[section.id] || []).map((sub, subIndex) => (
+                              <div key={subIndex} className="p-6 bg-white rounded-3xl border border-neutral-100 space-y-4 relative group/sub">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                    currentSubSections.splice(subIndex, 1);
+                                    setFormData({
+                                      ...formData,
+                                      subSections: {
+                                        ...formData.subSections,
+                                        [section.id]: currentSubSections
+                                      }
+                                    });
+                                  }}
+                                  className="absolute top-4 right-4 text-neutral-300 hover:text-red-500 transition-colors opacity-0 group-hover/sub:opacity-100"
+                                >
+                                  Remove
+                                </button>
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Sub-section Title</label>
+                                  <input 
+                                    type="text" 
+                                    value={sub.title} 
+                                    onChange={(e) => {
+                                      const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                      currentSubSections[subIndex].title = e.target.value;
+                                      setFormData({
+                                        ...formData,
+                                        subSections: {
+                                          ...formData.subSections,
+                                          [section.id]: currentSubSections
+                                        }
+                                      });
+                                    }} 
+                                    placeholder="e.g., SWOT Analysis, Persona..." 
+                                    className="w-full bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors" 
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Sub-section Content</label>
+                                  <div className="bg-neutral-50 rounded-xl border border-neutral-100 overflow-hidden resizable-editor">
+                                    <ReactQuill 
+                                      theme="snow" 
+                                      value={sub.content} 
+                                      onChange={(val) => {
+                                        const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                        currentSubSections[subIndex].content = val;
+                                        setFormData({
+                                          ...formData,
+                                          subSections: {
+                                            ...formData.subSections,
+                                            [section.id]: currentSubSections
+                                          }
+                                        });
+                                      }} 
+                                      modules={quillModules} 
+                                      formats={quillFormats} 
+                                      className="admin-quill" 
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>
