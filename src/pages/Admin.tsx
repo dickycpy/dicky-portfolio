@@ -495,92 +495,36 @@ export default function Admin() {
                       { id: "developDeliver", label: "06. Develop & Deliver" },
                       { id: "reflection", label: "07. Reflection" }
                     ].map((section) => (
-                      <div key={section.id} className="space-y-6">
-                        <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">{section.label}</label>
-                        <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden resizable-editor">
-                          <ReactQuill theme="snow" value={(formData as any)[section.id]} onChange={(val) => setFormData({...formData, [section.id]: val})} modules={quillModules} formats={quillFormats} className="admin-quill" />
+                      <div key={section.id} className="space-y-6 pb-12 border-b border-neutral-100 last:border-0">
+                        <div className="flex justify-between items-center">
+                          <label className="block text-xs font-bold uppercase tracking-[0.2em] text-black">{section.label}</label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentSubSections = formData.subSections?.[section.id] || [];
+                              setFormData({
+                                ...formData,
+                                subSections: {
+                                  ...formData.subSections,
+                                  [section.id]: [...currentSubSections, { title: "", content: "" }]
+                                }
+                              });
+                            }}
+                            className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 bg-neutral-100 rounded-full hover:bg-black hover:text-white transition-all"
+                          >
+                            + Add Content Block
+                          </button>
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-neutral-50 rounded-3xl border border-neutral-100">
-                          <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Section Image (Optional)</label>
-                            <input 
-                              type="url" 
-                              value={(formData as any)[`${section.id}Image`]} 
-                              onChange={(e) => setFormData({...formData, [`${section.id}Image`]: e.target.value})} 
-                              placeholder="Image URL (https://...)" 
-                              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors mb-4" 
-                            />
-                            <div className="flex items-center gap-4">
-                              <input 
-                                type="file" 
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) setSectionFiles(prev => ({ ...prev, [section.id]: file }));
-                                }} 
-                                className="flex-1 text-[10px] text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:uppercase file:bg-black file:text-white hover:file:bg-neutral-800 transition-all" 
-                                accept="image/*" 
-                              />
-                              {((formData as any)[`${section.id}Image`] || sectionFiles[section.id]) && (
-                                <div className="w-12 h-12 rounded-lg overflow-hidden border border-neutral-200 bg-white flex-shrink-0">
-                                  <img 
-                                    src={sectionFiles[section.id] ? URL.createObjectURL(sectionFiles[section.id]) : (formData as any)[`${section.id}Image`]} 
-                                    alt="Preview" 
-                                    className="w-full h-full object-cover" 
-                                  />
-                                </div>
-                              )}
+
+                        <div className="space-y-8">
+                          {(formData.subSections?.[section.id] || []).length === 0 ? (
+                            <div className="py-12 border-2 border-dashed border-neutral-100 rounded-[2.5rem] flex flex-col items-center justify-center text-neutral-300">
+                              <FileText size={32} className="mb-4 opacity-20" />
+                              <p className="text-[10px] font-bold uppercase tracking-widest">No blocks added yet</p>
                             </div>
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Section Video (YouTube/Vimeo URL)</label>
-                            <input 
-                              type="url" 
-                              value={(formData as any)[`${section.id}Video`]} 
-                              onChange={(e) => setFormData({...formData, [`${section.id}Video`]: e.target.value})} 
-                              placeholder="https://www.youtube.com/watch?v=..." 
-                              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors" 
-                            />
-                            <p className="mt-4 text-[10px] text-neutral-400 leading-relaxed">Paste a YouTube or Vimeo link to embed a video player in this section.</p>
-                          </div>
-                          
-                          <div className="md:col-span-2 pt-4 border-t border-neutral-100">
-                            <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Image Description / Caption (Optional)</label>
-                            <input 
-                              type="text" 
-                              value={(formData as any)[`${section.id}ImageDescription`] || ""} 
-                              onChange={(e) => setFormData({...formData, [`${section.id}ImageDescription`]: e.target.value})} 
-                              placeholder="Describe the image or provide a caption..." 
-                              className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors" 
-                            />
-                          </div>
-                        </div>
-
-                        {/* Sub-sections Manager */}
-                        <div className="space-y-6 pt-6 border-t border-neutral-100">
-                          <div className="flex justify-between items-center">
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Sub-sections (Optional)</h4>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const currentSubSections = formData.subSections?.[section.id] || [];
-                                setFormData({
-                                  ...formData,
-                                  subSections: {
-                                    ...formData.subSections,
-                                    [section.id]: [...currentSubSections, { title: "", content: "" }]
-                                  }
-                                });
-                              }}
-                              className="text-[10px] font-bold uppercase tracking-widest text-brand-teal hover:opacity-60 transition-opacity"
-                            >
-                              + Add Sub-section
-                            </button>
-                          </div>
-
-                          <div className="space-y-8">
-                            {(formData.subSections?.[section.id] || []).map((sub, subIndex) => (
-                              <div key={subIndex} className="p-6 bg-white rounded-3xl border border-neutral-100 space-y-4 relative group/sub">
+                          ) : (
+                            (formData.subSections?.[section.id] || []).map((sub, subIndex) => (
+                              <div key={subIndex} className="p-8 bg-white rounded-[2.5rem] border border-neutral-100 space-y-6 relative group/sub shadow-sm hover:shadow-md transition-shadow">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -594,12 +538,13 @@ export default function Admin() {
                                       }
                                     });
                                   }}
-                                  className="absolute top-4 right-4 text-neutral-300 hover:text-red-500 transition-colors opacity-0 group-hover/sub:opacity-100"
+                                  className="absolute top-6 right-6 w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center text-neutral-300 hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover/sub:opacity-100"
                                 >
-                                  Remove
+                                  <Trash2 size={14} />
                                 </button>
+                                
                                 <div>
-                                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Sub-section Title</label>
+                                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Block Title (Optional)</label>
                                   <input 
                                     type="text" 
                                     value={sub.title} 
@@ -615,12 +560,13 @@ export default function Admin() {
                                       });
                                     }} 
                                     placeholder="e.g., SWOT Analysis, Persona..." 
-                                    className="w-full bg-neutral-50 border border-neutral-100 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors" 
+                                    className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl px-6 py-4 text-sm font-medium focus:border-black outline-none transition-colors" 
                                   />
                                 </div>
+
                                 <div>
-                                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Sub-section Content</label>
-                                  <div className="bg-neutral-50 rounded-xl border border-neutral-100 overflow-hidden resizable-editor">
+                                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Block Content</label>
+                                  <div className="bg-neutral-50 rounded-2xl border border-neutral-100 overflow-hidden resizable-editor">
                                     <ReactQuill 
                                       theme="snow" 
                                       value={sub.content} 
@@ -642,9 +588,9 @@ export default function Admin() {
                                   </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-neutral-50 rounded-2xl border border-neutral-100">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-neutral-50 rounded-3xl border border-neutral-100">
                                   <div>
-                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Sub-section Image (Optional)</label>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Block Image (Optional)</label>
                                     <input 
                                       type="url" 
                                       value={sub.image || ""} 
@@ -684,7 +630,7 @@ export default function Admin() {
                                     </div>
                                   </div>
                                   <div>
-                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Sub-section Video (Optional)</label>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Block Video (Optional)</label>
                                     <input 
                                       type="url" 
                                       value={sub.video || ""} 
@@ -722,8 +668,8 @@ export default function Admin() {
                                   </div>
                                 </div>
                               </div>
-                            ))}
-                          </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     ))}
