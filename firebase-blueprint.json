@@ -28,7 +28,21 @@
         "understanding": { "type": "string", "description": "Understanding content." },
         "define": { "type": "string", "description": "Define content." },
         "developDeliver": { "type": "string", "description": "Develop & Deliver content." },
-        "reflection": { "type": "string", "description": "Reflection content." }
+        "reflection": { "type": "string", "description": "Reflection content." },
+        "introductionImage": { "type": "string", "description": "Optional image for introduction." },
+        "introductionVideo": { "type": "string", "description": "Optional video URL for introduction." },
+        "challengeImage": { "type": "string", "description": "Optional image for challenge." },
+        "challengeVideo": { "type": "string", "description": "Optional video URL for challenge." },
+        "approachImage": { "type": "string", "description": "Optional image for approach." },
+        "approachVideo": { "type": "string", "description": "Optional video URL for approach." },
+        "understandingImage": { "type": "string", "description": "Optional image for understanding." },
+        "understandingVideo": { "type": "string", "description": "Optional video URL for understanding." },
+        "defineImage": { "type": "string", "description": "Optional image for define." },
+        "defineVideo": { "type": "string", "description": "Optional video URL for define." },
+        "developDeliverImage": { "type": "string", "description": "Optional image for developDeliver." },
+        "developDeliverVideo": { "type": "string", "description": "Optional video URL for developDeliver." },
+        "reflectionImage": { "type": "string", "description": "Optional image for reflection." },
+        "reflectionVideo": { "type": "string", "description": "Optional video URL for reflection." }
       },
       "required": ["title", "description", "category", "image", "createdAt", "authorId"]
     },
