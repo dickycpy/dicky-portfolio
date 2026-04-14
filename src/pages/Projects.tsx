@@ -12,12 +12,18 @@ export default function Projects() {
   const [activeTab, setActiveTab] = useState<"main" | "lab">("main");
 
   useEffect(() => {
-    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "projects"), orderBy("sortOrder", "asc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedProjects = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as any[];
+      
+      // Fallback sorting for projects without sortOrder
+      if (fetchedProjects.every(p => p.sortOrder === undefined)) {
+        fetchedProjects.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      }
+      
       if (fetchedProjects.length > 0) {
         setProjects(fetchedProjects);
       }
