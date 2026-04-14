@@ -19,10 +19,8 @@ const NotFound: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span className="text-xs font-bold uppercase tracking-[0.4em] text-neutral-300 mb-8 block">Error Code 404</span>
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 leading-tight">
-            404 <span className="text-neutral-200">—</span> <br className="md:hidden" />
-            <span className="text-brand-pink">Route Not Found</span>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-8 leading-tight whitespace-nowrap">
+            404 <span className="text-neutral-200">—</span> <span className="text-brand-pink">Route Not Found</span>
           </h1>
           <p className="text-lg md:text-xl text-neutral-500 font-light mb-12 max-w-md mx-auto leading-relaxed">
             Looks like this train has left the track. <br className="hidden md:block" />
