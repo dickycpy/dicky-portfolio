@@ -439,7 +439,7 @@ export default function Admin() {
                     ].map((section) => (
                       <div key={section.id} className="space-y-6">
                         <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">{section.label}</label>
-                        <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
+                        <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden resizable-editor">
                           <ReactQuill theme="snow" value={(formData as any)[section.id]} onChange={(val) => setFormData({...formData, [section.id]: val})} modules={quillModules} formats={quillFormats} className="admin-quill" />
                         </div>
                         
