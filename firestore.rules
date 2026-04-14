@@ -11,6 +11,7 @@ service cloud.firestore {
     //   - description: string (required, 1-500 chars)
     //   - category: string (required, enum: ['Artificial Intelligence', 'Digital Marketing', 'Interactive Experience'])
     //   - type: string (optional, enum: ['main', 'lab'])
+    //   - sortOrder: number (optional)
     //   - image: string (required, URL)
     //   - role: string (optional, 1-100 chars)
     //   - timeline: string (optional, 1-100 chars)
@@ -57,7 +58,7 @@ service cloud.firestore {
     function isValidProject(data) {
       let requiredFields = ['title', 'description', 'category', 'image', 'createdAt', 'authorId'];
       let newFields = ['introduction', 'challenge', 'approach', 'understanding', 'define', 'developDeliver', 'reflection'];
-      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl', 'order', 'type'].concat(newFields);
+      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl', 'order', 'type', 'sortOrder'].concat(newFields);
       let allowedFields = requiredFields.concat(optionalFields);
       
       return data.keys().hasAll(requiredFields) &&
@@ -66,6 +67,7 @@ service cloud.firestore {
              data.description is string && data.description.size() > 0 && data.description.size() <= 1000 &&
              data.category in ['Artificial Intelligence', 'Digital Marketing', 'Interactive Experience'] &&
              (!('type' in data) || (data.type in ['main', 'lab'])) &&
+             (!('sortOrder' in data) || (data.sortOrder is number)) &&
              data.image is string && (data.image.matches("^https?://.*") || data.image == "") &&
              data.createdAt is timestamp &&
              data.authorId is string &&
