@@ -19,6 +19,7 @@ import About from "./pages/About";
 import Blogs from "./pages/Blogs";
 import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
+import NotFound from "./pages/NotFound";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -34,15 +35,7 @@ function AnimatedRoutes() {
         <Route path="/blogs" element={<PageTransition><Blogs /></PageTransition>} />
         <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
         <Route path="/projects/:id" element={<PageTransition><ProjectDetail /></PageTransition>} />
-        <Route path="*" element={
-          <PageTransition>
-            <div className="pt-40 px-6 text-center">
-              <h1 className="text-4xl font-bold mb-4">404</h1>
-              <p className="text-neutral-500">Page not found</p>
-              <Link to="/" className="inline-block mt-8 text-sm font-bold uppercase tracking-widest underline underline-offset-8">Back to Home</Link>
-            </div>
-          </PageTransition>
-        } />
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </motion.div>
     </AnimatePresence>
