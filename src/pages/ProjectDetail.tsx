@@ -51,6 +51,20 @@ export default function ProjectDetail() {
 
   const [activeSection, setActiveSection] = useState("introduction");
 
+  const getYouTubeEmbedUrl = (url: string) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+  };
+
+  const getVimeoEmbedUrl = (url: string) => {
+    if (!url) return null;
+    const regExp = /vimeo\.com\/(?:video\/)?(\d+)/;
+    const match = url.match(regExp);
+    return match ? `https://player.vimeo.com/video/${match[1]}` : null;
+  };
+
   const sections = useMemo(() => [
     { id: "introduction", label: "Introduction", num: "01" },
     { id: "challenge", label: "The Challenge", num: "02" },
@@ -262,6 +276,11 @@ export default function ProjectDetail() {
               section.id === "reflection" ? project.impact : null
             );
 
+            const sectionImage = project[`${section.id}Image`];
+            const sectionVideo = project[`${section.id}Video`];
+            const ytUrl = getYouTubeEmbedUrl(sectionVideo);
+            const vimeoUrl = getVimeoEmbedUrl(sectionVideo);
+
             return (
               <section key={section.id} id={section.id} className="scroll-mt-40 group">
                 <div className="flex items-center gap-4 mb-12">
@@ -280,6 +299,43 @@ export default function ProjectDetail() {
                     __html: cleanHtml(content || `<p class='opacity-30 italic'>No content provided for this section.</p>`) 
                   }}
                 />
+
+                {(sectionImage || ytUrl || vimeoUrl) && (
+                  <div className="space-y-8 mt-16">
+                    {sectionImage && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm"
+                      >
+                        <img 
+                          src={sectionImage} 
+                          alt={`${section.label} visual`} 
+                          className="w-full h-auto" 
+                          referrerPolicy="no-referrer"
+                        />
+                      </motion.div>
+                    )}
+                    
+                    {(ytUrl || vimeoUrl) && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="aspect-video rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-black shadow-2xl"
+                      >
+                        <iframe
+                          src={ytUrl || vimeoUrl || ""}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title={`${section.label} video`}
+                        />
+                      </motion.div>
+                    )}
+                  </div>
+                )}
               </section>
             );
           })}
