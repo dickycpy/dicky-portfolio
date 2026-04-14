@@ -27,6 +27,7 @@ interface Project {
   role: string;
   timeline: string;
   tools: string[];
+  type: "main" | "lab";
   introduction?: string;
   challenge?: string;
   approach?: string;
@@ -67,6 +68,7 @@ export default function Admin() {
     title: "",
     description: "",
     category: "Artificial Intelligence",
+    type: "main" as "main" | "lab",
     role: "",
     timeline: "",
     tools: "",
@@ -109,6 +111,7 @@ export default function Admin() {
       title: "",
       description: "",
       category: "Artificial Intelligence",
+      type: "main",
       role: "",
       timeline: "",
       tools: "",
@@ -133,6 +136,7 @@ export default function Admin() {
       title: project.title || "",
       description: project.description || "",
       category: project.category || "Artificial Intelligence",
+      type: project.type || "main",
       role: project.role || "",
       timeline: project.timeline || "",
       tools: project.tools?.join(", ") || "",
@@ -259,6 +263,13 @@ export default function Admin() {
                       <textarea id="project-description" name="description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors h-32 resize-none" required />
                     </div>
                     <div>
+                      <label htmlFor="project-type" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Type</label>
+                      <select id="project-type" name="type" value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value as any})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors appearance-none">
+                        <option value="main">Main Project (Career)</option>
+                        <option value="lab">My Lab (Freelance)</option>
+                      </select>
+                    </div>
+                    <div>
                       <label htmlFor="project-category" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Category</label>
                       <select id="project-category" name="category" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors appearance-none">
                         <option>Artificial Intelligence</option>
@@ -370,8 +381,13 @@ export default function Admin() {
                     <Trash2 size={18} />
                   </button>
                 </div>
-                <div className="absolute bottom-6 left-6 px-4 py-2 bg-black/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest z-20">
-                  {p.category}
+                <div className="absolute bottom-6 left-6 flex gap-2 z-20">
+                  <div className="px-4 py-2 bg-black/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
+                    {p.type === "lab" ? "My Lab" : "Main"}
+                  </div>
+                  <div className="px-4 py-2 bg-brand-teal/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
+                    {p.category}
+                  </div>
                 </div>
               </div>
               <div className="p-10">
