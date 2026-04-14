@@ -88,13 +88,25 @@ export default function Admin() {
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
-    const q = query(collection(db, "projects"), orderBy("sortOrder", "asc"));
+    const q = query(collection(db, "projects"));
     const unsubscribeProjects = onSnapshot(q, (snapshot) => {
       const fetchedProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Project[];
-      // If none have sortOrder, they might be old projects. Sort them by createdAt and we'll assign sortOrder later if needed
-      if (fetchedProjects.every(p => p.sortOrder === undefined)) {
-        fetchedProjects.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      }
+      
+      // Client-side sorting: 
+      // 1. Projects with sortOrder come first (sorted by sortOrder)
+      // 2. Projects without sortOrder come next (sorted by createdAt desc)
+      fetchedProjects.sort((a, b) => {
+        if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+          return a.sortOrder - b.sortOrder;
+        }
+        if (a.sortOrder !== undefined) return -1;
+        if (b.sortOrder !== undefined) return 1;
+        
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
+
       setProjects(fetchedProjects);
     }, (err) => {
       console.error("Firestore error in Admin:", err);
@@ -483,4 +495,3 @@ export default function Admin() {
     </div>
   );
 }
- 
