@@ -269,26 +269,12 @@ export default function ProjectDetail() {
         {/* Content Area */}
         <div className="lg:col-span-9 min-w-0 space-y-32">
           {sections.map((section) => {
-            const content = project[section.id] || (
-              section.id === "introduction" ? project.overview :
-              section.id === "challenge" ? project.problem :
-              section.id === "developDeliver" ? project.solution :
-              section.id === "reflection" ? project.impact : null
-            );
-
-            const sectionImage = project[`${section.id}Image`];
-            const sectionVideo = project[`${section.id}Video`];
-            const sectionImageDescription = project[`${section.id}ImageDescription`];
             const subSections = project.subSections?.[section.id] || [];
-            const ytUrl = getYouTubeEmbedUrl(sectionVideo);
-            const vimeoUrl = getVimeoEmbedUrl(sectionVideo);
-
-            // Check if section has any content at all
-            const hasTextContent = content && content.replace(/<[^>]*>/g, '').trim().length > 0;
+            
+            // Check if section has any content blocks
             const hasSubSections = subSections.length > 0;
-            const hasMedia = sectionImage || ytUrl || vimeoUrl;
 
-            if (!hasTextContent && !hasSubSections && !hasMedia) return null;
+            if (!hasSubSections) return null;
 
             return (
               <section key={section.id} id={section.id} className="scroll-mt-40 group">
@@ -302,123 +288,69 @@ export default function ProjectDetail() {
                   </h2>
                 </div>
                 
-                {hasTextContent && (
-                  <div 
-                    className={`prose-content ${section.id === 'introduction' ? 'prose-xl' : 'prose-lg'} max-w-none`}
-                    dangerouslySetInnerHTML={{ 
-                      __html: cleanHtml(content) 
-                    }}
-                  />
-                )}
-
-                {(sectionImage || ytUrl || vimeoUrl) && (
-                  <div className="space-y-8 mt-16">
-                    {sectionImage && (
-                      <div className="space-y-4">
-                        <motion.div 
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          className="rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm"
-                        >
-                          <img 
-                            src={sectionImage} 
-                            alt={`${section.label} visual`} 
-                            className="w-full h-auto" 
-                            referrerPolicy="no-referrer"
-                          />
-                        </motion.div>
-                        {sectionImageDescription && (
-                          <p className="text-xs font-medium text-neutral-400 text-center italic px-12 leading-relaxed">
-                            {sectionImageDescription}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                    
-                    {(ytUrl || vimeoUrl) && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="aspect-video rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-black shadow-2xl"
-                      >
-                        <iframe
-                          src={ytUrl || vimeoUrl || ""}
-                          className="w-full h-full"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          title={`${section.label} video`}
+                <div className="space-y-24">
+                  {subSections.map((sub: any, idx: number) => (
+                    <div key={idx} className="space-y-10">
+                      {sub.title && (
+                        <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-black flex items-center gap-4">
+                          <span className="w-8 h-[1px] bg-brand-teal" />
+                          {sub.title}
+                        </h3>
+                      )}
+                      
+                      {sub.content && (
+                        <div 
+                          className="prose-content prose-lg max-w-none"
+                          dangerouslySetInnerHTML={{ __html: cleanHtml(sub.content) }}
                         />
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-
-                {hasSubSections && (
-                  <div className="mt-20 space-y-20">
-                    {subSections.map((sub: any, idx: number) => (
-                      <div key={idx} className="space-y-8">
-                        {sub.title && (
-                          <h3 className="text-2xl font-bold tracking-tight text-black flex items-center gap-4">
-                            <span className="w-8 h-[1px] bg-brand-teal" />
-                            {sub.title}
-                          </h3>
-                        )}
-                        {sub.content && (
-                          <div 
-                            className="prose-content prose-lg max-w-none"
-                            dangerouslySetInnerHTML={{ __html: cleanHtml(sub.content) }}
-                          />
-                        )}
-                        
-                        {(sub.image || sub.video) && (
-                          <div className="space-y-8 mt-12">
-                            {sub.image && (
-                              <div className="space-y-4">
-                                <motion.div 
-                                  initial={{ opacity: 0, y: 20 }}
-                                  whileInView={{ opacity: 1, y: 0 }}
-                                  viewport={{ once: true }}
-                                  className="rounded-[2rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm"
-                                >
-                                  <img 
-                                    src={sub.image} 
-                                    alt={sub.title || "Sub-section visual"} 
-                                    className="w-full h-auto" 
-                                    referrerPolicy="no-referrer"
-                                  />
-                                </motion.div>
-                                {sub.imageDescription && (
-                                  <p className="text-[10px] font-medium text-neutral-400 text-center italic px-12 leading-relaxed">
-                                    {sub.imageDescription}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                            
-                            {sub.video && (
+                      )}
+                      
+                      {(sub.image || sub.video) && (
+                        <div className="space-y-8 mt-12">
+                          {sub.image && (
+                            <div className="space-y-4">
                               <motion.div 
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                className="aspect-video rounded-[2rem] overflow-hidden border border-neutral-100 bg-black shadow-xl"
+                                className="rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm"
                               >
-                                <iframe
-                                  src={getYouTubeEmbedUrl(sub.video) || getVimeoEmbedUrl(sub.video) || ""}
-                                  className="w-full h-full"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                  title={sub.title || "Sub-section video"}
+                                <img 
+                                  src={sub.image} 
+                                  alt={sub.title || "Section visual"} 
+                                  className="w-full h-auto" 
+                                  referrerPolicy="no-referrer"
                                 />
                               </motion.div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                              {sub.imageDescription && (
+                                <p className="text-xs font-medium text-neutral-400 text-center italic px-12 leading-relaxed">
+                                  {sub.imageDescription}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {sub.video && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              className="aspect-video rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-black shadow-2xl"
+                            >
+                              <iframe
+                                src={getYouTubeEmbedUrl(sub.video) || getVimeoEmbedUrl(sub.video) || ""}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                title={sub.title || "Section video"}
+                              />
+                            </motion.div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </section>
             );
           })}
