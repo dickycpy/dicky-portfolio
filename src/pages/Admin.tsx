@@ -64,6 +64,7 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"general" | "content" | "settings">("general");
+  const [listTab, setListTab] = useState<"main" | "lab">("main");
 
   // Form State
   const [formData, setFormData] = useState({
@@ -198,11 +199,13 @@ export default function Admin() {
       if (editingId) {
         await updateDoc(doc(db, "projects", editingId), projectData);
       } else {
+        // Calculate sortOrder based on how many projects of the same type already exist
+        const sameTypeCount = projects.filter(p => p.type === formData.type).length;
         await addDoc(collection(db, "projects"), {
           ...projectData,
           createdAt: serverTimestamp(),
           authorId: user.uid,
-          sortOrder: projects.length
+          sortOrder: sameTypeCount
         });
       }
       resetForm();
@@ -217,14 +220,22 @@ export default function Admin() {
   const onDragEnd = async (result: any) => {
     if (!result.destination) return;
 
-    const items = Array.from(projects) as Project[];
+    // Filter projects by current tab
+    const filteredItems = projects.filter(p => p.type === listTab);
+    const otherItems = projects.filter(p => p.type !== listTab);
+    
+    const items = Array.from(filteredItems) as Project[];
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
-    // Optimistic update
-    setProjects(items);
+    // Combine back for state update
+    const newAllProjects = [...items, ...otherItems];
+    
+    // Sort the final array to maintain consistent UI if needed, 
+    // but setProjects will trigger a re-render with our client-side sort anyway
+    setProjects(newAllProjects);
 
-    // Update Firestore
+    // Update Firestore for the reordered items in this tab
     try {
       const batch: Promise<void>[] = [];
       items.forEach((item, index) => {
@@ -404,8 +415,28 @@ export default function Admin() {
       </AnimatePresence>
 
       <div className="space-y-12">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <h2 className="text-3xl font-bold tracking-tighter">Existing Projects</h2>
+          
+          <div className="flex bg-neutral-100 p-1 rounded-2xl">
+            <button
+              onClick={() => setListTab("main")}
+              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                listTab === "main" ? "bg-white text-black shadow-sm" : "text-neutral-400 hover:text-neutral-600"
+              }`}
+            >
+              Main Project
+            </button>
+            <button
+              onClick={() => setListTab("lab")}
+              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                listTab === "lab" ? "bg-white text-black shadow-sm" : "text-neutral-400 hover:text-neutral-600"
+              }`}
+            >
+              My Lab
+            </button>
+          </div>
+
           <p className="text-xs text-neutral-400 font-medium uppercase tracking-widest">Drag cards to reorder</p>
         </div>
         
@@ -417,10 +448,12 @@ export default function Admin() {
                 ref={provided.innerRef}
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
               >
-                {projects.map((p, index) => {
-                  const DraggableComponent = Draggable as any;
-                  return (
-                    <DraggableComponent key={p.id} draggableId={p.id} index={index}>
+                {projects
+                  .filter(p => p.type === listTab)
+                  .map((p, index) => {
+                    const DraggableComponent = Draggable as any;
+                    return (
+                      <DraggableComponent key={p.id} draggableId={p.id} index={index}>
                       {(provided: any, snapshot: any) => (
                         <div 
                           ref={provided.innerRef}
