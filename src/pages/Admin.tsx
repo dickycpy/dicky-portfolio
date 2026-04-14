@@ -58,7 +58,13 @@ interface Project {
   defineImageDescription?: string;
   developDeliverImageDescription?: string;
   reflectionImageDescription?: string;
-  subSections?: Record<string, { title: string; content: string }[]>;
+  subSections?: Record<string, { 
+    title: string; 
+    content: string;
+    image?: string;
+    video?: string;
+    imageDescription?: string;
+  }[]>;
   password?: string;
   createdAt: any;
 }
@@ -127,7 +133,13 @@ export default function Admin() {
     defineImageDescription: "",
     developDeliverImageDescription: "",
     reflectionImageDescription: "",
-    subSections: {} as Record<string, { title: string; content: string }[]>
+    subSections: {} as Record<string, { 
+      title: string; 
+      content: string;
+      image?: string;
+      video?: string;
+      imageDescription?: string;
+    }[]>
   });
   const [file, setFile] = useState<File | null>(null);
   const [sectionFiles, setSectionFiles] = useState<Record<string, File>>({});
@@ -282,17 +294,31 @@ export default function Admin() {
       
       // Upload section images
       const sectionImageUrls: Record<string, string> = {};
-      for (const [sectionId, sectionFile] of Object.entries(sectionFiles)) {
+      const updatedSubSections = { ...formData.subSections };
+
+      for (const [key, sectionFile] of Object.entries(sectionFiles)) {
         const fileToUpload = sectionFile as File;
-        const sectionStorageRef = ref(storage, `projects/sections/${Date.now()}_${fileToUpload.name}`);
+        const storagePath = key.startsWith("sub_") ? `projects/subsections/${Date.now()}_${fileToUpload.name}` : `projects/sections/${Date.now()}_${fileToUpload.name}`;
+        const sectionStorageRef = ref(storage, storagePath);
         await uploadBytes(sectionStorageRef, fileToUpload);
         const url = await getDownloadURL(sectionStorageRef);
-        sectionImageUrls[`${sectionId}Image`] = url;
+        
+        if (key.startsWith("sub_")) {
+          // Format: sub_sectionId_index
+          const [_, sectionId, indexStr] = key.split("_");
+          const index = parseInt(indexStr);
+          if (updatedSubSections[sectionId] && updatedSubSections[sectionId][index]) {
+            updatedSubSections[sectionId][index].image = url;
+          }
+        } else {
+          sectionImageUrls[`${key}Image`] = url;
+        }
       }
 
       const projectData = {
         ...rest,
         ...sectionImageUrls,
+        subSections: updatedSubSections,
         image: finalImageUrl,
         tools: formData.tools.split(",").map(t => t.trim()).filter(t => t),
         updatedAt: serverTimestamp(),
@@ -612,6 +638,86 @@ export default function Admin() {
                                       modules={quillModules} 
                                       formats={quillFormats} 
                                       className="admin-quill" 
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-neutral-50 rounded-2xl border border-neutral-100">
+                                  <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Sub-section Image (Optional)</label>
+                                    <input 
+                                      type="url" 
+                                      value={sub.image || ""} 
+                                      onChange={(e) => {
+                                        const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                        currentSubSections[subIndex].image = e.target.value;
+                                        setFormData({
+                                          ...formData,
+                                          subSections: {
+                                            ...formData.subSections,
+                                            [section.id]: currentSubSections
+                                          }
+                                        });
+                                      }} 
+                                      placeholder="Image URL (https://...)" 
+                                      className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors mb-4" 
+                                    />
+                                    <div className="flex items-center gap-4">
+                                      <input 
+                                        type="file" 
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) setSectionFiles(prev => ({ ...prev, [`sub_${section.id}_${subIndex}`]: file }));
+                                        }} 
+                                        className="flex-1 text-[10px] text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:uppercase file:bg-black file:text-white hover:file:bg-neutral-800 transition-all" 
+                                        accept="image/*" 
+                                      />
+                                      {(sub.image || sectionFiles[`sub_${section.id}_${subIndex}`]) && (
+                                        <div className="w-12 h-12 rounded-lg overflow-hidden border border-neutral-200 bg-white flex-shrink-0">
+                                          <img 
+                                            src={sectionFiles[`sub_${section.id}_${subIndex}`] ? URL.createObjectURL(sectionFiles[`sub_${section.id}_${subIndex}`]) : sub.image} 
+                                            alt="Preview" 
+                                            className="w-full h-full object-cover" 
+                                          />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Sub-section Video (Optional)</label>
+                                    <input 
+                                      type="url" 
+                                      value={sub.video || ""} 
+                                      onChange={(e) => {
+                                        const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                        currentSubSections[subIndex].video = e.target.value;
+                                        setFormData({
+                                          ...formData,
+                                          subSections: {
+                                            ...formData.subSections,
+                                            [section.id]: currentSubSections
+                                          }
+                                        });
+                                      }} 
+                                      placeholder="https://www.youtube.com/watch?v=..." 
+                                      className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors" 
+                                    />
+                                    <input 
+                                      type="text" 
+                                      value={sub.imageDescription || ""} 
+                                      onChange={(e) => {
+                                        const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                        currentSubSections[subIndex].imageDescription = e.target.value;
+                                        setFormData({
+                                          ...formData,
+                                          subSections: {
+                                            ...formData.subSections,
+                                            [section.id]: currentSubSections
+                                          }
+                                        });
+                                      }} 
+                                      placeholder="Image Description (Optional)" 
+                                      className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors mt-4" 
                                     />
                                   </div>
                                 </div>
