@@ -118,4 +118,22 @@
     writing-mode: vertical-rl;
     text-orientation: mixed;
   }
+
+  /* Resizable Rich Text Editor */
+  .resizable-editor {
+    resize: vertical;
+    overflow: auto;
+    min-height: 200px;
+  }
+
+  .resizable-editor .quill {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .resizable-editor .ql-container {
+    flex: 1;
+    overflow-y: auto;
+  }
 }
