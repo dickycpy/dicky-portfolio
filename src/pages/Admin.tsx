@@ -200,7 +200,10 @@ export default function Admin() {
         await updateDoc(doc(db, "projects", editingId), projectData);
       } else {
         // Calculate sortOrder based on how many projects of the same type already exist
-        const sameTypeCount = projects.filter(p => p.type === formData.type).length;
+        const sameTypeCount = projects.filter(p => {
+          const projectType = p.type || "main";
+          return projectType === formData.type;
+        }).length;
         await addDoc(collection(db, "projects"), {
           ...projectData,
           createdAt: serverTimestamp(),
@@ -221,8 +224,14 @@ export default function Admin() {
     if (!result.destination) return;
 
     // Filter projects by current tab
-    const filteredItems = projects.filter(p => p.type === listTab);
-    const otherItems = projects.filter(p => p.type !== listTab);
+    const filteredItems = projects.filter(p => {
+      const projectType = p.type || "main";
+      return projectType === listTab;
+    });
+    const otherItems = projects.filter(p => {
+      const projectType = p.type || "main";
+      return projectType !== listTab;
+    });
     
     const items = Array.from(filteredItems) as Project[];
     const [reorderedItem] = items.splice(result.source.index, 1);
@@ -449,7 +458,10 @@ export default function Admin() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
               >
                 {projects
-                  .filter(p => p.type === listTab)
+                  .filter(p => {
+                    const projectType = p.type || "main";
+                    return projectType === listTab;
+                  })
                   .map((p, index) => {
                     const DraggableComponent = Draggable as any;
                     return (
