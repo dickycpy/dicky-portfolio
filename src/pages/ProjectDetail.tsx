@@ -65,18 +65,28 @@ export default function ProjectDetail() {
     return match ? `https://player.vimeo.com/video/${match[1]}` : null;
   };
 
-  const sections = useMemo(() => [
-    { id: "introduction", label: "Introduction", num: "01" },
-    { id: "challenge", label: "The Challenge", num: "02" },
-    { id: "approach", label: "The Approach", num: "03" },
-    { id: "understanding", label: "Understanding", num: "04" },
-    { id: "define", label: "Define", num: "05" },
-    { id: "developDeliver", label: "Develop & Deliver", num: "06" },
-    { id: "reflection", label: "Reflection", num: "07" },
-  ], []);
+  const sections = useMemo(() => {
+    const allSections = [
+      { id: "introduction", label: "Introduction", num: "01" },
+      { id: "challenge", label: "The Challenge", num: "02" },
+      { id: "approach", label: "The Approach", num: "03" },
+      { id: "understanding", label: "Understanding", num: "04" },
+      { id: "define", label: "Define", num: "05" },
+      { id: "developDeliver", label: "Develop & Deliver", num: "06" },
+      { id: "reflection", label: "Reflection", num: "07" },
+    ];
+
+    if (!project) return [];
+
+    // Only show sections that have at least one content block
+    return allSections.filter(section => {
+      const subSections = project.subSections?.[section.id] || [];
+      return subSections.length > 0;
+    });
+  }, [project]);
 
   useEffect(() => {
-    if (!isAuthorized) return;
+    if (!isAuthorized || !project) return;
 
     const handleScroll = () => {
       const sectionIds = sections.map(s => s.id);
@@ -233,6 +243,10 @@ export default function ProjectDetail() {
                   <a
                     key={section.id}
                     href={`#${section.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById(section.id)?.scrollIntoView({ behavior: "smooth" });
+                    }}
                     className={`group flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest transition-all ${
                       activeSection === section.id ? "text-black" : "text-neutral-300 hover:text-neutral-500"
                     }`}
