@@ -58,7 +58,16 @@ service cloud.firestore {
     function isValidProject(data) {
       let requiredFields = ['title', 'description', 'category', 'image', 'createdAt', 'authorId'];
       let newFields = ['introduction', 'challenge', 'approach', 'understanding', 'define', 'developDeliver', 'reflection'];
-      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl', 'order', 'type', 'sortOrder'].concat(newFields);
+      let mediaFields = [
+        'introductionImage', 'introductionVideo', 
+        'challengeImage', 'challengeVideo',
+        'approachImage', 'approachVideo',
+        'understandingImage', 'understandingVideo',
+        'defineImage', 'defineVideo',
+        'developDeliverImage', 'developDeliverVideo',
+        'reflectionImage', 'reflectionVideo'
+      ];
+      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl', 'order', 'type', 'sortOrder'].concat(newFields).concat(mediaFields);
       let allowedFields = requiredFields.concat(optionalFields);
       
       return data.keys().hasAll(requiredFields) &&
@@ -83,6 +92,20 @@ service cloud.firestore {
              (!('define' in data) || (data.define is string && data.define.size() <= 20000)) &&
              (!('developDeliver' in data) || (data.developDeliver is string && data.developDeliver.size() <= 20000)) &&
              (!('reflection' in data) || (data.reflection is string && data.reflection.size() <= 20000)) &&
+             (!('introductionImage' in data) || (data.introductionImage is string)) &&
+             (!('introductionVideo' in data) || (data.introductionVideo is string)) &&
+             (!('challengeImage' in data) || (data.challengeImage is string)) &&
+             (!('challengeVideo' in data) || (data.challengeVideo is string)) &&
+             (!('approachImage' in data) || (data.approachImage is string)) &&
+             (!('approachVideo' in data) || (data.approachVideo is string)) &&
+             (!('understandingImage' in data) || (data.understandingImage is string)) &&
+             (!('understandingVideo' in data) || (data.understandingVideo is string)) &&
+             (!('defineImage' in data) || (data.defineImage is string)) &&
+             (!('defineVideo' in data) || (data.defineVideo is string)) &&
+             (!('developDeliverImage' in data) || (data.developDeliverImage is string)) &&
+             (!('developDeliverVideo' in data) || (data.developDeliverVideo is string)) &&
+             (!('reflectionImage' in data) || (data.reflectionImage is string)) &&
+             (!('reflectionVideo' in data) || (data.reflectionVideo is string)) &&
              (!('overview' in data) || (data.overview is string && data.overview.size() <= 10000)) &&
              (!('problem' in data) || (data.problem is string && data.problem.size() <= 10000)) &&
              (!('solution' in data) || (data.solution is string && data.solution.size() <= 10000)) &&
