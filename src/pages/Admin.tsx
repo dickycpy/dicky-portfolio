@@ -65,6 +65,7 @@ interface Project {
     video?: string;
     imageDescription?: string;
     carouselImages?: string[];
+    carouselDescription?: string;
   }[]>;
   password?: string;
   createdAt: any;
@@ -141,6 +142,7 @@ export default function Admin() {
       video?: string;
       imageDescription?: string;
       carouselImages?: string[];
+      carouselDescription?: string;
     }[]>
   });
   const [file, setFile] = useState<File | null>(null);
@@ -722,6 +724,20 @@ export default function Admin() {
                                       >
                                         + Add Carousel Image
                                       </button>
+                                      <input 
+                                        type="text" 
+                                        value={sub.carouselDescription || ""} 
+                                        onChange={(e) => {
+                                          const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                          currentSubSections[subIndex].carouselDescription = e.target.value;
+                                          setFormData({
+                                            ...formData,
+                                            subSections: { ...formData.subSections, [section.id]: currentSubSections }
+                                          });
+                                        }} 
+                                        placeholder="Carousel Description (Optional)" 
+                                        className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors mt-4" 
+                                      />
                                     </div>
                                     </div>
                                   </div>
