@@ -64,6 +64,7 @@ interface Project {
     image?: string;
     video?: string;
     imageDescription?: string;
+    carouselImages?: string[];
   }[]>;
   password?: string;
   createdAt: any;
@@ -139,6 +140,7 @@ export default function Admin() {
       image?: string;
       video?: string;
       imageDescription?: string;
+      carouselImages?: string[];
     }[]>
   });
   const [file, setFile] = useState<File | null>(null);
@@ -665,6 +667,63 @@ export default function Admin() {
                                       placeholder="Image Description (Optional)" 
                                       className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm focus:border-black outline-none transition-colors mt-4" 
                                     />
+                                  <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Carousel Images (Optional)</label>
+                                    <div className="space-y-4">
+                                      {(sub.carouselImages || []).map((imgUrl: string, imgIdx: number) => (
+                                        <div key={imgIdx} className="flex items-center gap-3">
+                                          <input 
+                                            type="url" 
+                                            value={imgUrl} 
+                                            onChange={(e) => {
+                                              const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                              const currentCarousel = [...(currentSubSections[subIndex].carouselImages || [])];
+                                              currentCarousel[imgIdx] = e.target.value;
+                                              currentSubSections[subIndex].carouselImages = currentCarousel;
+                                              setFormData({
+                                                ...formData,
+                                                subSections: { ...formData.subSections, [section.id]: currentSubSections }
+                                              });
+                                            }} 
+                                            placeholder="Image URL" 
+                                            className="flex-1 bg-white border border-neutral-200 rounded-xl px-4 py-2 text-sm focus:border-black outline-none transition-colors" 
+                                          />
+                                          <button 
+                                            type="button"
+                                            onClick={() => {
+                                              const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                              const currentCarousel = [...(currentSubSections[subIndex].carouselImages || [])];
+                                              currentCarousel.splice(imgIdx, 1);
+                                              currentSubSections[subIndex].carouselImages = currentCarousel;
+                                              setFormData({
+                                                ...formData,
+                                                subSections: { ...formData.subSections, [section.id]: currentSubSections }
+                                              });
+                                            }}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                          >
+                                            <X size={14} />
+                                          </button>
+                                        </div>
+                                      ))}
+                                      <button 
+                                        type="button"
+                                        onClick={() => {
+                                          const currentSubSections = [...(formData.subSections?.[section.id] || [])];
+                                          const currentCarousel = [...(currentSubSections[subIndex].carouselImages || [])];
+                                          currentCarousel.push("");
+                                          currentSubSections[subIndex].carouselImages = currentCarousel;
+                                          setFormData({
+                                            ...formData,
+                                            subSections: { ...formData.subSections, [section.id]: currentSubSections }
+                                          });
+                                        }}
+                                        className="w-full py-2 border-2 border-dashed border-neutral-200 rounded-xl text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:border-black hover:text-black transition-all"
+                                      >
+                                        + Add Carousel Image
+                                      </button>
+                                    </div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
