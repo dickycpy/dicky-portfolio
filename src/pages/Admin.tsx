@@ -843,17 +843,24 @@ export default function Admin() {
                               <GripVertical size={18} />
                             </div>
 
-                            <div className="absolute top-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-30">
-                              <button onClick={() => handleEdit(p)} className="p-4 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl hover:bg-black hover:text-white transition-all">
+                            <div className="absolute top-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-[60]">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(p);
+                                }} 
+                                className="p-4 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl hover:bg-black hover:text-white transition-all cursor-pointer pointer-events-auto"
+                              >
                                 <Edit2 size={18} />
                               </button>
                               <button 
-                                onClick={async () => {
+                                onClick={async (e) => {
+                                  e.stopPropagation();
                                   if (window.confirm("Delete this project?")) {
                                     await deleteDoc(doc(db, "projects", p.id));
                                   }
                                 }} 
-                                className="p-4 bg-white/90 backdrop-blur-md text-red-500 rounded-2xl shadow-xl hover:bg-red-500 hover:text-white transition-all"
+                                className="p-4 bg-white/90 backdrop-blur-md text-red-500 rounded-2xl shadow-xl hover:bg-red-500 hover:text-white transition-all cursor-pointer pointer-events-auto"
                               >
                                 <Trash2 size={18} />
                               </button>
