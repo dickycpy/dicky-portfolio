@@ -62,7 +62,8 @@
                 "content": { "type": "string" },
                 "image": { "type": "string", "format": "url" },
                 "video": { "type": "string", "format": "url" },
-                "imageDescription": { "type": "string" }
+                "imageDescription": { "type": "string" },
+                "carouselImages": { "type": "array", "items": { "type": "string", "format": "url" }, "description": "Array of image URLs for a carousel." }
               }
             }
           }
