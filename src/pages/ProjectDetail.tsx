@@ -1,22 +1,101 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, useScroll, useSpring, AnimatePresence } from "motion/react";
-import { ArrowLeft, ChevronRight, Lock, ArrowRight, Clock, Tag, Calendar } from "lucide-react";
+import { ArrowLeft, ChevronRight, Lock, ArrowRight, Clock, Tag, Calendar, ChevronLeft } from "lucide-react";
 import { projects as mockProjects } from "@/lib/data";
 import React, { useEffect, useState, useMemo } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase";
 
+const ImageCarousel = ({ images }: { images: string[] }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const next = () => setCurrentIndex((prev) => (prev + 1) % images.length);
+  const prev = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+
+  if (!images || images.length === 0) return null;
+
+  return (
+    <div className="relative group/carousel">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="relative aspect-[3/2] rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm flex items-center justify-center"
+      >
+        {/* Design Frame Background */}
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={currentIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.2 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-cover bg-center blur-3xl scale-110"
+            style={{ backgroundImage: `url(${images[currentIndex]})` }}
+          />
+        </AnimatePresence>
+
+        <AnimatePresence mode="wait">
+          <motion.img 
+            key={currentIndex}
+            src={images[currentIndex]} 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain" 
+            referrerPolicy="no-referrer"
+          />
+        </AnimatePresence>
+
+        {/* Navigation Buttons */}
+        {images.length > 1 && (
+          <>
+            <button 
+              onClick={prev}
+              className="absolute left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-black shadow-xl opacity-0 group-hover/carousel:opacity-100 transition-all hover:bg-black hover:text-white"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button 
+              onClick={next}
+              className="absolute right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-black shadow-xl opacity-0 group-hover/carousel:opacity-100 transition-all hover:bg-black hover:text-white"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </>
+        )}
+
+        {/* Dots */}
+        {images.length > 1 && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+            {images.map((_, idx) => (
+              <button 
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex ? "bg-black w-4" : "bg-black/20"}`}
+              />
+            ))}
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+};
+
 export default function ProjectDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [project, setProject] = useState<any>(mockProjects.find((p) => p.id === id));
   const [passwordInput, setPasswordInput] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const { scrollYProgress } = useScroll();
 
   useEffect(() => {
     if (!id) return;
     
+    setIsLoading(true);
     const unsubscribe = onSnapshot(doc(db, "projects", id), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
@@ -24,13 +103,18 @@ export default function ProjectDetail() {
         if (!data.password) {
           setIsAuthorized(true);
         }
+      } else if (!mockProjects.find((p) => p.id === id)) {
+        // If not in Firebase and not in mock data, it's a 404
+        navigate("/404", { replace: true });
       }
+      setIsLoading(false);
     }, (error) => {
       console.error("Error fetching project detail:", error);
+      setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [id]);
+  }, [id, navigate]);
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,7 +200,19 @@ export default function ProjectDetail() {
       .replace(/&nbsp;/g, " "); // Replace HTML non-breaking space entities
   };
 
-  if (!project) return <div className="pt-40 px-6 text-center">Project not found</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-8 h-8 border-2 border-neutral-200 border-t-black rounded-full"
+        />
+      </div>
+    );
+  }
+
+  if (!project) return null;
 
   if (!isAuthorized) {
     return (
@@ -181,7 +277,7 @@ export default function ProjectDetail() {
 
       {/* Hero Section */}
       <header className="pt-32 pb-20 px-6 md:px-12 lg:px-24 max-w-7xl mx-auto">
-        <Link to="/projects" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:opacity-60 transition-opacity mb-16 group">
+        <Link to="/projects" className="relative z-10 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:opacity-50 transition-opacity mb-16 group">
           <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Back to Projects
         </Link>
         
@@ -220,12 +316,17 @@ export default function ProjectDetail() {
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="aspect-[21/9] rounded-[2rem] overflow-hidden bg-neutral-50 border border-neutral-100"
+          className="relative aspect-[3/2] rounded-[2rem] overflow-hidden bg-neutral-50 border border-neutral-100 flex items-center justify-center"
         >
+          {/* Design Frame Background */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 scale-110"
+            style={{ backgroundImage: `url(${project.image})` }}
+          />
           <img 
             src={project.image} 
             alt={project.title} 
-            className="w-full h-full object-cover" 
+            className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain" 
             referrerPolicy="no-referrer" 
           />
         </motion.div>
@@ -319,20 +420,27 @@ export default function ProjectDetail() {
                         />
                       )}
                       
-                      {(sub.image || sub.video) && (
+                      {(sub.image || sub.video || (sub.carouselImages && sub.carouselImages.length > 0)) && (
                         <div className="space-y-8 mt-12">
-                          {sub.image && (
+                          {sub.carouselImages && sub.carouselImages.length > 0 ? (
+                            <ImageCarousel images={sub.carouselImages} />
+                          ) : sub.image && (
                             <div className="space-y-4">
                               <motion.div 
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                className="rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm"
+                                className="relative aspect-[3/2] rounded-[2.5rem] overflow-hidden border border-neutral-100 bg-neutral-50 shadow-sm flex items-center justify-center"
                               >
+                                {/* Design Frame Background */}
+                                <div 
+                                  className="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 scale-110"
+                                  style={{ backgroundImage: `url(${sub.image})` }}
+                                />
                                 <img 
                                   src={sub.image} 
                                   alt={sub.title || "Section visual"} 
-                                  className="w-full h-auto" 
+                                  className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain" 
                                   referrerPolicy="no-referrer"
                                 />
                               </motion.div>
