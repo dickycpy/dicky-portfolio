@@ -423,7 +423,14 @@ export default function ProjectDetail() {
                       {(sub.image || sub.video || (sub.carouselImages && sub.carouselImages.length > 0)) && (
                         <div className="space-y-8 mt-12">
                           {sub.carouselImages && sub.carouselImages.length > 0 ? (
-                            <ImageCarousel images={sub.carouselImages} />
+                            <div className="space-y-4">
+                              <ImageCarousel images={sub.carouselImages} />
+                              {sub.carouselDescription && (
+                                <p className="text-xs font-medium text-neutral-400 text-center italic px-12 leading-relaxed">
+                                  {sub.carouselDescription}
+                                </p>
+                              )}
+                            </div>
                           ) : sub.image && (
                             <div className="space-y-4">
                               <motion.div 
