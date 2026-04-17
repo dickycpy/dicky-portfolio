@@ -14,6 +14,7 @@ interface Project {
   timeline?: string;
   tools?: string[];
   password?: string;
+  status?: "published" | "coming soon";
 }
 
 interface StackedProjectShowcaseProps {
@@ -147,7 +148,10 @@ const ProjectCard: React.FC<{
         <img 
           src={project.image} 
           alt={project.title} 
-          className="w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700"
+          className={cn(
+            "w-full h-full object-cover transition-all duration-700",
+            project.status === "coming soon" ? "opacity-30 blur-[2px] grayscale" : "opacity-60 group-hover:opacity-80 group-hover:scale-105"
+          )}
           referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -156,9 +160,16 @@ const ProjectCard: React.FC<{
       {/* Card Content (Collapsed) */}
       <div className="absolute inset-0 z-10 p-8 md:p-12 md:pb-16 flex flex-col justify-between">
         <div className="flex justify-between items-start">
-          <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
-            {project.category}
-          </motion.div>
+          <div className="flex items-center gap-3">
+            <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-white border border-white/10">
+              {project.category}
+            </motion.div>
+            {project.status === "coming soon" && (
+              <div className="px-4 py-2 bg-brand-teal/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-brand-teal border border-brand-teal/30">
+                Coming Soon
+              </div>
+            )}
+          </div>
           {project.password && (
             <div className="p-2 bg-white/10 backdrop-blur-md rounded-full text-white border border-white/10">
               <Lock size={14} />
@@ -228,6 +239,11 @@ function ExpandedCard({ project, onClose }: { project: Project; onClose: () => v
             <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-white border border-white/20 mb-4 inline-block">
               {project.category}
             </motion.div>
+            {project.status === "coming soon" && (
+              <div className="px-4 py-2 bg-brand-teal/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-brand-teal border border-brand-teal/30 mb-4 ml-3 inline-block">
+                Coming Soon
+              </div>
+            )}
             <motion.h3 layoutId={`title-${project.id}`} className="text-3xl font-bold tracking-tighter text-white">
               {project.title}
             </motion.h3>
@@ -236,9 +252,16 @@ function ExpandedCard({ project, onClose }: { project: Project; onClose: () => v
 
         <div className="w-full md:w-1/2 h-full overflow-y-auto p-8 md:p-16 lg:p-20 bg-white custom-scrollbar">
           <div className="hidden md:block mb-12">
-            <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-neutral-100 rounded-full text-[10px] font-bold uppercase tracking-widest text-neutral-500 border border-neutral-200 mb-6 inline-block">
-              {project.category}
-            </motion.div>
+            <div className="flex items-center gap-4 mb-6">
+              <motion.div layoutId={`category-${project.id}`} className="px-4 py-2 bg-neutral-100 rounded-full text-[10px] font-bold uppercase tracking-widest text-neutral-500 border border-neutral-200 inline-block">
+                {project.category}
+              </motion.div>
+              {project.status === "coming soon" && (
+                <div className="px-4 py-2 bg-brand-teal/10 rounded-full text-[10px] font-bold uppercase tracking-widest text-brand-teal border border-brand-teal/20 inline-block">
+                  Coming Soon
+                </div>
+              )}
+            </div>
             <motion.h3 layoutId={`title-${project.id}`} className="text-5xl lg:text-6xl font-bold tracking-tighter text-black mb-8">
               {project.title}
             </motion.h3>
@@ -269,12 +292,18 @@ function ExpandedCard({ project, onClose }: { project: Project; onClose: () => v
             </div>
 
             <div className="pt-8">
-              <Link 
-                to={`/projects/${project.id}`}
-                className="group w-full py-6 bg-black text-white rounded-2xl font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-neutral-800 transition-all shadow-xl"
-              >
-                View Full Case Study <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              </Link>
+              {project.status === "coming soon" ? (
+                <div className="p-8 bg-neutral-50 rounded-2xl border border-neutral-100 border-dashed text-center">
+                  <p className="text-sm font-bold uppercase tracking-widest text-neutral-400">Full case study coming soon</p>
+                </div>
+              ) : (
+                <Link 
+                  to={`/projects/${project.id}`}
+                  className="group w-full py-6 bg-black text-white rounded-2xl font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-neutral-800 transition-all shadow-xl"
+                >
+                  View Full Case Study <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                </Link>
+              )}
             </div>
           </motion.div>
         </div>
