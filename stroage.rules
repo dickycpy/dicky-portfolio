@@ -1,0 +1,12 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /site/{allPaths=**} {
+      // Allow public read
+      allow read: if true;
+      // Allow write if authenticated. For strict admin check, you could use:
+      // allow write: if request.auth != null && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if request.auth != null;
+    }
+  }
+}
