@@ -102,6 +102,7 @@ export default function Projects() {
                   image={project.image}
                   description={project.description}
                   isLocked={!!project.password}
+                  status={project.status}
                 />
               ))}
             </div>
