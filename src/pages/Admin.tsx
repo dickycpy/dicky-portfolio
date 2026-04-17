@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { auth, storage, db } from "@/firebase";
 import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield, GripVertical, Star } from "lucide-react";
+import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield, GripVertical, Star, File as FileIcon, Loader2, CheckCircle2 } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
@@ -70,6 +70,7 @@ interface Project {
     carouselDescription?: string;
   }[]>;
   password?: string;
+  status?: "published" | "coming soon";
   createdAt: any;
 }
 
@@ -96,7 +97,10 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"general" | "content" | "settings">("general");
-  const [listTab, setListTab] = useState<"main" | "lab" | "home">("main");
+  const [listTab, setListTab] = useState<"main" | "lab" | "home" | "config">("main");
+  const [siteSettings, setSiteSettings] = useState<{ resumeUrl: string }>({ resumeUrl: "" });
+  const [resumeLoading, setResumeLoading] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -109,6 +113,7 @@ export default function Admin() {
     tools: "",
     imageUrl: "",
     password: "",
+    status: "published" as "published" | "coming soon",
     showOnHome: false,
     homeSortOrder: 0,
     introduction: "",
@@ -182,6 +187,44 @@ export default function Admin() {
       unsubscribeProjects();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchSettings = async () => {
+      try {
+        const docRef = doc(db, "settings", "site");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSiteSettings(docSnap.data() as { resumeUrl: string });
+        }
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+      }
+    };
+    fetchSettings();
+  }, [user]);
+
+  const handleResumeUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resumeFile) return;
+
+    setResumeLoading(true);
+    try {
+      const storageRef = ref(storage, `site/resume_${Date.now()}_${resumeFile.name}`);
+      await uploadBytes(storageRef, resumeFile);
+      const url = await getDownloadURL(storageRef);
+      
+      await setDoc(doc(db, "settings", "site"), { resumeUrl: url }, { merge: true });
+      setSiteSettings({ resumeUrl: url });
+      setResumeFile(null);
+      alert("Resume uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading resume:", error);
+      alert("Error uploading resume. Please check your permissions or try again.");
+    } finally {
+      setResumeLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     try {
@@ -280,6 +323,7 @@ export default function Admin() {
       defineImageDescription: project.defineImageDescription || "",
       developDeliverImageDescription: project.developDeliverImageDescription || "",
       reflectionImageDescription: project.reflectionImageDescription || "",
+      status: project.status || "published",
       showOnHome: project.showOnHome || false,
       homeSortOrder: project.homeSortOrder || 0,
       subSections: project.subSections || {}
@@ -462,6 +506,13 @@ export default function Admin() {
                     <div className="md:col-span-2">
                       <label htmlFor="project-description" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Short Description</label>
                       <textarea id="project-description" name="description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors h-32 resize-none" required />
+                    </div>
+                    <div>
+                      <label htmlFor="project-status" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Status</label>
+                      <select id="project-status" name="status" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as any})} className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors appearance-none">
+                        <option value="published">Published</option>
+                        <option value="coming soon">Coming Soon</option>
+                      </select>
                     </div>
                     <div>
                       <label htmlFor="project-type" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Type</label>
@@ -844,13 +895,89 @@ export default function Admin() {
             >
               Home Featured
             </button>
+            <button
+              onClick={() => setListTab("config")}
+              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                listTab === "config" ? "bg-white text-black shadow-sm" : "text-neutral-400 hover:text-neutral-600"
+              }`}
+            >
+              Site Config
+            </button>
           </div>
 
-          <p className="text-xs text-neutral-400 font-medium uppercase tracking-widest">Drag cards to reorder</p>
+          <p className="text-xs text-neutral-400 font-medium uppercase tracking-widest">
+            {listTab === "config" ? "Manage global site settings" : "Drag cards to reorder"}
+          </p>
         </div>
         
         <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="projects-list" direction="vertical">
+          {listTab === "config" ? (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-neutral-50 rounded-[2.5rem] p-8 md:p-12 border border-neutral-100"
+            >
+              <div className="max-w-xl mx-auto md:mx-0">
+                <div className="flex items-center gap-4 mb-12">
+                  <div className="w-16 h-16 bg-black text-white rounded-[2rem] flex items-center justify-center shadow-2xl">
+                    <FileIcon size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold tracking-tight">Resume Management</h3>
+                    <p className="text-neutral-400 text-xs font-bold uppercase tracking-[0.2em] mt-1">Upload your portfolio resume (PDF)</p>
+                  </div>
+                </div>
+
+                <div className="space-y-10">
+                  {siteSettings.resumeUrl && (
+                    <div className="p-8 bg-white border border-neutral-100 rounded-[2rem] flex items-center justify-between shadow-sm">
+                      <div className="flex items-center gap-5">
+                        <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center">
+                          <CheckCircle2 size={24} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Active Resume</p>
+                          <a href={siteSettings.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-black hover:text-brand-teal flex items-center gap-2 transition-colors">
+                            Review Current PDF <ExternalLink size={14} />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleResumeUpload} className="space-y-6">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4 ml-2">Choose PDF Document</label>
+                      <div className="flex flex-col md:flex-row gap-4">
+                        <div className="relative flex-1 group">
+                          <input 
+                            type="file" 
+                            onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                            accept=".pdf"
+                            className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                          />
+                          <div className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 text-xs font-bold uppercase tracking-widest text-neutral-400 group-hover:border-black transition-all flex items-center justify-between">
+                            <span>{resumeFile ? resumeFile.name : siteSettings.resumeUrl ? "Change existing PDF" : "Select PDF file"}</span>
+                            <Plus size={16} />
+                          </div>
+                        </div>
+                        
+                        <button 
+                          type="submit" 
+                          disabled={resumeLoading || !resumeFile}
+                          className="px-10 py-5 bg-brand-teal text-white rounded-2xl font-bold uppercase tracking-widest hover:bg-brand-teal/80 transition-all flex items-center justify-center gap-3 shadow-xl disabled:opacity-50 disabled:bg-neutral-200 disabled:shadow-none"
+                        >
+                          {resumeLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                          {resumeLoading ? "Uploading..." : "Publish Resume"}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <Droppable droppableId="projects-list" direction="vertical">
             {(provided) => (
               <div 
                 {...provided.droppableProps}
@@ -975,6 +1102,7 @@ export default function Admin() {
               </div>
             )}
           </Droppable>
+          )}
         </DragDropContext>
       </div>
     </div>
