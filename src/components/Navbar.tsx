@@ -2,8 +2,10 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, FileText } from "lucide-react";
 import Magnetic from "./Magnetic";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/firebase";
 
 const links = [
   { name: "Home", path: "/" },
@@ -17,6 +19,19 @@ export default function Navbar() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+
+  // Fetch resume URL
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "site"), (doc) => {
+      if (doc.exists()) {
+        setResumeUrl(doc.data().resumeUrl);
+      }
+    }, (error) => {
+      console.error("Error fetching site settings:", error);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Handle scroll effect
   useEffect(() => {
@@ -92,14 +107,29 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Mobile Toggle */}
-          <motion.button 
+          <div className="flex items-center gap-4">
+            {resumeUrl && (
+              <Magnetic strength={0.2}>
+                <a 
+                  href={resumeUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hidden md:flex items-center gap-2 px-6 py-2 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-brand-teal transition-all shadow-lg hover:shadow-brand-teal/20"
+                >
+                  <FileText size={14} /> Resume
+                </a>
+              </Magnetic>
+            )}
+
+            {/* Mobile Toggle */}
+            <motion.button 
             whileTap={{ scale: 0.9 }}
             className="md:hidden p-3 rounded-2xl transition-colors"
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? <X size={22} /> : <Menu size={22} />}
           </motion.button>
+          </div>
         </nav>
       </header>
 
@@ -150,6 +180,23 @@ export default function Navbar() {
                     </Link>
                   </motion.div>
                 ))}
+                
+                {resumeUrl && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: links.length * 0.1 }}
+                  >
+                    <a
+                      href={resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-4xl font-bold tracking-tighter text-brand-teal flex items-center gap-3"
+                    >
+                      Resume <FileText size={28} />
+                    </a>
+                  </motion.div>
+                )}
               </div>
 
               <div className="mt-auto pt-12 border-t border-neutral-100">
@@ -171,4 +218,3 @@ export default function Navbar() {
     </>
   );
 }
- 
