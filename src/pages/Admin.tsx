@@ -30,6 +30,8 @@ interface Project {
   tools: string[];
   type: "main" | "lab";
   sortOrder?: number;
+  homeSortOrder?: number;
+  showOnHome?: boolean;
   introduction?: string;
   challenge?: string;
   approach?: string;
@@ -94,7 +96,7 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"general" | "content" | "settings">("general");
-  const [listTab, setListTab] = useState<"main" | "lab">("main");
+  const [listTab, setListTab] = useState<"main" | "lab" | "home">("main");
 
   // Form State
   const [formData, setFormData] = useState({
@@ -107,6 +109,8 @@ export default function Admin() {
     tools: "",
     imageUrl: "",
     password: "",
+    showOnHome: false,
+    homeSortOrder: 0,
     introduction: "",
     challenge: "",
     approach: "",
@@ -226,6 +230,8 @@ export default function Admin() {
       defineImageDescription: "",
       developDeliverImageDescription: "",
       reflectionImageDescription: "",
+      showOnHome: false,
+      homeSortOrder: 0,
       subSections: {}
     });
     setFile(null);
@@ -274,6 +280,8 @@ export default function Admin() {
       defineImageDescription: project.defineImageDescription || "",
       developDeliverImageDescription: project.developDeliverImageDescription || "",
       reflectionImageDescription: project.reflectionImageDescription || "",
+      showOnHome: project.showOnHome || false,
+      homeSortOrder: project.homeSortOrder || 0,
       subSections: project.subSections || {}
     });
     setEditingId(project.id);
@@ -357,10 +365,12 @@ export default function Admin() {
 
     // Filter projects by current tab
     const filteredItems = projects.filter(p => {
+      if (listTab === "home") return p.showOnHome;
       const projectType = p.type || "main";
       return projectType === listTab;
     });
     const otherItems = projects.filter(p => {
+      if (listTab === "home") return !p.showOnHome;
       const projectType = p.type || "main";
       return projectType !== listTab;
     });
@@ -369,19 +379,14 @@ export default function Admin() {
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
-    // Combine back for state update
-    const newAllProjects = [...items, ...otherItems];
-    
-    // Sort the final array to maintain consistent UI if needed, 
-    // but setProjects will trigger a re-render with our client-side sort anyway
-    setProjects(newAllProjects);
-
     // Update Firestore for the reordered items in this tab
     try {
       const batch: Promise<void>[] = [];
+      const orderField = listTab === "home" ? "homeSortOrder" : "sortOrder";
+      
       items.forEach((item, index) => {
-        if (item.sortOrder !== index) {
-          batch.push(updateDoc(doc(db, "projects", item.id), { sortOrder: index }));
+        if (item[orderField] !== index) {
+          batch.push(updateDoc(doc(db, "projects", item.id), { [orderField]: index }));
         }
       });
       await Promise.all(batch);
@@ -778,6 +783,19 @@ export default function Admin() {
                       <label htmlFor="project-password" title="Project Password (Optional)" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Project Password (Optional)</label>
                       <input id="project-password" name="password" type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Leave blank for public access" className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 focus:border-black outline-none transition-colors" />
                     </div>
+                    <div className="flex items-center gap-4 p-6 bg-white border border-neutral-200 rounded-2xl">
+                      <input 
+                        id="show-on-home" 
+                        type="checkbox" 
+                        checked={formData.showOnHome} 
+                        onChange={(e) => setFormData({...formData, showOnHome: e.target.checked})}
+                        className="w-5 h-5 rounded border-neutral-200 text-black focus:ring-black"
+                      />
+                      <div>
+                        <label htmlFor="show-on-home" className="block text-sm font-bold uppercase tracking-widest text-black">Feature on Home Screen</label>
+                        <p className="text-[10px] text-neutral-400 font-medium tracking-wider mt-1">Make this project visible in the "Selected Works" section</p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -818,6 +836,14 @@ export default function Admin() {
             >
               My Lab
             </button>
+            <button
+              onClick={() => setListTab("home")}
+              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                listTab === "home" ? "bg-white text-black shadow-sm" : "text-neutral-400 hover:text-neutral-600"
+              }`}
+            >
+              Home Featured
+            </button>
           </div>
 
           <p className="text-xs text-neutral-400 font-medium uppercase tracking-widest">Drag cards to reorder</p>
@@ -833,8 +859,15 @@ export default function Admin() {
               >
                 {projects
                   .filter(p => {
+                    if (listTab === "home") return p.showOnHome;
                     const projectType = p.type || "main";
                     return projectType === listTab;
+                  })
+                  .sort((a, b) => {
+                    if (listTab === "home") {
+                      return (a.homeSortOrder || 0) - (b.homeSortOrder || 0);
+                    }
+                    return (a.sortOrder || 0) - (b.sortOrder || 0);
                   })
                   .map((p, index) => {
                     const DraggableComponent = Draggable as any;
