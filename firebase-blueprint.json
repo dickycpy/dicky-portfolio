@@ -14,6 +14,8 @@
         "tools": { "type": "array", "items": { "type": "string" }, "description": "Tools used." },
         "type": { "type": "string", "enum": ["main", "lab"], "description": "Project type: main (career) or lab (freelance)." },
         "sortOrder": { "type": "number", "description": "Custom display order." },
+        "homeSortOrder": { "type": "number", "description": "Custom display order for home screen." },
+        "showOnHome": { "type": "boolean", "description": "Whether to show this project on the home screen." },
         "overview": { "type": "string", "description": "Detailed overview." },
         "problem": { "type": "string", "description": "Problem statement." },
         "solution": { "type": "string", "description": "Final solution." },
