@@ -6,7 +6,7 @@ import StackedProjectShowcase from "@/components/StackedProjectShowcase";
 import Footer from "@/components/Footer";
 import { projects as mockProjects } from "@/lib/data";
 import { Link } from "react-router-dom";
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, where } from "firebase/firestore";
 import { db } from "@/firebase";
 import { cn } from "@/lib/utils";
 
@@ -118,14 +118,24 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"), limit(3));
+    // Fetch only projects marked for home display, ordered by homeSortOrder
+    const q = query(
+      collection(db, "projects"), 
+      where("showOnHome", "==", true),
+      orderBy("homeSortOrder", "asc")
+    );
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedProjects = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as any[];
+      
       if (fetchedProjects.length > 0) {
         setProjects(fetchedProjects);
+      } else {
+        // Fallback or explicit empty state if no projects are marked for home
+        setProjects([]);
       }
     }, (error) => {
       console.error("Error fetching projects:", error);
