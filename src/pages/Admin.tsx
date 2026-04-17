@@ -960,7 +960,7 @@ export default function Admin() {
                             <div className="flex items-center gap-4">
                               {p.password && (
                                 <div className="flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-lg text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                                  <Shield size={12} /> Locked
+                                  <Shield size={12} /> Password Required
                                 </div>
                               )}
                               <div className="flex-grow h-px bg-neutral-100" />
