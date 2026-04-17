@@ -13,6 +13,7 @@
         "timeline": { "type": "string", "description": "Project duration." },
         "tools": { "type": "array", "items": { "type": "string" }, "description": "Tools used." },
         "type": { "type": "string", "enum": ["main", "lab"], "description": "Project type: main (career) or lab (freelance)." },
+        "status": { "type": "string", "enum": ["published", "coming soon"], "description": "Project status: published or coming soon." },
         "sortOrder": { "type": "number", "description": "Custom display order." },
         "homeSortOrder": { "type": "number", "description": "Custom display order for home screen." },
         "showOnHome": { "type": "boolean", "description": "Whether to show this project on the home screen." },
@@ -83,6 +84,14 @@
         "role": { "type": "string", "enum": ["admin", "user"] }
       },
       "required": ["email", "role"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global application settings.",
+      "type": "object",
+      "properties": {
+        "resumeUrl": { "type": "string", "format": "url", "description": "The URL of the resume PDF." }
+      }
     }
   },
   "firestore": {
@@ -93,6 +102,10 @@
     "users": {
       "schema": { "$ref": "User" },
       "description": "Collection of user profiles for RBAC."
+    },
+    "settings": {
+      "schema": { "$ref": "Settings" },
+      "description": "Collection for global site settings."
     }
   }
 }
