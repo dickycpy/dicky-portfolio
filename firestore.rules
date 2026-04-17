@@ -67,7 +67,7 @@ service cloud.firestore {
         'developDeliverImage', 'developDeliverVideo', 'developDeliverImageDescription',
         'reflectionImage', 'reflectionVideo', 'reflectionImageDescription'
       ];
-      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl', 'order', 'type', 'sortOrder', 'subSections', 'showOnHome', 'homeSortOrder'].concat(newFields).concat(mediaFields);
+      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl', 'order', 'type', 'sortOrder', 'subSections', 'showOnHome', 'homeSortOrder', 'status'].concat(newFields).concat(mediaFields);
       let allowedFields = requiredFields.concat(optionalFields);
       
       return data.keys().hasAll(requiredFields) &&
@@ -121,6 +121,7 @@ service cloud.firestore {
              (!('solution' in data) || (data.solution is string && data.solution.size() <= 10000)) &&
              (!('impact' in data) || (data.impact is string && data.impact.size() <= 10000)) &&
              (!('password' in data) || (data.password is string)) &&
+             (!('status' in data) || (data.status in ['published', 'coming soon'])) &&
              (!('updatedAt' in data) || (data.updatedAt is timestamp));
     }
 
