@@ -210,17 +210,33 @@ export default function Admin() {
 
     setResumeLoading(true);
     try {
-      const storageRef = ref(storage, `site/resume_${Date.now()}_${resumeFile.name}`);
+      // Sanitize the filename to avoid issues with special characters or spaces in the URL
+      const cleanFileName = resumeFile.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+      const storageRef = ref(storage, `site/resume_${Date.now()}_${cleanFileName}`);
+      
+      console.log("Starting resume upload...");
       await uploadBytes(storageRef, resumeFile);
       const url = await getDownloadURL(storageRef);
       
+      console.log("Upload successful, saving URL to Firestore...");
       await setDoc(doc(db, "settings", "site"), { resumeUrl: url }, { merge: true });
       setSiteSettings({ resumeUrl: url });
       setResumeFile(null);
       alert("Resume uploaded successfully!");
     } catch (error) {
-      console.error("Error uploading resume:", error);
-      alert("Error uploading resume. Please check your permissions or try again.");
+      console.error("Critical Error uploading resume:", error);
+      let errorMessage = "Error uploading resume. ";
+      
+      if (error instanceof Error) {
+        if (error.message.includes("reset")) {
+          errorMessage += "The connection was interrupted. This can happen with large files or network restrictions. Try a smaller file or checking your local network.";
+        } else if (error.message.includes("unauthorized") || error.message.includes("permission")) {
+          errorMessage += "Please ensure you have set your Firebase Storage rules to allow writes.";
+        } else {
+          errorMessage += error.message;
+        }
+      }
+      alert(errorMessage);
     } finally {
       setResumeLoading(false);
     }
