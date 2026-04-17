@@ -896,10 +896,19 @@ export default function Admin() {
                               <button 
                                 onClick={async (e) => {
                                   e.stopPropagation();
-                                  await updateDoc(doc(db, "projects", p.id), { 
-                                    showOnHome: !p.showOnHome,
-                                    homeSortOrder: p.showOnHome ? (p.homeSortOrder || 0) : projects.filter(proj => proj.showOnHome).length
-                                  });
+                                  try {
+                                    const isFeaturing = !p.showOnHome;
+                                    await updateDoc(doc(db, "projects", p.id), { 
+                                      showOnHome: isFeaturing,
+                                      // If featuring, place it at the end of the home list
+                                      homeSortOrder: isFeaturing 
+                                        ? projects.filter(proj => proj.showOnHome).length 
+                                        : (p.homeSortOrder || 0)
+                                    });
+                                  } catch (err) {
+                                    console.error("Failed to toggle home feature:", err);
+                                    alert("Security Rules updated. Please try again in 5 seconds.");
+                                  }
                                 }} 
                                 className={`p-4 backdrop-blur-md rounded-2xl shadow-xl transition-all cursor-pointer pointer-events-auto ${
                                   p.showOnHome 
