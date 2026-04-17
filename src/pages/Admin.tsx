@@ -5,7 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield, GripVertical } from "lucide-react";
+import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield, GripVertical, Star } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
@@ -893,6 +893,23 @@ export default function Admin() {
                             </div>
 
                             <div className="absolute top-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-[60]">
+                              <button 
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await updateDoc(doc(db, "projects", p.id), { 
+                                    showOnHome: !p.showOnHome,
+                                    homeSortOrder: p.showOnHome ? (p.homeSortOrder || 0) : projects.filter(proj => proj.showOnHome).length
+                                  });
+                                }} 
+                                className={`p-4 backdrop-blur-md rounded-2xl shadow-xl transition-all cursor-pointer pointer-events-auto ${
+                                  p.showOnHome 
+                                    ? "bg-brand-teal text-white hover:bg-brand-teal/80" 
+                                    : "bg-white/90 text-black hover:bg-black hover:text-white"
+                                }`}
+                                title={p.showOnHome ? "Remove from Home" : "Feature on Home"}
+                              >
+                                <Star size={18} fill={p.showOnHome ? "currentColor" : "none"} />
+                              </button>
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
