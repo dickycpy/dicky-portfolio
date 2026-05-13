@@ -163,7 +163,7 @@ export default function Home() {
             className="w-16 h-8 rounded-full overflow-hidden border border-black/5 bg-neutral-100"
           >
             <img 
-              src="https://media.licdn.com/dms/image/v2/D5603AQFEbtlamY8BwQ/profile-displayphoto-scale_400_400/B56Z0GLjlSH8Ao-/0/1773925187634?e=1777507200&v=beta&t=ogAGWebh6mQjr-mM7geJcg-bbIMxNiBD6WUjSPvmwzM" 
+              src="https://i.postimg.cc/WztpmZMX/profile-pic.jpg" 
               alt="Dicky Headshot" 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
@@ -230,7 +230,7 @@ export default function Home() {
               whileInView={{ filter: "grayscale(0%)" }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1.5, delay: 0.2 }}
-              src="https://media.licdn.com/dms/image/v2/D4E22AQGkSwuqrPQ1Cg/feedshare-shrink_2048_1536/B4EZcwSfOgHQAo-/0/1748861862406?e=1777507200&v=beta&t=ROx_jE8Eb2O_8muzZhn6WSAk_4ewNWn4-1OsZ2AqCqg"
+              src="https://i.postimg.cc/YC24jvP6/creato.jpg"
               alt="Creato!"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
