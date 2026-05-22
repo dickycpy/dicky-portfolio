@@ -50,7 +50,6 @@ const timeline = [
     year: "2025 - Present",
     title: "Digital Operation Analyst",
     company: "IBM Consulting",
-    handle: "ibm.com",
     location: "Hong Kong",
     industry: "Consulting / Technology",
     logo: "https://cdn.worldvectorlogo.com/logos/ibm.svg",
@@ -181,9 +180,11 @@ export default function About() {
                           <img src={item.logo} alt={item.company} className="w-full h-full object-contain p-1.5" referrerPolicy="no-referrer" />
                         </div>
                         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                          <span className="text-brand-teal font-bold flex items-center gap-1.5">
-                            {item.handle} <ExternalLink size={14} />
-                          </span>
+                          {item.handle && (
+                            <span className="text-brand-teal font-bold flex items-center gap-1.5">
+                              {item.handle} <ExternalLink size={14} />
+                            </span>
+                          )}
                           <span className="text-neutral-400 font-medium">{item.location}</span>
                           <span className="px-2 py-0.5 bg-neutral-100 text-neutral-500 rounded text-[10px] font-bold uppercase tracking-wider">
                             {item.industry}
