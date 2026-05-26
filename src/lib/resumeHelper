@@ -1,0 +1,138 @@
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { db } from "@/firebase";
+
+/**
+ * Checks if a URL is stored directly in the database (either as inline base64 or a chunked db pointer)
+ */
+export function isDbPdfUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return url.startsWith("db-pdf://") || url.startsWith("data:application/pdf;base64,");
+}
+
+/**
+ * Robustly converts a raw base64 or Data URI string into a binary Blob
+ */
+export function base64ToBlob(base64: string, contentType: string = 'application/pdf'): Blob {
+  const pureBase64 = base64.includes(",") ? base64.split(",")[1] : base64;
+  const byteCharacters = atob(pureBase64);
+  const byteArrays = [];
+  
+  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+    const slice = byteCharacters.slice(offset, offset + 512);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+  
+  return new Blob(byteArrays, { type: contentType });
+}
+
+/**
+ * Resolves any resume URL (standard link, inline data-uri, or chunked Firestore DB string) 
+ * into a browser-safe, high-performance local Blob URL or returns standard link as-is.
+ */
+export async function resolveResumeBlobUrl(resumeUrl: string | null | undefined): Promise<string | null> {
+  if (!resumeUrl) return null;
+  
+  // Try resolving inline data-uris
+  if (resumeUrl.startsWith("data:application/pdf;base64,")) {
+    try {
+      const blob = base64ToBlob(resumeUrl);
+      return URL.createObjectURL(blob);
+    } catch (err) {
+      console.error("Failed to parse inline base64 PDF:", err);
+      return resumeUrl;
+    }
+  }
+  
+  // Try resolving chunked Firestore database documents
+  if (resumeUrl.startsWith("db-pdf://")) {
+    try {
+      console.log("Loading chunked PDF from high-reliability Firestore database...");
+      const chunks: string[] = [];
+      let idx = 0;
+      let hasMore = true;
+      
+      // We read sequential chunk documents (Id 0, 1, 2...) from '/settings/site/resumeChunks'
+      while (hasMore) {
+        const chunkDoc = await getDoc(doc(db, "settings", "site", "resumeChunks", idx.toString()));
+        if (chunkDoc.exists()) {
+          const data = chunkDoc.data();
+          if (data && typeof data.chunk === "string") {
+            chunks.push(data.chunk);
+            idx++;
+          } else {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      if (chunks.length > 0) {
+        console.log(`Successfully retrieved ${chunks.length} chunks. Reassembling PDF...`);
+        const fullBase64 = chunks.join("");
+        const blob = base64ToBlob(fullBase64);
+        return URL.createObjectURL(blob);
+      } else {
+        console.warn("Chunked PDF matched scheme 'db-pdf://' but no chunks were found.");
+      }
+    } catch (err) {
+      console.error("Error loading chunked PDF from Firestore:", err);
+    }
+    return null;
+  }
+  
+  // Default to standard HTTPS links
+  return resumeUrl;
+}
+
+/**
+ * Uploads a PDF to Firestore by splitting interest-rate base64 data into multiple chunks.
+ * This completely avoids connection resets or storage initialization/permissions issues by direct DB storage.
+ */
+export async function uploadResumeChunked(resumeFile: File, cleanFileName: string): Promise<string> {
+  // 1. Read the file as base64 Data URI
+  const base64String = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(resumeFile);
+  });
+
+  // 2. Clear out any previous chunks first to avoid leftover chunks if the new file is smaller than previous
+  console.log("Cleaning up previous resume chunks index...");
+  for (let i = 0; i < 35; i++) {
+    try {
+      await deleteDoc(doc(db, "settings", "site", "resumeChunks", i.toString()));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // 3. Split base64String into chunks of 600,000 characters (comfortable size for Firestore 1MB limits)
+  const chunkSize = 600000;
+  const chunks: string[] = [];
+  for (let offset = 0; offset < base64String.length; offset += chunkSize) {
+    chunks.push(base64String.slice(offset, offset + chunkSize));
+  }
+
+  console.log(`Uploading ${chunks.length} PDF chunk(s) directly to DB...`);
+  for (let idx = 0; idx < chunks.length; idx++) {
+    await setDoc(doc(db, "settings", "site", "resumeChunks", idx.toString()), {
+      chunk: chunks[idx]
+    });
+  }
+
+  // 4. Update the parent settings document to point to db-pdf://site
+  await setDoc(doc(db, "settings", "site"), { 
+    resumeUrl: "db-pdf://site",
+    resumeUpdatedAt: Date.now(),
+    resumeFileName: cleanFileName
+  }, { merge: true });
+
+  return "db-pdf://site";
+}
