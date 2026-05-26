@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { auth, storage, db } from "@/firebase";
+import { resolveResumeBlobUrl, uploadResumeChunked } from "@/lib/resumeHelper";
 import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
@@ -100,6 +101,7 @@ export default function Admin() {
   const [listTab, setListTab] = useState<"main" | "lab" | "home" | "config">("main");
   const [siteSettings, setSiteSettings] = useState<{ resumeUrl: string }>({ resumeUrl: "" });
   const [manualUrl, setManualUrl] = useState("");
+  const [resolvedResumeUrl, setResolvedResumeUrl] = useState<string | null>(null);
   const [resumeLoading, setResumeLoading] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
 
@@ -207,6 +209,43 @@ export default function Admin() {
     fetchSettings();
   }, [user]);
 
+  // Resolve DB fallback PDF strings to blob URLs for admin previewing
+  useEffect(() => {
+    let isCurrent = true;
+    let localBlobUrl: string | null = null;
+
+    if (!siteSettings.resumeUrl) {
+      setResolvedResumeUrl(null);
+      return;
+    }
+
+    const resolve = async () => {
+      try {
+        const resolved = await resolveResumeBlobUrl(siteSettings.resumeUrl);
+        if (isCurrent) {
+          setResolvedResumeUrl(resolved);
+          if (resolved && resolved.startsWith("blob:")) {
+            localBlobUrl = resolved;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to resolve admin preview resume URL:", err);
+        if (isCurrent) {
+          setResolvedResumeUrl(siteSettings.resumeUrl);
+        }
+      }
+    };
+
+    resolve();
+
+    return () => {
+      isCurrent = false;
+      if (localBlobUrl) {
+        URL.revokeObjectURL(localBlobUrl);
+      }
+    };
+  }, [siteSettings.resumeUrl]);
+
   const handleSaveDirectUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualUrl.trim()) return;
@@ -230,48 +269,32 @@ export default function Admin() {
     if (!resumeFile) return;
 
     setResumeLoading(true);
+    const cleanFileName = resumeFile.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+
     try {
-      // Sanitize the filename to avoid issues with special characters or spaces in the URL
-      const cleanFileName = resumeFile.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
       const storageRef = ref(storage, `site/resume_${Date.now()}_${cleanFileName}`);
-      
-      console.log("Starting resume upload...");
+      console.log("Starting standard Firebase Storage resume upload...");
       await uploadBytes(storageRef, resumeFile);
       const url = await getDownloadURL(storageRef);
       
       console.log("Upload successful, saving URL to Firestore...");
-      await setDoc(doc(db, "settings", "site"), { resumeUrl: url }, { merge: true });
+      await setDoc(doc(db, "settings", "site"), { resumeUrl: url, resumeFileName: cleanFileName }, { merge: true });
       setSiteSettings({ resumeUrl: url });
       setManualUrl(url);
       setResumeFile(null);
       alert("Resume uploaded successfully to Cloud Storage!");
     } catch (error) {
-      console.warn("Standard Cloud Storage upload failed. Initiating high-reliability database-direct fallback...", error);
+      console.warn("Standard Cloud Storage upload failed. Initiating high-reliability database-direct chunked fallback...", error);
       
-      // If file is under Firestore's 1MB limit (leaving overhead room)
-      if (resumeFile.size <= 850 * 1024) {
-        try {
-          const base64String = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = (err) => reject(err);
-            reader.readAsDataURL(resumeFile);
-          });
-          
-          await setDoc(doc(db, "settings", "site"), { resumeUrl: base64String }, { merge: true });
-          setSiteSettings({ resumeUrl: base64String });
-          setManualUrl(base64String);
-          setResumeFile(null);
-          alert("Standard file storage is uninitialized or blocked. The applet automatically updated your CV using highly resilient database-direct deployment instead! It is fully active now.");
-        } catch (dbError) {
-          console.error("Database fallback also failed:", dbError);
-          alert("Failed to save resume. Both storage and database fallback encountered errors.");
-        }
-      } else {
-        console.error("Critical Error uploading resume:", error);
-        let errorMessage = "Standard storage upload failed (ERR_CONNECTION_RESET). \n\n";
-        errorMessage += "To trigger the automatic database-direct fallback, please compress your PDF so that it is under 850 KB (currently " + Math.round(resumeFile.size / 1024) + " KB), or use the 'Direct Web Link' text input box below to link your Google Drive/Dropbox PDF!";
-        alert(errorMessage);
+      try {
+        const urlPnt = await uploadResumeChunked(resumeFile, cleanFileName);
+        setSiteSettings({ resumeUrl: urlPnt });
+        setManualUrl(urlPnt);
+        setResumeFile(null);
+        alert("The PDF was successfully uploaded and hosted using our high-reliability, network-resilient database storage fallback! It is fully active now.");
+      } catch (dbError) {
+        console.error("Database fallback also failed:", dbError);
+        alert("Failed to upload/save PDF: both standard storage (ERR_CONNECTION_RESET) and chunked DB fallback encountered issues.");
       }
     } finally {
       setResumeLoading(false);
@@ -989,7 +1012,7 @@ export default function Admin() {
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Active Resume</p>
-                          <a href={siteSettings.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-black hover:text-brand-teal flex items-center gap-2 transition-colors">
+                          <a href={resolvedResumeUrl || siteSettings.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-black hover:text-brand-teal flex items-center gap-2 transition-colors">
                             Review Current PDF <ExternalLink size={14} />
                           </a>
                         </div>
