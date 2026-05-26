@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { auth, storage, db } from "@/firebase";
-import { resolveResumeBlobUrl, uploadResumeChunked } from "@/lib/resumeHelper";
+import { resolveResumeBlobUrl, uploadResumeChunked } from "../lib/resumeHelper";
 import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
