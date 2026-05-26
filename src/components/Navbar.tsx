@@ -6,7 +6,7 @@ import { Menu, X, FileText } from "lucide-react";
 import Magnetic from "./Magnetic";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase";
-import { resolveResumeBlobUrl } from "@/lib/resumeHelper";
+import { resolveResumeBlobUrl } from "../lib/resumeHelper";
 
 const links = [
   { name: "Home", path: "/" },
