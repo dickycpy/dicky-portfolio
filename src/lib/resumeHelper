@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "@/firebase";
+import { db } from "../firebase";
 
 /**
  * Checks if a URL is stored directly in the database (either as inline base64 or a chunked db pointer)
