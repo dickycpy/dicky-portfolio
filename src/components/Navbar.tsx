@@ -6,7 +6,6 @@ import { Menu, X, FileText } from "lucide-react";
 import Magnetic from "./Magnetic";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase";
-import { resolveResumeBlobUrl } from "../lib/resumeHelper";
 
 const links = [
   { name: "Home", path: "/" },
@@ -21,7 +20,6 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
-  const [resolvedResumeUrl, setResolvedResumeUrl] = useState<string | null>(null);
 
   // Fetch resume URL
   useEffect(() => {
@@ -34,43 +32,6 @@ export default function Navbar() {
     });
     return () => unsubscribe();
   }, []);
-
-  // Resolve database-direct fallback PDF links to safe blob URLs
-  useEffect(() => {
-    let isCurrent = true;
-    let localBlobUrl: string | null = null;
-
-    if (!resumeUrl) {
-      setResolvedResumeUrl(null);
-      return;
-    }
-
-    const resolve = async () => {
-      try {
-        const resolved = await resolveResumeBlobUrl(resumeUrl);
-        if (isCurrent) {
-          setResolvedResumeUrl(resolved);
-          if (resolved && resolved.startsWith("blob:")) {
-            localBlobUrl = resolved;
-          }
-        }
-      } catch (err) {
-        console.error("Failed to resolve dynamic resume:", err);
-        if (isCurrent) {
-          setResolvedResumeUrl(resumeUrl);
-        }
-      }
-    };
-
-    resolve();
-
-    return () => {
-      isCurrent = false;
-      if (localBlobUrl) {
-        URL.revokeObjectURL(localBlobUrl);
-      }
-    };
-  }, [resumeUrl]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -147,10 +108,10 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
-            {resolvedResumeUrl && (
+            {resumeUrl && (
               <Magnetic strength={0.2}>
                 <a 
-                  href={resolvedResumeUrl} 
+                  href={resumeUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="hidden md:flex items-center gap-2 px-6 py-2 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-brand-teal transition-all shadow-lg hover:shadow-brand-teal/20"
@@ -220,14 +181,14 @@ export default function Navbar() {
                   </motion.div>
                 ))}
                 
-                {resolvedResumeUrl && (
+                {resumeUrl && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: links.length * 0.1 }}
                   >
                     <a
-                      href={resolvedResumeUrl}
+                      href={resumeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-4xl font-bold tracking-tighter text-brand-teal flex items-center gap-3"
