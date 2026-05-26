@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { auth, storage, db } from "@/firebase";
-import { resolveResumeBlobUrl, uploadResumeChunked } from "../lib/resumeHelper";
 import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
@@ -101,9 +100,7 @@ export default function Admin() {
   const [listTab, setListTab] = useState<"main" | "lab" | "home" | "config">("main");
   const [siteSettings, setSiteSettings] = useState<{ resumeUrl: string }>({ resumeUrl: "" });
   const [manualUrl, setManualUrl] = useState("");
-  const [resolvedResumeUrl, setResolvedResumeUrl] = useState<string | null>(null);
   const [resumeLoading, setResumeLoading] = useState(false);
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -209,43 +206,6 @@ export default function Admin() {
     fetchSettings();
   }, [user]);
 
-  // Resolve DB fallback PDF strings to blob URLs for admin previewing
-  useEffect(() => {
-    let isCurrent = true;
-    let localBlobUrl: string | null = null;
-
-    if (!siteSettings.resumeUrl) {
-      setResolvedResumeUrl(null);
-      return;
-    }
-
-    const resolve = async () => {
-      try {
-        const resolved = await resolveResumeBlobUrl(siteSettings.resumeUrl);
-        if (isCurrent) {
-          setResolvedResumeUrl(resolved);
-          if (resolved && resolved.startsWith("blob:")) {
-            localBlobUrl = resolved;
-          }
-        }
-      } catch (err) {
-        console.error("Failed to resolve admin preview resume URL:", err);
-        if (isCurrent) {
-          setResolvedResumeUrl(siteSettings.resumeUrl);
-        }
-      }
-    };
-
-    resolve();
-
-    return () => {
-      isCurrent = false;
-      if (localBlobUrl) {
-        URL.revokeObjectURL(localBlobUrl);
-      }
-    };
-  }, [siteSettings.resumeUrl]);
-
   const handleSaveDirectUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualUrl.trim()) return;
@@ -259,43 +219,6 @@ export default function Admin() {
     } catch (error) {
       console.error("Error saving manual URL:", error);
       alert("Failed to save direct URL. Make sure you are logged in and authorized.");
-    } finally {
-      setResumeLoading(false);
-    }
-  };
-
-  const handleResumeUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resumeFile) return;
-
-    setResumeLoading(true);
-    const cleanFileName = resumeFile.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
-
-    try {
-      const storageRef = ref(storage, `site/resume_${Date.now()}_${cleanFileName}`);
-      console.log("Starting standard Firebase Storage resume upload...");
-      await uploadBytes(storageRef, resumeFile);
-      const url = await getDownloadURL(storageRef);
-      
-      console.log("Upload successful, saving URL to Firestore...");
-      await setDoc(doc(db, "settings", "site"), { resumeUrl: url, resumeFileName: cleanFileName }, { merge: true });
-      setSiteSettings({ resumeUrl: url });
-      setManualUrl(url);
-      setResumeFile(null);
-      alert("Resume uploaded successfully to Cloud Storage!");
-    } catch (error) {
-      console.warn("Standard Cloud Storage upload failed. Initiating high-reliability database-direct chunked fallback...", error);
-      
-      try {
-        const urlPnt = await uploadResumeChunked(resumeFile, cleanFileName);
-        setSiteSettings({ resumeUrl: urlPnt });
-        setManualUrl(urlPnt);
-        setResumeFile(null);
-        alert("The PDF was successfully uploaded and hosted using our high-reliability, network-resilient database storage fallback! It is fully active now.");
-      } catch (dbError) {
-        console.error("Database fallback also failed:", dbError);
-        alert("Failed to upload/save PDF: both standard storage (ERR_CONNECTION_RESET) and chunked DB fallback encountered issues.");
-      }
     } finally {
       setResumeLoading(false);
     }
@@ -1011,61 +934,20 @@ export default function Admin() {
                           <CheckCircle2 size={24} />
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Active Resume</p>
-                          <a href={resolvedResumeUrl || siteSettings.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-black hover:text-brand-teal flex items-center gap-2 transition-colors">
-                            Review Current PDF <ExternalLink size={14} />
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Active CV Link</p>
+                          <a href={siteSettings.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-black hover:text-brand-teal flex items-center gap-2 transition-colors">
+                            Review Current Link <ExternalLink size={14} />
                           </a>
                         </div>
                       </div>
                     </div>
                   )}
 
-                   <form onSubmit={handleResumeUpload} className="space-y-6">
-                    <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-2">Option A: Upload PDF Document</label>
-                        <span className="text-[10px] bg-neutral-100 text-neutral-500 font-bold px-2 py-0.5 rounded uppercase tracking-wider">Has Auto-Fallback</span>
-                      </div>
-                      <p className="text-[11px] text-neutral-400 mb-4 ml-2 leading-relaxed">
-                        If the Cloud Storage server is uninitialized or blocked by connection resets, the applet will automatically compress and deploy your PDF directly to high-reliability database-direct storage. (PDF must be under 850 KB).
-                      </p>
-                      <div className="flex flex-col md:flex-row gap-4">
-                        <div className="relative flex-1 group">
-                          <input 
-                            type="file" 
-                            onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-                            accept=".pdf"
-                            className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                          />
-                          <div className="w-full bg-white border border-neutral-200 rounded-2xl px-6 py-4 text-xs font-bold uppercase tracking-widest text-neutral-400 group-hover:border-black transition-all flex items-center justify-between">
-                            <span>{resumeFile ? resumeFile.name : siteSettings.resumeUrl ? "Change existing PDF" : "Select PDF file"}</span>
-                            <Plus size={16} />
-                          </div>
-                        </div>
-                        
-                        <button 
-                          type="submit" 
-                          disabled={resumeLoading || !resumeFile}
-                          className="px-10 py-5 bg-brand-teal text-white rounded-2xl font-bold uppercase tracking-widest hover:bg-brand-teal/80 transition-all flex items-center justify-center gap-3 shadow-xl disabled:opacity-50 disabled:bg-neutral-200 disabled:shadow-none"
-                        >
-                          {resumeLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                          {resumeLoading ? "Uploading..." : "Publish PDF"}
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-
-                  <div className="relative flex items-center py-4">
-                    <div className="flex-grow border-t border-neutral-200"></div>
-                    <span className="flex-shrink mx-4 text-[10px] font-bold uppercase tracking-widest text-neutral-300">Or</span>
-                    <div className="flex-grow border-t border-neutral-200"></div>
-                  </div>
-
                   <form onSubmit={handleSaveDirectUrl} className="space-y-6">
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4 ml-2">Option B: Use Direct Web Link</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4 ml-2">CV / Resume Web Link</label>
                       <p className="text-[11px] text-neutral-400 mb-4 ml-2 leading-relaxed">
-                        Alternatively, paste any online hosting link (Google Drive, Dropbox, OneDrive, personal web space) here and save instantly.
+                        Paste any online hosting link (Google Drive, Dropbox, OneDrive, or personal CV file link) here to update your CV button across the portfolio website instantly.
                       </p>
                       <div className="flex flex-col md:flex-row gap-4">
                         <input 
