@@ -5,10 +5,9 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield, GripVertical, Star, File as FileIcon, Loader2, CheckCircle2 } from "lucide-react";
+import { Edit2, Trash2, Plus, X, Layout, FileText, Settings, Image as ImageIcon, Save, LogOut, ExternalLink, Shield, Star, File as FileIcon, Loader2, CheckCircle2, ChevronUp, ChevronDown, ArrowUpDown } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 enum OperationType {
   CREATE = 'create',
@@ -101,6 +100,7 @@ export default function Admin() {
   const [siteSettings, setSiteSettings] = useState<{ resumeUrl: string }>({ resumeUrl: "" });
   const [manualUrl, setManualUrl] = useState("");
   const [resumeLoading, setResumeLoading] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -402,38 +402,72 @@ export default function Admin() {
     }
   };
 
-  const onDragEnd = async (result: any) => {
-    if (!result.destination) return;
-
-    // Filter projects by current tab
-    const filteredItems = projects.filter(p => {
-      if (listTab === "home") return p.showOnHome;
-      const projectType = p.type || "main";
-      return projectType === listTab;
-    });
-    const otherItems = projects.filter(p => {
-      if (listTab === "home") return !p.showOnHome;
-      const projectType = p.type || "main";
-      return projectType !== listTab;
-    });
-    
-    const items = Array.from(filteredItems) as Project[];
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // Update Firestore for the reordered items in this tab
-    try {
-      const batch: Promise<void>[] = [];
-      const orderField = listTab === "home" ? "homeSortOrder" : "sortOrder";
-      
-      items.forEach((item, index) => {
-        if (item[orderField] !== index) {
-          batch.push(updateDoc(doc(db, "projects", item.id), { [orderField]: index }));
+  const handleOrderChange = async (projectId: string, targetPosition: number) => {
+    // Current filtered projects for this tab, sorted in order
+    const currentList = projects
+      .filter((p) => {
+        if (listTab === "home") return p.showOnHome;
+        const projectType = p.type || "main";
+        return projectType === listTab;
+      })
+      .sort((a, b) => {
+        if (listTab === "home") {
+          const orderA = a.homeSortOrder !== undefined ? a.homeSortOrder : 9999;
+          const orderB = b.homeSortOrder !== undefined ? b.homeSortOrder : 9999;
+          if (orderA !== orderB) return orderA - orderB;
+        } else {
+          const orderA = a.sortOrder !== undefined ? a.sortOrder : 9999;
+          const orderB = b.sortOrder !== undefined ? b.sortOrder : 9999;
+          if (orderA !== orderB) return orderA - orderB;
         }
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
       });
-      await Promise.all(batch);
-    } catch (error) {
-      console.error("Failed to update sort order", error);
+
+    const currentIndex = currentList.findIndex((p) => p.id === projectId);
+    const targetIndex = targetPosition - 1; // 1-based to 0-based
+
+    if (currentIndex === -1 || targetIndex < 0 || targetIndex >= currentList.length || currentIndex === targetIndex) {
+      return;
+    }
+
+    const reordered = [...currentList];
+    const [moved] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    const orderField = listTab === "home" ? "homeSortOrder" : "sortOrder";
+    const updatedIdToOrder = new Map<string, number>();
+    reordered.forEach((p, idx) => {
+      // 1 is on top: 1, 2, 3, 4, ...
+      updatedIdToOrder.set(p.id, idx + 1);
+    });
+
+    // Optimistically update local state immediately
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (updatedIdToOrder.has(p.id)) {
+          return { ...p, [orderField]: updatedIdToOrder.get(p.id)! };
+        }
+        return p;
+      })
+    );
+
+    setIsReordering(true);
+    try {
+      const updates = reordered.map((p, idx) => {
+        const newOrder = idx + 1;
+        if (p[orderField] !== newOrder) {
+          return updateDoc(doc(db, "projects", p.id), { [orderField]: newOrder });
+        }
+        return Promise.resolve();
+      });
+      await Promise.all(updates);
+    } catch (err) {
+      console.error("Failed to update project order in Firestore:", err);
+      alert("Failed to update project order. Please check permissions.");
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -903,203 +937,276 @@ export default function Admin() {
             </button>
           </div>
 
-          <p className="text-xs text-neutral-400 font-medium uppercase tracking-widest">
-            {listTab === "config" ? "Manage global site settings" : "Drag cards to reorder"}
+          <p className="text-xs text-neutral-400 font-medium uppercase tracking-widest flex items-center gap-2">
+            {isReordering ? (
+              <span className="text-brand-teal font-bold flex items-center gap-1.5">
+                <Loader2 size={13} className="animate-spin" /> Saving order...
+              </span>
+            ) : listTab === "config" ? (
+              "Manage global site settings"
+            ) : (
+              `Set ordering numbers (1 is top) • ${
+                projects.filter((p) => (listTab === "home" ? p.showOnHome : (p.type || "main") === listTab)).length
+              } items`
+            )}
           </p>
         </div>
         
-        <DragDropContext onDragEnd={onDragEnd}>
-          {listTab === "config" ? (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-neutral-50 rounded-[2.5rem] p-8 md:p-12 border border-neutral-100"
-            >
-              <div className="max-w-xl mx-auto md:mx-0">
-                <div className="flex items-center gap-4 mb-12">
-                  <div className="w-16 h-16 bg-black text-white rounded-[2rem] flex items-center justify-center shadow-2xl">
-                    <FileIcon size={32} />
+        {listTab === "config" ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-neutral-50 rounded-[2.5rem] p-8 md:p-12 border border-neutral-100"
+          >
+            <div className="max-w-xl mx-auto md:mx-0">
+              <div className="flex items-center gap-4 mb-12">
+                <div className="w-16 h-16 bg-black text-white rounded-[2rem] flex items-center justify-center shadow-2xl">
+                  <FileIcon size={32} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight">Resume Management</h3>
+                  <p className="text-neutral-400 text-xs font-bold uppercase tracking-[0.2em] mt-1">Upload your portfolio resume (PDF)</p>
+                </div>
+              </div>
+
+              <div className="space-y-10">
+                {siteSettings.resumeUrl && (
+                  <div className="p-8 bg-white border border-neutral-100 rounded-[2rem] flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-5">
+                      <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center">
+                        <CheckCircle2 size={24} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Active CV Link</p>
+                        <a href={siteSettings.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-black hover:text-brand-teal flex items-center gap-2 transition-colors">
+                          Review Current Link <ExternalLink size={14} />
+                        </a>
+                      </div>
+                    </div>
                   </div>
+                )}
+
+                <form onSubmit={handleSaveDirectUrl} className="space-y-6">
                   <div>
-                    <h3 className="text-2xl font-bold tracking-tight">Resume Management</h3>
-                    <p className="text-neutral-400 text-xs font-bold uppercase tracking-[0.2em] mt-1">Upload your portfolio resume (PDF)</p>
+                    <label htmlFor="manual-resume-url" className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4 ml-2">CV / Resume Web Link</label>
+                    <p className="text-[11px] text-neutral-400 mb-4 ml-2 leading-relaxed">
+                      Paste any online hosting link (Google Drive, Dropbox, OneDrive, or personal CV file link) here to update your CV button across the portfolio website instantly.
+                    </p>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <input 
+                        id="manual-resume-url"
+                        type="url"
+                        value={manualUrl}
+                        onChange={(e) => setManualUrl(e.target.value)}
+                        placeholder="https://drive.google.com/your-resume-id"
+                        className="flex-grow bg-white border border-neutral-200 rounded-2xl px-6 py-4 text-sm focus:border-black outline-none transition-colors"
+                        required
+                      />
+                      <button 
+                        type="submit" 
+                        disabled={resumeLoading}
+                        className="px-10 py-5 bg-black text-white rounded-2xl font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all flex items-center justify-center gap-3 shadow-xl disabled:opacity-50"
+                      >
+                        {resumeLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                        {resumeLoading ? "Saving..." : "Save Link"}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </form>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          (() => {
+            const currentTabProjects = projects
+              .filter((p) => {
+                if (listTab === "home") return p.showOnHome;
+                const projectType = p.type || "main";
+                return projectType === listTab;
+              })
+              .sort((a, b) => {
+                if (listTab === "home") {
+                  const orderA = a.homeSortOrder !== undefined ? a.homeSortOrder : 9999;
+                  const orderB = b.homeSortOrder !== undefined ? b.homeSortOrder : 9999;
+                  if (orderA !== orderB) return orderA - orderB;
+                } else {
+                  const orderA = a.sortOrder !== undefined ? a.sortOrder : 9999;
+                  const orderB = b.sortOrder !== undefined ? b.sortOrder : 9999;
+                  if (orderA !== orderB) return orderA - orderB;
+                }
+                const timeA = a.createdAt?.seconds || 0;
+                const timeB = b.createdAt?.seconds || 0;
+                return timeB - timeA;
+              });
 
-                <div className="space-y-10">
-                  {siteSettings.resumeUrl && (
-                    <div className="p-8 bg-white border border-neutral-100 rounded-[2rem] flex items-center justify-between shadow-sm">
-                      <div className="flex items-center gap-5">
-                        <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center">
-                          <CheckCircle2 size={24} />
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Active CV Link</p>
-                          <a href={siteSettings.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-black hover:text-brand-teal flex items-center gap-2 transition-colors">
-                            Review Current Link <ExternalLink size={14} />
-                          </a>
-                        </div>
-                      </div>
-                    </div>
+            if (currentTabProjects.length === 0) {
+              return (
+                <div className="py-24 text-center bg-neutral-50 rounded-[2.5rem] border border-neutral-100 p-8">
+                  <p className="text-neutral-400 font-bold uppercase tracking-widest text-xs">
+                    {listTab === "home" ? "No featured projects selected for Home screen" : `No ${listTab === "main" ? "Main" : "Lab"} projects found`}
+                  </p>
+                  {listTab === "home" && (
+                    <p className="text-neutral-400 text-xs mt-3 max-w-md mx-auto">
+                      Go to <span className="font-bold text-black">Main Project</span> or <span className="font-bold text-black">My Lab</span> and click the star (<Star size={12} className="inline mx-1" />) icon to feature a project on your homepage.
+                    </p>
                   )}
-
-                  <form onSubmit={handleSaveDirectUrl} className="space-y-6">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4 ml-2">CV / Resume Web Link</label>
-                      <p className="text-[11px] text-neutral-400 mb-4 ml-2 leading-relaxed">
-                        Paste any online hosting link (Google Drive, Dropbox, OneDrive, or personal CV file link) here to update your CV button across the portfolio website instantly.
-                      </p>
-                      <div className="flex flex-col md:flex-row gap-4">
-                        <input 
-                          type="url"
-                          value={manualUrl}
-                          onChange={(e) => setManualUrl(e.target.value)}
-                          placeholder="https://drive.google.com/your-resume-id"
-                          className="flex-grow bg-white border border-neutral-200 rounded-2xl px-6 py-4 text-sm focus:border-black outline-none transition-colors"
-                          required
-                        />
-                        <button 
-                          type="submit" 
-                          disabled={resumeLoading}
-                          className="px-10 py-5 bg-black text-white rounded-2xl font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all flex items-center justify-center gap-3 shadow-xl disabled:opacity-50"
-                        >
-                          {resumeLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                          {resumeLoading ? "Saving..." : "Save Link"}
-                        </button>
-                      </div>
-                    </div>
-                  </form>
                 </div>
-              </div>
-            </motion.div>
-          ) : (
-            <Droppable droppableId="projects-list" direction="vertical">
-            {(provided) => (
-              <div 
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
-              >
-                {projects
-                  .filter(p => {
-                    if (listTab === "home") return p.showOnHome;
-                    const projectType = p.type || "main";
-                    return projectType === listTab;
-                  })
-                  .sort((a, b) => {
-                    if (listTab === "home") {
-                      return (a.homeSortOrder || 0) - (b.homeSortOrder || 0);
-                    }
-                    return (a.sortOrder || 0) - (b.sortOrder || 0);
-                  })
-                  .map((p, index) => {
-                    const DraggableComponent = Draggable as any;
-                    return (
-                      <DraggableComponent key={p.id} draggableId={p.id} index={index}>
-                      {(provided: any, snapshot: any) => (
-                        <div 
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`group bg-white rounded-[2.5rem] overflow-hidden border border-neutral-100 hover:border-neutral-200 hover:shadow-2xl transition-all duration-300 relative ${
-                            snapshot.isDragging ? "shadow-2xl scale-[1.02] z-50 ring-2 ring-brand-teal" : ""
-                          }`}
-                        >
-                          <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
-                            <img src={p.image} alt={p.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />
-                            
-                            {/* Drag Handle */}
-                            <div 
-                              {...provided.dragHandleProps}
-                              className="absolute top-6 left-6 p-3 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl opacity-0 group-hover:opacity-100 transition-all cursor-grab active:cursor-grabbing z-40"
-                            >
-                              <GripVertical size={18} />
-                            </div>
+              );
+            }
 
-                            <div className="absolute top-6 right-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-[60]">
-                              <button 
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  try {
-                                    const isFeaturing = !p.showOnHome;
-                                    await updateDoc(doc(db, "projects", p.id), { 
-                                      showOnHome: isFeaturing,
-                                      // If featuring, place it at the end of the home list
-                                      homeSortOrder: isFeaturing 
-                                        ? projects.filter(proj => proj.showOnHome).length 
-                                        : (p.homeSortOrder || 0)
-                                    });
-                                  } catch (err) {
-                                    console.error("Failed to toggle home feature:", err);
-                                    alert("Security Rules updated. Please try again in 5 seconds.");
-                                  }
-                                }} 
-                                className={`p-4 backdrop-blur-md rounded-2xl shadow-xl transition-all cursor-pointer pointer-events-auto ${
-                                  p.showOnHome 
-                                    ? "bg-brand-teal text-white hover:bg-brand-teal/80" 
-                                    : "bg-white/90 text-black hover:bg-black hover:text-white"
-                                }`}
-                                title={p.showOnHome ? "Remove from Home" : "Feature on Home"}
-                              >
-                                <Star size={18} fill={p.showOnHome ? "currentColor" : "none"} />
-                              </button>
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEdit(p);
-                                }} 
-                                className="p-4 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl hover:bg-black hover:text-white transition-all cursor-pointer pointer-events-auto"
-                              >
-                                <Edit2 size={18} />
-                              </button>
-                              <button 
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  if (window.confirm("Delete this project?")) {
-                                    await deleteDoc(doc(db, "projects", p.id));
-                                  }
-                                }} 
-                                className="p-4 bg-white/90 backdrop-blur-md text-red-500 rounded-2xl shadow-xl hover:bg-red-500 hover:text-white transition-all cursor-pointer pointer-events-auto"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                            <div className="absolute bottom-6 left-6 flex gap-2 z-20">
-                              <div className="px-4 py-2 bg-black/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
-                                {p.type === "lab" ? "My Lab" : "Main"}
-                              </div>
-                              <div className="px-4 py-2 bg-brand-teal/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
-                                {p.category}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="p-10">
-                            <div className="flex justify-between items-start mb-4">
-                              <h3 className="font-bold text-2xl tracking-tight leading-tight">{p.title}</h3>
-                              <Link to={`/projects/${p.id}`} target="_blank" className="p-2 text-neutral-300 hover:text-black transition-colors">
-                                <ExternalLink size={18} />
-                              </Link>
-                            </div>
-                            <p className="text-neutral-500 text-sm leading-relaxed line-clamp-2 mb-8">{p.description}</p>
-                            <div className="flex items-center gap-4">
-                              {p.password && (
-                                <div className="flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-lg text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                                  <Shield size={12} /> Password Required
-                                </div>
-                              )}
-                              <div className="flex-grow h-px bg-neutral-100" />
-                            </div>
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {currentTabProjects.map((p, index) => (
+                  <motion.div 
+                    key={p.id}
+                    layout
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="group bg-white rounded-[2.5rem] overflow-hidden border border-neutral-100 hover:border-neutral-200 hover:shadow-2xl transition-all duration-300 relative flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
+                        <img 
+                          src={p.image} 
+                          alt={p.title} 
+                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" 
+                          referrerPolicy="no-referrer" 
+                        />
+                        
+                        {/* Ordering Dropdown & Up/Down Controls (1 is Top) */}
+                        <div className="absolute top-4 left-4 z-40 flex items-center gap-2 bg-black/90 text-white backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-2xl border border-white/10">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Order:</span>
+                          <select
+                            id={`order-select-${p.id}`}
+                            aria-label={`Order position for ${p.title}`}
+                            value={index + 1}
+                            onChange={(e) => handleOrderChange(p.id, Number(e.target.value))}
+                            disabled={isReordering}
+                            className="bg-white text-black font-bold text-xs rounded-xl px-2.5 py-1 outline-none cursor-pointer hover:bg-neutral-100 transition-colors shadow-sm"
+                            title="Assign ordering number (1 is top)"
+                          >
+                            {currentTabProjects.map((_, optIdx) => (
+                              <option key={optIdx + 1} value={optIdx + 1}>
+                                #{optIdx + 1} {optIdx === 0 ? "(Top)" : optIdx === currentTabProjects.length - 1 ? "(Last)" : ""}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div className="flex items-center gap-0.5 ml-1">
+                            <button
+                              type="button"
+                              disabled={isReordering || index === 0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOrderChange(p.id, index);
+                              }}
+                              className="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-25 disabled:pointer-events-none transition-colors"
+                              title="Move up (towards #1 top)"
+                            >
+                              <ChevronUp size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isReordering || index === currentTabProjects.length - 1}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOrderChange(p.id, index + 2);
+                              }}
+                              className="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-25 disabled:pointer-events-none transition-colors"
+                              title="Move down"
+                            >
+                              <ChevronDown size={14} />
+                            </button>
                           </div>
                         </div>
-                      )}
-                    </DraggableComponent>
-                  );
-                })}
-                {provided.placeholder}
+
+                        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-[60]">
+                          <button 
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const isFeaturing = !p.showOnHome;
+                                await updateDoc(doc(db, "projects", p.id), { 
+                                  showOnHome: isFeaturing,
+                                  homeSortOrder: isFeaturing 
+                                    ? projects.filter(proj => proj.showOnHome).length + 1 
+                                    : (p.homeSortOrder || 0)
+                                });
+                              } catch (err) {
+                                console.error("Failed to toggle home feature:", err);
+                                alert("Failed to update feature status.");
+                              }
+                            }} 
+                            className={`p-3.5 backdrop-blur-md rounded-2xl shadow-xl transition-all cursor-pointer pointer-events-auto ${
+                              p.showOnHome 
+                                ? "bg-brand-teal text-white hover:bg-brand-teal/80" 
+                                : "bg-white/90 text-black hover:bg-black hover:text-white"
+                            }`}
+                            title={p.showOnHome ? "Remove from Home" : "Feature on Home"}
+                          >
+                            <Star size={18} fill={p.showOnHome ? "currentColor" : "none"} />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(p);
+                            }} 
+                            className="p-3.5 bg-white/90 backdrop-blur-md text-black rounded-2xl shadow-xl hover:bg-black hover:text-white transition-all cursor-pointer pointer-events-auto"
+                            title="Edit project"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button 
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (window.confirm("Delete this project?")) {
+                                await deleteDoc(doc(db, "projects", p.id));
+                              }
+                            }} 
+                            className="p-3.5 bg-white/90 backdrop-blur-md text-red-500 rounded-2xl shadow-xl hover:bg-red-500 hover:text-white transition-all cursor-pointer pointer-events-auto"
+                            title="Delete project"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                        
+                        <div className="absolute bottom-4 left-4 flex gap-2 z-20">
+                          <div className="px-3.5 py-1.5 bg-black/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            {p.type === "lab" ? "My Lab" : "Main"}
+                          </div>
+                          <div className="px-3.5 py-1.5 bg-brand-teal/80 backdrop-blur-md text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            {p.category}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-8 md:p-10">
+                        <div className="flex justify-between items-start mb-3">
+                          <h3 className="font-bold text-2xl tracking-tight leading-tight">{p.title}</h3>
+                          <Link to={`/projects/${p.id}`} target="_blank" className="p-2 text-neutral-300 hover:text-black transition-colors" title="View live page">
+                            <ExternalLink size={18} />
+                          </Link>
+                        </div>
+                        <p className="text-neutral-500 text-sm leading-relaxed line-clamp-2 mb-6">{p.description}</p>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 bg-neutral-100 px-3 py-1 rounded-lg">
+                            Position #{index + 1} {index === 0 ? "• Top" : ""}
+                          </span>
+                          {p.password && (
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-neutral-100 rounded-lg text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                              <Shield size={12} /> Password Required
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-            )}
-          </Droppable>
-          )}
-        </DragDropContext>
+            );
+          })()
+        )}
       </div>
     </div>
   );
