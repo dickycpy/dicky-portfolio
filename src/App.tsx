@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HashRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import Navbar from "./components/Navbar";
 import FancyCursor from "./components/FancyCursor";
