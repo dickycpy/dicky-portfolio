@@ -17,9 +17,14 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || configData.appId,
 };
 
-const firestoreDatabaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || configData.firestoreDatabaseId;
+const firestoreDatabaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || configData.firestoreDatabaseId || "";
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, firestoreDatabaseId);
+// Use the named database only when one is configured; otherwise fall back to
+// the project's (default) database. (New project dicky-portfolio-83529 uses
+// the default DB, so firestoreDatabaseId is empty.)
+export const db = firestoreDatabaseId
+  ? getFirestore(app, firestoreDatabaseId)
+  : getFirestore(app);
 export const storage = getStorage(app);
