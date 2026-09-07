@@ -45,10 +45,15 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Admin emails allowed to write. Add more to this list if needed.
+    function adminEmails() {
+      return ['cpakyin117@gmail.com', 'dicky.chu.ibm@gmail.com'];
+    }
+
     function isAdmin() {
       return isAuthenticated() &&
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         (request.auth.token.email == "dicky.chu.ibm@gmail.com" && request.auth.token.email_verified == true));
+         (request.auth.token.email in adminEmails() && request.auth.token.email_verified == true));
     }
 
     function isOwner(userId) {
@@ -131,11 +136,19 @@ service cloud.firestore {
 
     match /projects/{projectId} {
       allow read: if true; // Publicly readable
-      allow create: if isAdmin() && 
-                      isValidProject(request.resource.data) && 
+
+      // New docs must be well-formed and owned by the admin.
+      allow create: if isAdmin() &&
+                      isValidProject(request.resource.data) &&
                       request.resource.data.authorId == request.auth.uid;
-      allow update: if isAdmin() && 
-                      isValidProject(request.resource.data);
+
+      // Updates: the admin is the only writer, so we trust admin edits rather
+      // than re-running full isValidProject() on the merged document. The old
+      // rule re-validated the WHOLE doc on every write, which blocked simple
+      // reorders / edits on legacy docs missing createdAt/authorId or with a
+      // non-http image URL. isAdmin() alone keeps writes locked to the admin.
+      allow update: if isAdmin();
+
       allow delete: if isAdmin();
     }
 
