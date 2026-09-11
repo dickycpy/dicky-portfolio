@@ -11,6 +11,7 @@ import ProjectForm from "@/components/admin/ProjectForm";
 import ProjectList from "@/components/admin/ProjectList";
 import SiteConfig from "@/components/admin/SiteConfig";
 import MediaManager from "@/components/admin/MediaManager";
+import ResumeEditor from "@/components/admin/ResumeEditor";
 
 export default function Admin() {
   const [user, setUser] = useState(auth.currentUser);
@@ -94,6 +95,7 @@ export default function Admin() {
     { id: "lab", label: "My Lab" },
     { id: "home", label: "Home Featured" },
     { id: "media", label: "Media" },
+    { id: "resume", label: "Resume" },
     { id: "config", label: "Site Config" },
   ];
 
@@ -161,6 +163,8 @@ export default function Admin() {
 
           {listTab === "config" ? (
             <SiteConfig />
+          ) : listTab === "resume" ? (
+            <ResumeEditor />
           ) : listTab === "media" ? (
             <MediaManager projects={projects} />
           ) : (

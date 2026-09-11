@@ -52,7 +52,46 @@ export interface ProjectFormData {
   subSections: Record<string, SubSectionBlock[]>;
 }
 
-export type ListTab = "main" | "lab" | "home" | "config" | "media";
+export type ListTab = "main" | "lab" | "home" | "config" | "media" | "resume";
+
+// --- Resume / CV (print-to-PDF) ---------------------------------------------
+export interface ResumeExperience {
+  company: string;
+  role: string;
+  dateRange: string;
+  bullets: string[];
+}
+
+export interface ResumeEducation {
+  school: string;
+  program: string;
+  dateRange: string;
+}
+
+export interface ResumeCertification {
+  name: string;
+  issuer: string;
+  dateRange: string;
+}
+
+export interface ResumeSkillGroup {
+  label: string;
+  items: string;
+}
+
+export interface ResumeData {
+  title: string;
+  name: string;
+  email: string;
+  phone: string;
+  portfolioUrl: string;
+  linkedinUrl: string;
+  summary: string;
+  experience: ResumeExperience[];
+  education: ResumeEducation[];
+  certifications: ResumeCertification[];
+  skills: ResumeSkillGroup[];
+}
 
 export const CATEGORIES = [
   "Artificial Intelligence",

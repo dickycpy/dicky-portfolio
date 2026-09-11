@@ -137,3 +137,64 @@
     overflow-y: auto;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Resume / CV print styles
+   The /resume page renders a printable A4 sheet. On screen it sits on a grey
+   backdrop; when printed (or "Save as PDF") we hide all app chrome and print
+   only the sheet.
+--------------------------------------------------------------------------- */
+
+/* Screen: A4-proportioned sheet with comfortable padding */
+.resume-sheet {
+  width: 100%;
+  max-width: 800px;
+  padding: 40px 48px;
+  cursor: auto;
+}
+
+/* Avoid awkward page breaks inside an experience/education entry */
+.resume-entry {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.resume-h2 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  /* Hide everything, then reveal only the resume sheet */
+  body * {
+    visibility: hidden !important;
+  }
+  .resume-sheet,
+  .resume-sheet * {
+    visibility: visible !important;
+  }
+  .resume-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-shadow: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure teal accents and colours print (Chrome/Safari) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
