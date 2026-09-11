@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/firebase";
+import { compressImage } from "@/lib/imageCompression";
 import {
   Layout,
   FileText,
@@ -110,8 +111,12 @@ const ProjectForm: React.FC<Props> = ({
       // Upload cover image if a file was chosen.
       let finalImageUrl = formData.imageUrl;
       if (file) {
-        const storageRef = ref(storage, `projects/${Date.now()}_${file.name}`);
-        await uploadBytes(storageRef, file);
+        const compressed = await compressImage(file);
+        const storageRef = ref(
+          storage,
+          `projects/${Date.now()}_${compressed.name}`
+        );
+        await uploadBytes(storageRef, compressed);
         finalImageUrl = await getDownloadURL(storageRef);
       }
 
@@ -124,11 +129,12 @@ const ProjectForm: React.FC<Props> = ({
         string,
         File
       ][]) {
+        const compressed = await compressImage(sectionFile);
         const storageRef = ref(
           storage,
-          `projects/subsections/${Date.now()}_${sectionFile.name}`
+          `projects/subsections/${Date.now()}_${compressed.name}`
         );
-        await uploadBytes(storageRef, sectionFile);
+        await uploadBytes(storageRef, compressed);
         const url = await getDownloadURL(storageRef);
         const [, sectionId, indexStr] = fkey.split("_");
         const index = parseInt(indexStr, 10);
