@@ -105,27 +105,34 @@ const ProjectCard: React.FC<{
   // However, since we are inside a container that is already padded (pt-32), 
   // we calculate the Y relative to that.
   
-  const startScroll = (index * 0.5) / total;
-  const endScroll = ((index + 1) * 0.5) / total;
-  
+  // Card 0 is the base and stays put; cards 1..N-1 slide up in sequence.
+  // Spread that sequence across the FULL scroll range (0 -> 1) so there is no
+  // dead scroll zone before the first card moves or after the last one lands.
+  const movingCount = Math.max(total - 1, 1);
+  const seg = 1 / movingCount;
+  const startScroll = (index - 1) * seg;
+  const endScroll = index * seg;
+
   // The final stacked Y position relative to the container
   const targetY = index * 40;
-  
-  // Each card slides from 100vh down to its targetY
-  // We use a spring for smoother motion
+
+  // Each card slides from below (1000px) up to its targetY.
   const yRaw = useTransform(
-    scrollYProgress, 
-    [0, startScroll, Math.min(endScroll, 1)], 
+    scrollYProgress,
+    [0, Math.max(startScroll, 0), Math.min(endScroll, 1)],
     [index === 0 ? 0 : 1000, index === 0 ? 0 : 1000, targetY]
   );
-  
-  const y = useSpring(yRaw, { stiffness: 100, damping: 20, restDelta: 0.001 });
 
-  // Scale down cards that are "behind"
+  // Tighter spring = the stack tracks the scroll instead of lagging behind it.
+  const y = useSpring(yRaw, { stiffness: 220, damping: 30, restDelta: 0.001 });
+
+  // Scale down cards that are "behind" once the next card starts covering them.
+  // The top-most card never recedes, so keep its scale constant.
+  const isTop = index === total - 1;
   const scale = useTransform(
     scrollYProgress,
-    [endScroll, endScroll + 0.2],
-    [1, 0.95]
+    isTop ? [0, 1] : [endScroll, Math.min(endScroll + seg, 1)],
+    isTop ? [1, 1] : [1, 0.95]
   );
 
   return (
