@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { ChevronDown, ChevronUp, ExternalLink, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const introText = "Adaptable designer turning challenges into creative, user-centered solutions with clarity, teamwork, and impact.";
+const introText = "I turn messy problems into clear requirements — sitting with users and stakeholders, digging out the real pain points, and translating them into what a team can build.";
 
 function RevealText({ text }: { text: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -23,7 +23,7 @@ function RevealText({ text }: { text: string }) {
           // eslint-disable-next-line react-hooks/rules-of-hooks
           const opacity = useTransform(scrollYProgress, [start, end], [0.15, 1]);
           
-          const isHighlight = ["creative,", "user-centered", "clarity,", "teamwork,", "impact."].includes(word);
+          const isHighlight = ["problems", "requirements", "stakeholders,", "pain", "points,"].includes(word);
 
           return (
             <motion.span
@@ -47,18 +47,19 @@ function RevealText({ text }: { text: string }) {
 
 const timeline = [
   {
-    year: "2025 - Present",
-    title: "Digital Operation Analyst",
-    company: "IBM Consulting",
+    year: "Dec 2025 - Present",
+    title: "Business Analyst",
+    company: "IBM Consulting · Digital Operation Analyst, IBM iX",
     location: "Hong Kong",
-    industry: "Consulting / Technology",
+    industry: "Consulting / AI Products",
     logo: "https://cdn.worldvectorlogo.com/logos/ibm.svg",
-    description: "Leading design for AI-driven products and cross-platform experiences.",
+    description: "Primary client-facing BA on AI-powered, phygital customer experiences.",
     bullets: [
-      "Leading design for AI-driven products and cross-platform experiences.",
-      "Collaborating with cross-functional teams to deliver high-impact solutions.",
-      "Optimizing digital operations through automation and data-driven insights.",
-      "Driving full automation transformation across service operations.",
+      "Primary client-facing BA on AI-powered, phygital customer experiences — including an AI horse-selection station and a live race broadcast blending real-time odds with Generative AI content.",
+      "Translated business needs into actionable requirements and System Requirement Specifications, then led offshore development teams through implementation and delivery.",
+      "Ran SA briefings and drove SAT/UAT coordination and defect triage — analysing reproduction conditions across app logic, real-time (MQTT) events, data and environment config.",
+      "Investigated complex production issues, owned root-cause analysis and RCA reports, and coordinated releases across SAT/PROD with client IT.",
+      "Prepared PDLC documentation and ran client knowledge-transfer sessions and walkthroughs to drive user adoption.",
       "Philosophy: if it repeats, automate it — for the customer and for the team."
     ],
     clients: [
@@ -67,38 +68,24 @@ const timeline = [
     caseStudy: { title: "Gen-AI digital racing experience", link: "/projects/ai-ops" }
   },
   {
-    year: "2023 - 2025",
-    title: "Product Designer",
-    company: "ESSAA Limited",
+    year: "2022 - 2025",
+    title: "Product Designer / BA",
+    company: "ESSAA Limited · PM/BA Specialist",
     handle: "creatogether.app",
     location: "Hong Kong",
-    industry: "SASS Digital Marketing / STEM Education",
+    industry: "AI Marketing SaaS / STEM Education",
     logo: "https://static.wixstatic.com/media/6e47aa_bd763a11882242e0b0c85f29a32be46c~mv2.png",
-    description: "Focused on digital marketing tools and interactive web experiences.",
+    description: "Led end-to-end delivery of an AI-powered Marketing SaaS platform.",
     bullets: [
-      "Designed end-to-end mobile applications and design systems.",
-      "Increased user engagement by 40% through intuitive UI patterns.",
-      "Managed multiple client projects from discovery to delivery."
+      "Led end-to-end delivery of an AI-powered Marketing SaaS platform — from product discovery and technical scoping to sprint management, UAT and regression testing.",
+      "Owned the product experience end to end: turned user and stakeholder needs into requirements and user flows, then worked closely with dev to ship them.",
+      "Planned and ran a pilot onboarding workshop for 50+ external stakeholders across South America.",
+      "Represented the product at international summits (Hong Kong, Taiwan, Vancouver), translating technical value into clear business impact for clients."
     ],
     clients: [
       { name: "STARLUX Airlines", logo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAJ1BMVEVHcEyXak2Ob02Ic02Xak2Xak2EdU2TbE2EdU2Xak2Ob02Xak2EdU2Z9D7zAAAADHRSTlMA/x0TsDTcdvRQj8fnoB3qAAAAbUlEQVQokdXS0Q6AIAgFUARKRf//e8vCtgb0Ui/dN3d2FZ0AHwXPLGSFk6YaWybxWDwY5NgIGDDqgaQW9eqYjDO6vf3IJMGeIwwU2jWtZ/OeVanZZ7lFSj9SLJFSXx3r/zeMjUSpZKensZ/xTTZjvwXsKgulDgAAAABJRU5ErkJggg==" },
       { name: "HKU iDendron", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvKwjcCnJapeWjOqfAZZc6Z84hOEX2D6ZA2w&s" },
       { name: "Findie", logo: "https://media.licdn.com/dms/image/v2/C4E0BAQF3HNPhVdvR1w/company-logo_200_200/company-logo_200_200/0/1647875333903/findieonline_logo?e=1777507200&v=beta&t=kcuau-Z7XfJoG9XasDa_ffNejVQBKeSfeTXmleYKkXU" }
-    ]
-  },
-  {
-    year: "2020 - 2022",
-    title: "UX/UI Designer",
-    company: "StartUp Inc",
-    handle: "startup.inc",
-    location: "San Francisco, CA",
-    industry: "SaaS / Fintech",
-    logo: "https://picsum.photos/seed/startup/100/100",
-    description: "Designed end-to-end mobile applications and design systems.",
-    bullets: [
-      "Built the initial design system from scratch.",
-      "Collaborated with engineers to ensure high-fidelity implementation.",
-      "Conducted user research and usability testing sessions."
     ]
   }
 ];
