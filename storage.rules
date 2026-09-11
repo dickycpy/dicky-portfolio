@@ -1,0 +1,35 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Only the verified portfolio admins may write. Mirrors the adminEmails()
+    // list in firestore.rules. Reads are public so visitors can see the images.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['cpakyin117@gmail.com', 'dicky.chu.ibm@gmail.com'];
+    }
+
+    function isImageUnder(maxBytes) {
+      return request.resource.size < maxBytes
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Project imagery: cover images + case-study section/subsection images.
+    // Publicly readable; only an admin can upload/overwrite/delete, and only
+    // reasonably sized image files.
+    match /projects/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && isImageUnder(10 * 1024 * 1024);
+    }
+
+    // Site assets (e.g. resume PDF, misc files). Public read, admin write.
+    // Not restricted to images so a resume PDF can live here if needed.
+    match /site/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+    }
+
+    // Everything else is denied by default.
+  }
+}
