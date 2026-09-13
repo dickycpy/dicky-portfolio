@@ -27,19 +27,19 @@ function AnimatedRoutes() {
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div key={location.pathname}>
+      <PageTransition key={location.pathname}>
         <Routes location={location}>
-          <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
-        <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-        <Route path="/projects" element={<PageTransition><Projects /></PageTransition>} />
-        <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-        <Route path="/blogs" element={<PageTransition><Blogs /></PageTransition>} />
-        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-        <Route path="/projects/:id" element={<PageTransition><ProjectDetail /></PageTransition>} />
-        <Route path="/resume" element={<PageTransition><Resume /></PageTransition>} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-      </Routes>
-    </motion.div>
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/blogs" element={<Blogs />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/projects/:id" element={<ProjectDetail />} />
+          <Route path="/resume" element={<Resume />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </PageTransition>
     </AnimatePresence>
   );
 }

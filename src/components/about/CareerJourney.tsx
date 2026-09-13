@@ -80,15 +80,28 @@ export default function CareerJourney() {
 
   return (
     <section className="mx-auto max-w-3xl px-2">
-      <p className="text-center text-sm font-semibold uppercase tracking-[0.2em] text-neutral-400 mb-8">
+      <p className="pl-11 md:pl-12 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-400 mb-8">
         Career path
       </p>
-      <div className="space-y-4">
+      <div className="relative">
+        {/* Timeline spine */}
+        <div
+          aria-hidden
+          className="absolute left-[7px] md:left-2 top-4 bottom-4 w-px bg-gradient-to-b from-brand-teal/40 via-black/10 to-transparent"
+        />
+        <div className="space-y-4">
         {journey.map((item, i) => {
           const open = expanded === i;
           return (
+            <div key={i} className="relative pl-11 md:pl-12">
+              {/* Timeline node */}
+              <span
+                aria-hidden
+                className={`absolute left-[7px] md:left-2 top-8 -translate-x-1/2 w-3 h-3 rounded-full ring-4 ring-brand-white transition-colors duration-500 ${
+                  open ? "bg-brand-teal" : "bg-neutral-300"
+                }`}
+              />
             <motion.div
-              key={i}
               layout
               className={`rounded-3xl border transition-colors duration-500 ${
                 open
@@ -202,8 +215,10 @@ export default function CareerJourney() {
                 )}
               </AnimatePresence>
             </motion.div>
+            </div>
           );
         })}
+        </div>
       </div>
     </section>
   );
