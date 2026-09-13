@@ -121,6 +121,21 @@ export default function Home() {
           I bridge users, stakeholders &amp; dev — sitting with people to uncover the
           real pain points, then turning them into requirements a team can build.
         </motion.p>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="flex flex-wrap gap-3 mt-8"
+        >
+          {["Requirements", "Stakeholder discovery", "UX-minded delivery"].map((k) => (
+            <span
+              key={k}
+              className="px-5 py-2.5 rounded-full text-sm font-bold text-brand-teal bg-brand-teal/5 border border-brand-teal/30"
+            >
+              {k}
+            </span>
+          ))}
+        </motion.div>
       </section>
 
       {/* Logo Wall */}
@@ -147,7 +162,7 @@ export default function Home() {
               end user in the picture.
             </p>
             <div className="flex flex-wrap gap-3 mb-12">
-              {["Requirements", "Stakeholder discovery", "UX-minded delivery"].map((k) => (
+              {["User stories", "UAT & delivery", "Cross-team facilitation"].map((k) => (
                 <span
                   key={k}
                   className="px-5 py-2.5 rounded-full text-sm font-bold text-brand-teal bg-brand-teal/5 border border-brand-teal/30"
