@@ -3,19 +3,22 @@ import {
   motion,
   useScroll,
   useTransform,
-  useMotionTemplate,
+  useMotionValue,
+  useSpring,
   useInView,
   useReducedMotion,
+  type MotionValue,
 } from "motion/react";
 import { Compass, PenLine, Rocket, ArrowRight } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Career journey — an immersive, scroll-driven story of Dicky's roles.
-// The throughline: on every product he's the BA embedded in an app team,
-// running the same loop (Discover → Specify → Ship). Each checkpoint scales
-// up and turns to full colour as it reaches the centre of the screen; the
-// others shrink, blur and fade to grey — so there's always one focal point.
-// Curved connectors draw themselves as you scroll between checkpoints.
+// Career journey — a CSS-3D "spatial depth" story of Dicky's roles.
+//   • Spatial depth: each checkpoint floats in a perspective scene and dollies
+//     forward on the Z-axis as you scroll it to centre (recedes + fades away).
+//   • Pointer reactivity: the whole scene tilts (rotateX/Y) toward the cursor,
+//     giving parallax — like looking into a box.
+//   • Layered storytelling: foreground text sits over a receding card panel.
+// Falls back to a calm flat layout for reduced-motion / touch (no cursor).
 // ---------------------------------------------------------------------------
 
 interface Stat {
@@ -81,11 +84,10 @@ const journey: Checkpoint[] = [
   },
 ];
 
-// A single metric tile. Counts up from 0 when it scrolls into view (unless the
-// value isn't a leading number, or the user prefers reduced motion).
+// Metric tile — counts up from 0 when scrolled into view.
 function StatTile({ value, label }: Stat & { key?: any }) {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-15%" });
+  const inView = useInView(ref, { once: true, margin: "-10%" });
   const reduce = useReducedMotion();
 
   const match = value.match(/^(\d+)(.*)$/);
@@ -113,7 +115,7 @@ function StatTile({ value, label }: Stat & { key?: any }) {
   return (
     <div
       ref={ref}
-      className="rounded-2xl border border-black/5 bg-neutral-50/70 px-3 py-4 text-center"
+      className="rounded-2xl border border-black/5 bg-white/80 px-3 py-4 text-center"
     >
       <div className="text-xl md:text-2xl font-bold text-brand-teal tracking-tight leading-none">
         {display}
@@ -123,8 +125,7 @@ function StatTile({ value, label }: Stat & { key?: any }) {
   );
 }
 
-// The recurring motif — a slow-rotating dashed ring with the three phases he
-// owns on every app team. Same on every checkpoint: that repetition IS the point.
+// Recurring motif: the same Discover → Specify → Ship loop on every checkpoint.
 function LoopGlyph() {
   const reduce = useReducedMotion();
   return (
@@ -135,13 +136,13 @@ function LoopGlyph() {
           animate={reduce ? undefined : { rotate: 360 }}
           transition={reduce ? undefined : { duration: 20, repeat: Infinity, ease: "linear" }}
         />
-        <span className="absolute left-1/2 -top-1 -translate-x-1/2 bg-white rounded-full p-1.5 text-brand-teal">
+        <span className="absolute left-1/2 -top-1 -translate-x-1/2 bg-white rounded-full p-1.5 text-brand-teal shadow-sm">
           <Compass size={18} />
         </span>
-        <span className="absolute -left-1 bottom-2 bg-white rounded-full p-1.5 text-brand-teal">
+        <span className="absolute -left-1 bottom-2 bg-white rounded-full p-1.5 text-brand-teal shadow-sm">
           <PenLine size={18} />
         </span>
-        <span className="absolute -right-1 bottom-2 bg-white rounded-full p-1.5 text-brand-teal">
+        <span className="absolute -right-1 bottom-2 bg-white rounded-full p-1.5 text-brand-teal shadow-sm">
           <Rocket size={18} />
         </span>
       </div>
@@ -154,133 +155,152 @@ function LoopGlyph() {
   );
 }
 
-// A curved connector that draws its stroke as you scroll past it.
-function Connector() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start 85%", "end 45%"],
-  });
+// The inner content of a checkpoint (shared by 3D and flat modes).
+function CardContent({ item }: { item: Checkpoint; key?: any }) {
   return (
-    <div ref={ref} className="flex justify-center text-brand-teal">
-      <svg width="60" height="120" viewBox="0 0 60 120" fill="none" aria-hidden="true">
-        <motion.path
-          d="M30 2 C 8 34, 52 86, 30 118"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          style={{ pathLength: scrollYProgress }}
-        />
-      </svg>
+    <div className="relative flex flex-col items-center gap-6 text-center px-6 py-10">
+      {/* receding panel behind the content */}
+      <div className="absolute inset-0 rounded-[2rem] bg-white/70 border border-black/5 shadow-2xl shadow-black/10 backdrop-blur-sm -z-10" />
+
+      <span className="w-3 h-3 rounded-full bg-brand-teal ring-4 ring-brand-teal/15" />
+
+      <div>
+        <div className="text-6xl md:text-7xl font-bold tracking-tighter leading-none">
+          {item.periodBig}
+        </div>
+        <div className="text-xs font-medium text-neutral-400 mt-2">{item.periodSub}</div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-black/5 shrink-0">
+          <img
+            src={item.logo}
+            alt={item.company}
+            className="w-full h-full object-contain p-1.5"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+        <div className="text-left">
+          <div className="text-lg font-bold tracking-tight leading-tight">{item.title}</div>
+          <div className="text-sm text-neutral-500">{item.company}</div>
+        </div>
+      </div>
+
+      <LoopGlyph />
+
+      <div className="grid grid-cols-3 gap-3 w-full">
+        {item.stats.map((s, i) => (
+          <StatTile key={i} value={s.value} label={s.label} />
+        ))}
+      </div>
+
+      {item.clients.length > 0 && (
+        <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+          {item.clients.map((c, i) => (
+            <img
+              key={i}
+              src={c.logo}
+              alt={c.name}
+              title={c.name}
+              className="h-5 w-auto object-contain"
+              referrerPolicy="no-referrer"
+            />
+          ))}
+        </div>
+      )}
+
+      {item.caseStudy && (
+        <a
+          href={item.caseStudy.link}
+          className="group inline-flex items-center gap-2 text-sm font-bold text-brand-teal"
+        >
+          Case study: {item.caseStudy.title}
+          <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+        </a>
+      )}
     </div>
   );
 }
 
-function CheckpointBlock({ item }: { item: Checkpoint }) {
+// A checkpoint floating in 3D space. Pointer tilt (rx/ry) is shared across the
+// scene; Z-dolly + scale + opacity are driven by this block's own scroll.
+function Checkpoint3D({
+  item,
+  rx,
+  ry,
+}: {
+  item: Checkpoint;
+  rx: MotionValue<number>;
+  ry: MotionValue<number>;
+  key?: any;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
-  const reduce = useReducedMotion();
-
-  // Peak (full colour, full size) when the block is centred in the viewport.
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.92, 1, 0.92]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.35, 1, 0.35]);
-  const gray = useTransform(scrollYProgress, [0, 0.5, 1], [1, 0, 1]);
-  const blurPx = useTransform(scrollYProgress, [0, 0.5, 1], [4, 0, 4]);
-  const filter = useMotionTemplate`grayscale(${gray}) blur(${blurPx}px)`;
+  // Peak (front + full size + opaque) when the block is centred.
+  const z = useTransform(scrollYProgress, [0, 0.5, 1], [-520, 0, -520]);
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.72, 1, 0.72]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.1, 1, 0.1]);
 
   return (
-    <div ref={ref} className="min-h-[85vh] flex items-center justify-center">
+    <div
+      ref={ref}
+      className="min-h-[92vh] flex items-center justify-center"
+      style={{ perspective: 1100 }}
+    >
       <motion.div
-        style={reduce ? undefined : { scale, opacity, filter }}
-        className="w-full max-w-xl flex flex-col items-center gap-7 text-center px-2"
+        style={{ rotateX: rx, rotateY: ry, z, scale, opacity }}
+        className="w-full max-w-md will-change-transform"
       >
-        {/* node dot */}
-        <span className="w-3 h-3 rounded-full bg-brand-teal ring-4 ring-brand-teal/15" />
-
-        {/* period */}
-        <div>
-          <div className="text-6xl md:text-7xl font-bold tracking-tighter leading-none">
-            {item.periodBig}
-          </div>
-          <div className="text-xs font-medium text-neutral-400 mt-2">{item.periodSub}</div>
-        </div>
-
-        {/* role + company */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-black/5 shrink-0">
-            <img
-              src={item.logo}
-              alt={item.company}
-              className="w-full h-full object-contain p-1.5"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <div className="text-left">
-            <div className="text-lg font-bold tracking-tight leading-tight">{item.title}</div>
-            <div className="text-sm text-neutral-500">{item.company}</div>
-          </div>
-        </div>
-
-        <LoopGlyph />
-
-        {/* metrics */}
-        <div className="grid grid-cols-3 gap-3 w-full">
-          {item.stats.map((s, i) => (
-            <StatTile key={i} value={s.value} label={s.label} />
-          ))}
-        </div>
-
-        {/* clients */}
-        {item.clients.length > 0 && (
-          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
-            {item.clients.map((c, i) => (
-              <img
-                key={i}
-                src={c.logo}
-                alt={c.name}
-                title={c.name}
-                className="h-5 w-auto object-contain"
-                referrerPolicy="no-referrer"
-              />
-            ))}
-          </div>
-        )}
-
-        {/* case study */}
-        {item.caseStudy && (
-          <a
-            href={item.caseStudy.link}
-            className="group inline-flex items-center gap-2 text-sm font-bold text-brand-teal"
-          >
-            Case study: {item.caseStudy.title}
-            <ArrowRight
-              size={16}
-              className="transition-transform group-hover:translate-x-1"
-            />
-          </a>
-        )}
+        <CardContent item={item} />
       </motion.div>
     </div>
   );
 }
 
 export default function CareerJourney() {
+  const reduce = useReducedMotion();
+
+  // Shared pointer position → gentle scene tilt.
+  const px = useMotionValue(0);
+  const py = useMotionValue(0);
+  const rx = useSpring(useTransform(py, [-0.5, 0.5], [9, -9]), {
+    stiffness: 120,
+    damping: 20,
+  });
+  const ry = useSpring(useTransform(px, [-0.5, 0.5], [-14, 14]), {
+    stiffness: 120,
+    damping: 20,
+  });
+
+  const onMove = (e: any) => {
+    if (reduce) return;
+    px.set(e.clientX / window.innerWidth - 0.5);
+    py.set(e.clientY / window.innerHeight - 0.5);
+  };
+
   return (
-    <section className="py-12">
-      <h2 className="text-center text-2xl md:text-3xl font-bold tracking-tight mb-4">
+    <section onMouseMove={onMove} className="py-8">
+      <h2 className="text-center text-2xl md:text-3xl font-bold tracking-tight mb-2">
         The same loop, every product
       </h2>
-      <div>
-        {journey.map((item, i) => (
-          <div key={i}>
-            {i > 0 && <Connector />}
-            <CheckpointBlock item={item} />
-          </div>
-        ))}
-      </div>
+
+      {reduce ? (
+        // Calm, accessible fallback — no 3D, no motion.
+        <div className="max-w-md mx-auto space-y-16 pt-8">
+          {journey.map((item, i) => (
+            <CardContent key={i} item={item} />
+          ))}
+        </div>
+      ) : (
+        <div>
+          {journey.map((item, i) => (
+            <Checkpoint3D key={i} item={item} rx={rx} ry={ry} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
