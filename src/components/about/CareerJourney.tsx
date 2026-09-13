@@ -12,13 +12,16 @@ import {
 import { Compass, PenLine, Rocket, ArrowRight } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Career journey — a CSS-3D "spatial depth" story of Dicky's roles.
-//   • Spatial depth: each checkpoint floats in a perspective scene and dollies
-//     forward on the Z-axis as you scroll it to centre (recedes + fades away).
-//   • Pointer reactivity: the whole scene tilts (rotateX/Y) toward the cursor,
-//     giving parallax — like looking into a box.
-//   • Layered storytelling: foreground text sits over a receding card panel.
-// Falls back to a calm flat layout for reduced-motion / touch (no cursor).
+// Career journey — a Prezi-style ZUI (zooming user interface).
+//   • One infinite canvas. A "camera" flies over it as you scroll.
+//   • The big dashed ring IS the container: the Discover → Specify → Ship loop
+//     that every product goes through. Each role is a small node nested on the
+//     ring — zoom into it to reveal what's inside (the "aha, there's more").
+//   • Camera path: overview (whole loop) → zoom IBM → pull back to loop (breathe)
+//     → pan + zoom ESSAA → pull all the way out. Space = meaning.
+//   • Pointer parallax tilts the whole scene gently, like looking into a box.
+// Falls back to a calm flat stack for reduced-motion / touch / narrow screens
+// (no camera flight — protects readability + avoids motion sickness).
 // ---------------------------------------------------------------------------
 
 interface Stat {
@@ -84,6 +87,40 @@ const journey: Checkpoint[] = [
   },
 ];
 
+// Camera keyframes over scroll progress.  x stays 0 (nodes are stacked
+// vertically), so the camera only travels up/down + zooms.
+// world point (0, cy) is centred when  y = -scale * cy.
+//   overview → zoom IBM(top, cy=-NODE_Y) → back → zoom ESSAA(bottom, cy=+NODE_Y) → out
+const NODE_Y = 340;
+const CAM_P = [0, 0.22, 0.4, 0.52, 0.7, 0.85, 1];
+const CAM_SCALE = [0.62, 1.6, 1.6, 0.62, 1.6, 1.6, 0.72];
+// y = -scale*cy :  IBM cy=-340 → +544 ;  ESSAA cy=+340 → -544
+const CAM_Y = [0, 544, 544, 0, -544, -544, 0];
+
+// per-node focus windows (badge ↔ full card cross-fade)
+const NODE_FOCUS = [
+  { cardIn: 0.15, cardFull: 0.23, cardHold: 0.39, cardOut: 0.47 }, // IBM
+  { cardIn: 0.63, cardFull: 0.71, cardHold: 0.84, cardOut: 0.92 }, // ESSAA
+];
+
+// True on narrow screens or coarse (touch) pointers — where a flying camera
+// hurts more than it helps.
+function useCompact() {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const narrow = window.innerWidth < 768;
+      const coarse =
+        window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      setCompact(narrow || coarse);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return compact;
+}
+
 // Metric tile — counts up from 0 when scrolled into view.
 function StatTile({ value, label }: Stat & { key?: any }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -125,7 +162,7 @@ function StatTile({ value, label }: Stat & { key?: any }) {
   );
 }
 
-// Recurring motif: the same Discover → Specify → Ship loop on every checkpoint.
+// Recurring motif — the same loop, small, shown on each expanded card.
 function LoopGlyph() {
   const reduce = useReducedMotion();
   return (
@@ -155,12 +192,12 @@ function LoopGlyph() {
   );
 }
 
-// The inner content of a checkpoint (shared by 3D and flat modes).
-function CardContent({ item }: { item: Checkpoint; key?: any }) {
+// The full detail of a role (shown flat, and as the "opened" node in ZUI).
+function CardContent({ item, showLoop = true }: { item: Checkpoint; showLoop?: boolean; key?: any }) {
   return (
     <div className="relative flex flex-col items-center gap-6 text-center px-6 py-10">
       {/* receding panel behind the content */}
-      <div className="absolute inset-0 rounded-[2rem] bg-white/70 border border-black/5 shadow-2xl shadow-black/10 backdrop-blur-sm -z-10" />
+      <div className="absolute inset-0 rounded-[2rem] bg-white/80 border border-black/5 shadow-2xl shadow-black/10 backdrop-blur-sm -z-10" />
 
       <span className="w-3 h-3 rounded-full bg-brand-teal ring-4 ring-brand-teal/15" />
 
@@ -186,7 +223,7 @@ function CardContent({ item }: { item: Checkpoint; key?: any }) {
         </div>
       </div>
 
-      <LoopGlyph />
+      {showLoop && <LoopGlyph />}
 
       <div className="grid grid-cols-3 gap-3 w-full">
         {item.stats.map((s, i) => (
@@ -222,85 +259,199 @@ function CardContent({ item }: { item: Checkpoint; key?: any }) {
   );
 }
 
-// A checkpoint floating in 3D space. Pointer tilt (rx/ry) is shared across the
-// scene; Z-dolly + scale + opacity are driven by this block's own scroll.
-function Checkpoint3D({
+// The collapsed node you see from far away — a labelled dot on the ring.
+function NodeBadge({ item }: { item: Checkpoint; key?: any }) {
+  return (
+    <div className="flex flex-col items-center gap-3 text-center">
+      <div className="w-20 h-20 rounded-full bg-white border border-black/10 shadow-xl shadow-black/10 flex items-center justify-center overflow-hidden">
+        <img
+          src={item.logo}
+          alt={item.company}
+          className="w-12 h-12 object-contain"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      <div className="text-4xl font-bold tracking-tighter leading-none">{item.periodBig}</div>
+      <div className="text-xs font-medium text-neutral-500 max-w-[10rem]">{item.title}</div>
+    </div>
+  );
+}
+
+// A node nested on the ring: badge (far) cross-fades into the full card (near).
+function ZuiNode({
   item,
-  rx,
-  ry,
+  yOffset,
+  progress,
+  focus,
 }: {
   item: Checkpoint;
-  rx: MotionValue<number>;
-  ry: MotionValue<number>;
+  yOffset: number;
+  progress: MotionValue<number>;
+  focus: { cardIn: number; cardFull: number; cardHold: number; cardOut: number };
   key?: any;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  });
-  // Peak (front + full size + opaque) when the block is centred.
-  const z = useTransform(scrollYProgress, [0, 0.5, 1], [-520, 0, -520]);
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.72, 1, 0.72]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.1, 1, 0.1]);
+  const { cardIn, cardFull, cardHold, cardOut } = focus;
+  const cardOpacity = useTransform(
+    progress,
+    [cardIn, cardFull, cardHold, cardOut],
+    [0, 1, 1, 0]
+  );
+  const badgeOpacity = useTransform(
+    progress,
+    [cardIn, cardFull, cardHold, cardOut],
+    [1, 0, 0, 1]
+  );
 
   return (
     <div
-      ref={ref}
-      className="min-h-[92vh] flex items-center justify-center"
-      style={{ perspective: 1100 }}
+      className="absolute left-1/2 top-1/2"
+      style={{ transform: `translate(-50%, calc(-50% + ${yOffset}px))` }}
     >
+      {/* full card — readable only when the camera is on it */}
       <motion.div
-        style={{ rotateX: rx, rotateY: ry, z, scale, opacity }}
-        className="w-full max-w-md will-change-transform"
+        style={{ opacity: cardOpacity }}
+        className="w-[380px] -translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-1/2"
       >
         <CardContent item={item} />
+      </motion.div>
+      {/* collapsed badge — what you see from the overview */}
+      <motion.div
+        style={{ opacity: badgeOpacity }}
+        className="-translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-1/2"
+      >
+        <NodeBadge item={item} />
       </motion.div>
     </div>
   );
 }
 
-export default function CareerJourney() {
+// The big container ring — the loop every product runs through.
+function LoopRing({ progress }: { progress: MotionValue<number> }) {
   const reduce = useReducedMotion();
+  // fade the ring back a touch while zoomed into a node, so cards stay clean
+  const opacity = useTransform(
+    progress,
+    [0, 0.18, 0.24, 0.46, 0.52, 0.64, 0.7, 0.92, 1],
+    [1, 1, 0.12, 0.12, 1, 1, 0.12, 0.12, 1]
+  );
+  return (
+    <motion.div
+      style={{ opacity }}
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+    >
+      <div className="relative w-[720px] h-[720px]">
+        <motion.div
+          className="absolute inset-0 rounded-full border-2 border-dashed border-brand-teal/35"
+          animate={reduce ? undefined : { rotate: 360 }}
+          transition={reduce ? undefined : { duration: 90, repeat: Infinity, ease: "linear" }}
+        />
+        <span className="absolute left-1/2 top-6 -translate-x-1/2 text-xs font-semibold tracking-widest text-neutral-400">
+          DISCOVER
+        </span>
+        <span className="absolute left-10 top-1/2 -translate-y-1/2 text-xs font-semibold tracking-widest text-neutral-400">
+          SPECIFY
+        </span>
+        <span className="absolute right-10 top-1/2 -translate-y-1/2 text-xs font-semibold tracking-widest text-neutral-400">
+          SHIP
+        </span>
+      </div>
+    </motion.div>
+  );
+}
 
-  // Shared pointer position → gentle scene tilt.
+// Desktop ZUI scene.
+function ZuiScene() {
+  const reduce = useReducedMotion();
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
+
+  const rawScale = useTransform(scrollYProgress, CAM_P, CAM_SCALE);
+  const rawY = useTransform(scrollYProgress, CAM_P, CAM_Y);
+  // light spring softens the camera → gentler on the eyes
+  const scale = useSpring(rawScale, { stiffness: 80, damping: 22, mass: 0.4 });
+  const camY = useSpring(rawY, { stiffness: 80, damping: 22, mass: 0.4 });
+
+  // pointer parallax — subtle tilt of the whole scene
   const px = useMotionValue(0);
   const py = useMotionValue(0);
-  const rx = useSpring(useTransform(py, [-0.5, 0.5], [9, -9]), {
-    stiffness: 120,
-    damping: 20,
-  });
-  const ry = useSpring(useTransform(px, [-0.5, 0.5], [-14, 14]), {
-    stiffness: 120,
-    damping: 20,
-  });
-
+  const rx = useSpring(useTransform(py, [-0.5, 0.5], [5, -5]), { stiffness: 120, damping: 20 });
+  const ry = useSpring(useTransform(px, [-0.5, 0.5], [-7, 7]), { stiffness: 120, damping: 20 });
   const onMove = (e: any) => {
     if (reduce) return;
     px.set(e.clientX / window.innerWidth - 0.5);
     py.set(e.clientY / window.innerHeight - 0.5);
   };
 
-  return (
-    <section onMouseMove={onMove} className="py-8">
-      <h2 className="text-center text-2xl md:text-3xl font-bold tracking-tight mb-2">
-        The same loop, every product
-      </h2>
+  // opening hint fades once you start scrolling
+  const hintOpacity = useTransform(scrollYProgress, [0, 0.06], [1, 0]);
 
-      {reduce ? (
-        // Calm, accessible fallback — no 3D, no motion.
+  return (
+    // tall driver — gives the camera room to travel (≈ 5 waypoints)
+    <div ref={sectionRef} className="relative h-[500vh]">
+      <div
+        onMouseMove={onMove}
+        className="sticky top-0 h-screen overflow-hidden flex items-center justify-center"
+        style={{ perspective: 1400 }}
+      >
+        {/* pinned foreground caption */}
+        <div className="pointer-events-none absolute top-24 left-0 right-0 z-20 text-center px-6">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            The same loop, every product
+          </h2>
+        </div>
+        <motion.div
+          style={{ opacity: hintOpacity }}
+          className="pointer-events-none absolute bottom-10 left-0 right-0 z-20 text-center text-xs font-medium tracking-widest text-neutral-400"
+        >
+          SCROLL TO TRAVEL ↓
+        </motion.div>
+
+        {/* the world, seen through the camera */}
+        <motion.div style={{ rotateX: rx, rotateY: ry }} className="w-full h-full">
+          <motion.div
+            style={{ y: camY, scale }}
+            className="relative w-full h-full will-change-transform"
+          >
+            <LoopRing progress={scrollYProgress} />
+            {journey.map((item, i) => (
+              <ZuiNode
+                key={i}
+                item={item}
+                yOffset={i === 0 ? -NODE_Y : NODE_Y}
+                progress={scrollYProgress}
+                focus={NODE_FOCUS[i]}
+              />
+            ))}
+          </motion.div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+export default function CareerJourney() {
+  const reduce = useReducedMotion();
+  const compact = useCompact();
+
+  // Calm, accessible fallback — no camera, no motion sickness, fully readable.
+  if (reduce || compact) {
+    return (
+      <section className="py-8">
+        <h2 className="text-center text-2xl md:text-3xl font-bold tracking-tight mb-2">
+          The same loop, every product
+        </h2>
         <div className="max-w-md mx-auto space-y-16 pt-8">
           {journey.map((item, i) => (
             <CardContent key={i} item={item} />
           ))}
         </div>
-      ) : (
-        <div>
-          {journey.map((item, i) => (
-            <Checkpoint3D key={i} item={item} rx={rx} ry={ry} />
-          ))}
-        </div>
-      )}
-    </section>
-  );
+      </section>
+    );
+  }
+
+  return <ZuiScene />;
 }
