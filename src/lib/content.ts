@@ -61,6 +61,30 @@ export interface CareerContent {
   journey: CareerCheckpoint[];
 }
 
+// --- Contact page -----------------------------------------------------------
+
+export interface ContactContent {
+  eyebrow: string;
+  headline: string; // rich text (newline = line break)
+  intro: string;
+  email: string;
+  socialLabel: string;
+  socialUrl: string;
+  cardTitle: string;
+  cardSubtitle: string;
+}
+
+// --- Site-wide (logo wall + footer) -----------------------------------------
+
+export interface SiteContent {
+  logoWallHeading: string;
+  logos: string[]; // image URLs
+  footerCopyright: string;
+  footerTagline: string;
+  footerLinkLabel: string;
+  footerLinkUrl: string;
+}
+
 // --- Defaults (must match the current live copy verbatim) -------------------
 
 export const DEFAULT_HOME: HomeContent = {
@@ -83,6 +107,36 @@ export const DEFAULT_ABOUT: AboutContent = {
   headline: "I'm a *Business Analyst* embedded in the app team.",
   sub: "I turn messy problems into **clear requirements** — then ship them with the **developers** who build the product.",
   pills: ["Requirements", "Stakeholder discovery", "Ship with devs"],
+};
+
+export const DEFAULT_CONTACT: ContactContent = {
+  eyebrow: "Get in touch",
+  headline: "SAY\nHELLO.",
+  intro:
+    "I'm always open to new challenges and interesting projects. Whether you have a question or just want to have a chat, my inbox is always open.",
+  email: "chu.dicky@outlook.com",
+  socialLabel: "LinkedIn",
+  socialUrl: "https://www.linkedin.com/in/dicky-chu/",
+  cardTitle: "Based in Hong Kong",
+  cardSubtitle: "Available for projects worldwide.",
+};
+
+export const DEFAULT_SITE: SiteContent = {
+  logoWallHeading: "brands I've worked with",
+  logos: [
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQkBN6ErFLOxDlTPOo_vt_L4EqUKptPvQ_qQQ&s",
+    "https://static.wixstatic.com/media/60ffec_5e361527dd784fa291294157f29dfe37~mv2.png/v1/fill/w_274,h_106,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/sidebyside_orange.png",
+    "https://i0.wp.com/glide.hk/wp-content/uploads/2023/05/HKU_iDendron_Logo_black-2.png?resize=950%2C148&ssl=1",
+    "https://i.postimg.cc/HL9M79k7/HKSTP.png",
+    "https://ibmix.de/wp-content/uploads/2023/05/IBM-iX-Logo.png",
+    "https://upload.wikimedia.org/wikipedia/zh/thumb/8/8c/The_Hong_Kong_Jockey_Club.svg/960px-The_Hong_Kong_Jockey_Club.svg.png",
+    "https://wp.logos-download.com/wp-content/uploads/2024/01/STARLUX_Airlines_Logo.png?dl",
+    "https://hongkongai.org/wp-content/uploads/2019/08/HKAI-LAB_RGB.png",
+  ],
+  footerCopyright: "© 2026 Dicky Chu's Portfolio.",
+  footerTagline: "Made in Hong Kong 🇭🇰",
+  footerLinkLabel: "LinkedIn",
+  footerLinkUrl: "https://www.linkedin.com/in/dicky-chu/",
 };
 
 export const DEFAULT_CAREER: CareerContent = {

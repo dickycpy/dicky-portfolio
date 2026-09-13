@@ -39,7 +39,13 @@ interface Props {
   projects: Project[];
   listTab: Exclude<
     ListTab,
-    "media" | "resume" | "pageHome" | "pageAbout" | "pageCareer"
+    | "media"
+    | "resume"
+    | "pageHome"
+    | "pageAbout"
+    | "pageCareer"
+    | "pageContact"
+    | "pageSite"
   >;
   user: User;
   onEdit: (p: Project) => void;

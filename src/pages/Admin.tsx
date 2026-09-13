@@ -15,7 +15,12 @@ import ContentEditor, {
   type FieldSchema,
 } from "@/components/admin/ContentEditor";
 import CareerEditor from "@/components/admin/CareerEditor";
-import { DEFAULT_HOME, DEFAULT_ABOUT } from "@/lib/content";
+import {
+  DEFAULT_HOME,
+  DEFAULT_ABOUT,
+  DEFAULT_CONTACT,
+  DEFAULT_SITE,
+} from "@/lib/content";
 
 const HOME_SCHEMA: FieldSchema[] = [
   { key: "eyebrow", label: "Eyebrow greeting", type: "text" },
@@ -34,6 +39,36 @@ const ABOUT_SCHEMA: FieldSchema[] = [
   { key: "headline", label: "Hero headline", type: "richtext" },
   { key: "sub", label: "Hero sub-text", type: "richtext" },
   { key: "pills", label: "Keyword pills", type: "list" },
+];
+
+const CONTACT_SCHEMA: FieldSchema[] = [
+  { key: "eyebrow", label: "Eyebrow", type: "text" },
+  {
+    key: "headline",
+    label: "Big headline",
+    type: "richtext",
+    hint: "Use a new line to split across two lines (e.g. SAY / HELLO.).",
+  },
+  { key: "intro", label: "Intro paragraph", type: "textarea" },
+  { key: "email", label: "Email address", type: "text" },
+  { key: "socialLabel", label: "Social link label", type: "text" },
+  { key: "socialUrl", label: "Social link URL", type: "url" },
+  { key: "cardTitle", label: "Side-card title", type: "text" },
+  { key: "cardSubtitle", label: "Side-card subtitle", type: "text" },
+];
+
+const SITE_SCHEMA: FieldSchema[] = [
+  { key: "logoWallHeading", label: "Logo wall heading", type: "text" },
+  {
+    key: "logos",
+    label: "Brand logos",
+    type: "list",
+    hint: "Direct image URLs. Order = display order in the marquee.",
+  },
+  { key: "footerCopyright", label: "Footer copyright line", type: "text" },
+  { key: "footerTagline", label: "Footer tagline", type: "text" },
+  { key: "footerLinkLabel", label: "Footer link label", type: "text" },
+  { key: "footerLinkUrl", label: "Footer link URL", type: "url" },
 ];
 
 export default function Admin() {
@@ -122,12 +157,16 @@ export default function Admin() {
     { id: "pageHome", label: "Home Page" },
     { id: "pageAbout", label: "About Page" },
     { id: "pageCareer", label: "Career Path" },
+    { id: "pageContact", label: "Contact Page" },
+    { id: "pageSite", label: "Site-wide" },
   ];
 
   const isContentTab =
     listTab === "pageHome" ||
     listTab === "pageAbout" ||
-    listTab === "pageCareer";
+    listTab === "pageCareer" ||
+    listTab === "pageContact" ||
+    listTab === "pageSite";
 
   return (
     <ToastProvider>
@@ -211,6 +250,22 @@ export default function Admin() {
             />
           ) : listTab === "pageCareer" ? (
             <CareerEditor />
+          ) : listTab === "pageContact" ? (
+            <ContentEditor
+              page="contact"
+              title="Contact Page"
+              description="Edit the Contact page copy, email, and social link. Changes go live on save."
+              defaults={DEFAULT_CONTACT}
+              schema={CONTACT_SCHEMA}
+            />
+          ) : listTab === "pageSite" ? (
+            <ContentEditor
+              page="site"
+              title="Site-wide"
+              description="Edit the brand logo wall and the footer, shown across the whole site."
+              defaults={DEFAULT_SITE}
+              schema={SITE_SCHEMA}
+            />
           ) : listTab === "resume" ? (
             <ResumeEditor />
           ) : listTab === "media" ? (
