@@ -2,6 +2,7 @@
 # secrets & keys
 key-source.json
 key-dest.json
+clone-key.json
 *firebase-adminsdk*.json
 node_modules
 dist

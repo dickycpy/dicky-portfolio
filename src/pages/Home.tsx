@@ -12,60 +12,6 @@ import { cn } from "@/lib/utils";
 
 import Magnetic from "@/components/Magnetic";
 
-const pairings = [
-  { role: "Business Analyst", focus: "Interactive Experience", color: "text-brand-pink", cursorColor: "bg-brand-pink" },
-  { role: "Product Designer", focus: "Digital Marketing", color: "text-brand-pink", cursorColor: "bg-brand-pink" },
-  { role: "Digital Marketer", focus: "Artificial Intelligence", color: "text-brand-pink", cursorColor: "bg-brand-pink" }
-];
-
-function Typewriter({ text, colorClass, cursorClass }: { text: string; colorClass: string; cursorClass: string }) {
-  const [displayText, setDisplayText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [speed, setSpeed] = useState(100);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-
-    const handleTyping = () => {
-      if (isDeleting) {
-        if (displayText.length > 0) {
-          setDisplayText((prev) => prev.substring(0, prev.length - 1));
-          setSpeed(40);
-        } else {
-          setIsDeleting(false);
-          setSpeed(100);
-        }
-      } else {
-        if (displayText !== text) {
-          setDisplayText(text.substring(0, displayText.length + 1));
-          setSpeed(100);
-        }
-      }
-    };
-
-    timer = setTimeout(handleTyping, speed);
-    return () => clearTimeout(timer);
-  }, [displayText, isDeleting, text, speed]);
-
-  // When the target text changes, start deleting first
-  useEffect(() => {
-    if (displayText !== "" && displayText !== text) {
-      setIsDeleting(true);
-    }
-  }, [text]);
-
-  return (
-    <span className={cn("relative transition-colors duration-500", colorClass)}>
-      {displayText}
-      <motion.span
-        animate={{ opacity: [0, 1, 0] }}
-        transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-        className={cn("inline-block w-[2px] h-[0.8em] ml-1 align-middle transition-colors duration-500", cursorClass)}
-      />
-    </span>
-  );
-}
-
 function RevealText({ text, className, highlightWords = [] }: { text: string; className?: string; highlightWords?: string[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -107,15 +53,7 @@ function RevealText({ text, className, highlightWords = [] }: { text: string; cl
 }
 
 export default function Home() {
-  const [focusIndex, setFocusIndex] = useState(0);
   const [projects, setProjects] = useState(mockProjects);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFocusIndex((prev) => (prev + 1) % pairings.length);
-    }, 4000); // Increased time to allow typewriter to finish
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     // Fetch only projects marked for home display, ordered by homeSortOrder
@@ -170,30 +108,19 @@ export default function Home() {
             />
           </motion.div>
         </div>
-        <h1 className="text-3xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-12">
-          a <span className="relative inline-block h-[1.4em] overflow-hidden align-baseline px-2 -ml-2 translate-y-[0.3em]">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={pairings[focusIndex].role}
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "-100%" }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="block italic text-brand-teal whitespace-nowrap leading-[1.4]"
-              >
-                {pairings[focusIndex].role}
-              </motion.span>
-            </AnimatePresence>
-          </span> <br />
-          with focus on <br />
-          <div className="min-h-[1.2em] md:min-h-0 whitespace-nowrap">
-            <Typewriter 
-              text={pairings[focusIndex].focus} 
-              colorClass={pairings[focusIndex].color}
-              cursorClass={pairings[focusIndex].cursorColor}
-            />
-          </div>
+        <h1 className="text-3xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-8">
+          a <span className="italic text-brand-teal">Product BA</span> <br />
+          with a <span className="italic text-brand-teal">designer&apos;s eye</span>.
         </h1>
+        <motion.p
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-lg md:text-2xl text-neutral-500 font-medium max-w-2xl leading-snug"
+        >
+          I bridge users, stakeholders &amp; dev — sitting with people to uncover the
+          real pain points, then turning them into requirements a team can build.
+        </motion.p>
       </section>
 
       {/* Logo Wall */}

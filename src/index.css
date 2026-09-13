@@ -137,3 +137,88 @@
     overflow-y: auto;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Resume / CV print styles
+   The /resume page renders a printable A4 sheet. On screen it sits on a grey
+   backdrop; when printed (or "Save as PDF") we hide all app chrome and print
+   only the sheet.
+--------------------------------------------------------------------------- */
+
+/* Screen: A4-proportioned sheet with comfortable padding */
+.resume-sheet {
+  width: 100%;
+  max-width: 800px;
+  padding: 40px 48px;
+  cursor: auto;
+}
+
+/* Resume table wrapper — thead/tfoot repeat on every printed page to create
+   per-page top/bottom margins. On screen the spacers collapse to nothing. */
+.resume-doc {
+  width: 100%;
+  border-collapse: collapse;
+}
+.resume-doc td {
+  padding: 0;
+  vertical-align: top;
+}
+.resume-spacer {
+  height: 0;
+}
+
+/* Avoid awkward page breaks inside an experience/education entry */
+.resume-entry {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.resume-h2 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+@media print {
+  /* margin:0 makes Chrome/Edge drop the default header & footer
+     (print date, page URL, page numbers). We recreate the white
+     margin with padding on the sheet itself below. */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Hide everything, then reveal only the resume sheet */
+  body * {
+    visibility: hidden !important;
+  }
+  .resume-sheet,
+  .resume-sheet * {
+    visibility: visible !important;
+  }
+  .resume-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    /* Horizontal margin only — vertical margins come from the repeating
+       thead/tfoot spacers so every page (not just the first) is spaced. */
+    padding: 0 14mm;
+    box-shadow: none !important;
+  }
+
+  /* Repeating per-page top & bottom margin */
+  .resume-spacer {
+    height: 12mm;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure teal accents and colours print (Chrome/Safari) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
