@@ -1,9 +1,11 @@
 import { motion } from "motion/react";
 import CareerJourney from "@/components/about/CareerJourney";
-
-const keywords = ["Requirements", "Stakeholder discovery", "Ship with devs"];
+import RichText from "@/components/RichText";
+import { usePageContent, DEFAULT_ABOUT } from "@/lib/content";
 
 function AboutHero() {
+  const { content } = usePageContent("about", DEFAULT_ABOUT);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -12,15 +14,13 @@ function AboutHero() {
       className="relative"
     >
       <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.02] mb-8">
-        I'm a <span className="text-brand-teal">Business Analyst</span> embedded in the app team.
+        <RichText text={content.headline} />
       </h1>
       <p className="text-xl md:text-2xl text-neutral-500 font-medium leading-relaxed max-w-3xl mb-10">
-        I turn messy problems into{" "}
-        <b className="text-black font-bold">clear requirements</b> — then ship them
-        with the <b className="text-black font-bold">developers</b> who build the product.
+        <RichText text={content.sub} />
       </p>
       <div className="flex flex-wrap gap-3">
-        {keywords.map((k) => (
+        {content.pills.map((k) => (
           <span
             key={k}
             className="px-5 py-2.5 rounded-full text-sm font-bold text-brand-teal bg-brand-teal/5 border border-brand-teal/30"

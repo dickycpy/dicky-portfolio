@@ -37,7 +37,7 @@ import { Project, ListTab } from "./types";
 
 interface Props {
   projects: Project[];
-  listTab: Exclude<ListTab, "config" | "media">;
+  listTab: Exclude<ListTab, "media" | "resume" | "pageHome" | "pageAbout">;
   user: User;
   onEdit: (p: Project) => void;
 }

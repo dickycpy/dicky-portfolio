@@ -52,7 +52,14 @@ export interface ProjectFormData {
   subSections: Record<string, SubSectionBlock[]>;
 }
 
-export type ListTab = "main" | "lab" | "home" | "config" | "media" | "resume";
+export type ListTab =
+  | "main"
+  | "lab"
+  | "home"
+  | "media"
+  | "resume"
+  | "pageHome"
+  | "pageAbout";
 
 // --- Resume / CV (print-to-PDF) ---------------------------------------------
 export interface ResumeExperience {
