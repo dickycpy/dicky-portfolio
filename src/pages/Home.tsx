@@ -132,19 +132,38 @@ export default function Home() {
       {/* About Section */}
       <section className="px-6 md:px-12 lg:px-24 py-40">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-          <div>
-            <RevealText 
-              text="I excel at investigating problems and designing solutions that go beyond just the user interface. My approach involves suggesting innovative solutions through various channel, bridging the gap between human to human, and or human to objects."
-              className="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-12"
-              highlightWords={["investigating", "problems", "designing", "solutions", "innovative", "human"]}
-            />
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-[1.08] mb-8">
+              I <span className="text-brand-teal">investigate problems</span> and design solutions that go beyond the UI.
+            </h2>
+            <p className="text-lg text-neutral-500 font-medium leading-relaxed max-w-xl mb-8">
+              I sit with stakeholders, uncover the real pain points, and turn them
+              into requirements the team can build — with a UX eye that keeps the
+              end user in the picture.
+            </p>
+            <div className="flex flex-wrap gap-3 mb-12">
+              {["Requirements", "Stakeholder discovery", "UX-minded delivery"].map((k) => (
+                <span
+                  key={k}
+                  className="px-5 py-2.5 rounded-full text-sm font-bold text-brand-teal bg-brand-teal/5 border border-brand-teal/30"
+                >
+                  {k}
+                </span>
+              ))}
+            </div>
             <Link
               to="/about"
+              state={{ animate: true }}
               className="inline-block px-8 py-4 bg-black text-white rounded-full text-sm font-medium uppercase tracking-widest hover:bg-brand-teal transition-all duration-300"
             >
               About Me
             </Link>
-          </div>
+          </motion.div>
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
