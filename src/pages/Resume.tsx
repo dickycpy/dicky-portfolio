@@ -35,12 +35,7 @@ export default function Resume() {
   return (
     <div className="resume-page min-h-screen bg-neutral-100 pt-28 md:pt-32 pb-24 px-4 print:p-0 print:bg-white print:min-h-0">
       {/* Toolbar (hidden in print) */}
-      <div className="no-print max-w-[800px] mx-auto mb-6 flex items-center justify-between gap-4">
-        <p className="text-xs text-neutral-500 font-medium">
-          Tip: in the print dialog choose <strong>Save as PDF</strong> and keep
-          margins as <strong>Default</strong> — page spacing and header removal
-          are handled automatically.
-        </p>
+      <div className="no-print max-w-[800px] mx-auto mb-6 flex items-center justify-end gap-4">
         <button
           onClick={() => window.print()}
           className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-brand-teal transition-all shadow-lg shrink-0"
