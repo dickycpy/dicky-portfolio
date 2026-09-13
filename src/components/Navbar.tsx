@@ -54,10 +54,15 @@ export default function Navbar() {
               state={{ animate: true }}
               className="text-xl font-bold tracking-tighter uppercase group flex items-center gap-2"
             >
-              <motion.span 
+              <motion.span
                 whileTap={{ scale: 0.95 }}
-                className="relative"
+                className="relative flex items-center gap-2"
               >
+                <img
+                  src="/logo-mark.png"
+                  alt="Dicky Chu logo"
+                  className="h-7 w-7 md:h-8 md:w-8 object-contain"
+                />
                 Dicky.
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full" />
               </motion.span>

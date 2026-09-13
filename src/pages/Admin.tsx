@@ -9,9 +9,67 @@ import { Project, ListTab } from "@/components/admin/types";
 import { ToastProvider } from "@/components/admin/ToastProvider";
 import ProjectForm from "@/components/admin/ProjectForm";
 import ProjectList from "@/components/admin/ProjectList";
-import SiteConfig from "@/components/admin/SiteConfig";
 import MediaManager from "@/components/admin/MediaManager";
 import ResumeEditor from "@/components/admin/ResumeEditor";
+import ContentEditor, {
+  type FieldSchema,
+} from "@/components/admin/ContentEditor";
+import CareerEditor from "@/components/admin/CareerEditor";
+import {
+  DEFAULT_HOME,
+  DEFAULT_ABOUT,
+  DEFAULT_CONTACT,
+  DEFAULT_SITE,
+} from "@/lib/content";
+
+const HOME_SCHEMA: FieldSchema[] = [
+  { key: "eyebrow", label: "Eyebrow greeting", type: "text" },
+  { key: "headshot", label: "Headshot image URL", type: "url" },
+  { key: "heroHeadline", label: "Hero headline", type: "richtext" },
+  { key: "heroSub", label: "Hero sub-text", type: "richtext" },
+  { key: "heroPills", label: "Hero keyword pills", type: "list" },
+  { key: "aboutHeadline", label: "About-section headline", type: "richtext" },
+  { key: "aboutBody", label: "About-section body", type: "richtext" },
+  { key: "aboutPills", label: "About-section pills", type: "list" },
+  { key: "aboutCta", label: "About button label", type: "text" },
+  { key: "aboutImage", label: "About-section image URL", type: "url" },
+];
+
+const ABOUT_SCHEMA: FieldSchema[] = [
+  { key: "headline", label: "Hero headline", type: "richtext" },
+  { key: "sub", label: "Hero sub-text", type: "richtext" },
+  { key: "pills", label: "Keyword pills", type: "list" },
+];
+
+const CONTACT_SCHEMA: FieldSchema[] = [
+  { key: "eyebrow", label: "Eyebrow", type: "text" },
+  {
+    key: "headline",
+    label: "Big headline",
+    type: "richtext",
+    hint: "Use a new line to split across two lines (e.g. SAY / HELLO.).",
+  },
+  { key: "intro", label: "Intro paragraph", type: "textarea" },
+  { key: "email", label: "Email address", type: "text" },
+  { key: "socialLabel", label: "Social link label", type: "text" },
+  { key: "socialUrl", label: "Social link URL", type: "url" },
+  { key: "cardTitle", label: "Side-card title", type: "text" },
+  { key: "cardSubtitle", label: "Side-card subtitle", type: "text" },
+];
+
+const SITE_SCHEMA: FieldSchema[] = [
+  { key: "logoWallHeading", label: "Logo wall heading", type: "text" },
+  {
+    key: "logos",
+    label: "Brand logos",
+    type: "list",
+    hint: "Direct image URLs. Order = display order in the marquee.",
+  },
+  { key: "footerCopyright", label: "Footer copyright line", type: "text" },
+  { key: "footerTagline", label: "Footer tagline", type: "text" },
+  { key: "footerLinkLabel", label: "Footer link label", type: "text" },
+  { key: "footerLinkUrl", label: "Footer link URL", type: "url" },
+];
 
 export default function Admin() {
   const [user, setUser] = useState(auth.currentUser);
@@ -96,8 +154,19 @@ export default function Admin() {
     { id: "home", label: "Home Featured" },
     { id: "media", label: "Media" },
     { id: "resume", label: "Resume" },
-    { id: "config", label: "Site Config" },
+    { id: "pageHome", label: "Home Page" },
+    { id: "pageAbout", label: "About Page" },
+    { id: "pageCareer", label: "Career Path" },
+    { id: "pageContact", label: "Contact Page" },
+    { id: "pageSite", label: "Site-wide" },
   ];
+
+  const isContentTab =
+    listTab === "pageHome" ||
+    listTab === "pageAbout" ||
+    listTab === "pageCareer" ||
+    listTab === "pageContact" ||
+    listTab === "pageSite";
 
   return (
     <ToastProvider>
@@ -110,13 +179,15 @@ export default function Admin() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => (showForm ? closeForm() : openNew())}
-              className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors"
-            >
-              {showForm ? <X size={16} /> : <Plus size={16} />}{" "}
-              {showForm ? "Cancel" : "New Project"}
-            </button>
+            {!isContentTab && (
+              <button
+                onClick={() => (showForm ? closeForm() : openNew())}
+                className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors"
+              >
+                {showForm ? <X size={16} /> : <Plus size={16} />}{" "}
+                {showForm ? "Cancel" : "New Project"}
+              </button>
+            )}
             <button
               onClick={() => signOut(auth)}
               className="p-3 text-neutral-400 hover:text-black transition-colors"
@@ -142,7 +213,7 @@ export default function Admin() {
         <div className="space-y-12">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <h2 className="text-3xl font-bold tracking-tighter">
-              Existing Projects
+              {isContentTab ? "Page Content" : "Existing Projects"}
             </h2>
             <div className="flex flex-wrap bg-neutral-100 p-1 rounded-2xl">
               {tabs.map((tab) => (
@@ -161,8 +232,40 @@ export default function Admin() {
             </div>
           </div>
 
-          {listTab === "config" ? (
-            <SiteConfig />
+          {listTab === "pageHome" ? (
+            <ContentEditor
+              page="home"
+              title="Home Page"
+              description="Edit the Home hero and the About section. Changes go live on save."
+              defaults={DEFAULT_HOME}
+              schema={HOME_SCHEMA}
+            />
+          ) : listTab === "pageAbout" ? (
+            <ContentEditor
+              page="about"
+              title="About Page"
+              description="Edit the About page hero headline, sub-text and keyword pills."
+              defaults={DEFAULT_ABOUT}
+              schema={ABOUT_SCHEMA}
+            />
+          ) : listTab === "pageCareer" ? (
+            <CareerEditor />
+          ) : listTab === "pageContact" ? (
+            <ContentEditor
+              page="contact"
+              title="Contact Page"
+              description="Edit the Contact page copy, email, and social link. Changes go live on save."
+              defaults={DEFAULT_CONTACT}
+              schema={CONTACT_SCHEMA}
+            />
+          ) : listTab === "pageSite" ? (
+            <ContentEditor
+              page="site"
+              title="Site-wide"
+              description="Edit the brand logo wall and the footer, shown across the whole site."
+              defaults={DEFAULT_SITE}
+              schema={SITE_SCHEMA}
+            />
           ) : listTab === "resume" ? (
             <ResumeEditor />
           ) : listTab === "media" ? (

@@ -1,47 +1,35 @@
-import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
-import { cn } from "@/lib/utils";
+import { motion } from "motion/react";
 import CareerJourney from "@/components/about/CareerJourney";
+import RichText from "@/components/RichText";
+import { usePageContent, DEFAULT_ABOUT } from "@/lib/content";
 
-const introText = "Across every role, I've worked inside an app team — turning messy problems into clear requirements, then shipping them with the developers who build the product.";
-
-function RevealText({ text }: { text: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start 95%", "end 40%"],
-  });
-
-  const words = text.split(" ");
+function AboutHero() {
+  const { content } = usePageContent("about", DEFAULT_ABOUT);
 
   return (
-    <div ref={containerRef} className="relative">
-      <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.1] mb-12 flex flex-wrap gap-x-[0.2em] gap-y-[0.1em]">
-        {words.map((word, i) => {
-          const start = i / words.length;
-          const end = (i + 1) / words.length;
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const opacity = useTransform(scrollYProgress, [start, end], [0.15, 1]);
-          
-          const isHighlight = ["app", "team", "requirements,", "shipping", "build"].includes(word);
-
-          return (
-            <motion.span
-              key={i}
-              style={{ opacity }}
-              whileHover={{ color: "#0F7B77", scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-              className={cn(
-                "cursor-default transition-colors",
-                isHighlight ? "text-black" : "text-neutral-400"
-              )}
-            >
-              {word}
-            </motion.span>
-          );
-        })}
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      className="relative"
+    >
+      <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.02] mb-8">
+        <RichText text={content.headline} />
       </h1>
-    </div>
+      <p className="text-xl md:text-2xl text-neutral-500 font-medium leading-relaxed max-w-3xl mb-10">
+        <RichText text={content.sub} />
+      </p>
+      <div className="flex flex-wrap gap-3">
+        {content.pills.map((k) => (
+          <span
+            key={k}
+            className="px-5 py-2.5 rounded-full text-sm font-bold text-brand-teal bg-brand-teal/5 border border-brand-teal/30"
+          >
+            {k}
+          </span>
+        ))}
+      </div>
+    </motion.div>
   );
 }
 
@@ -49,7 +37,7 @@ export default function About() {
   return (
     <div className="pt-24 md:pt-32 px-6 md:px-12 lg:px-24 pb-40">
       <section className="mb-32 md:mb-40">
-        <RevealText text={introText} />
+        <AboutHero />
       </section>
 
       <CareerJourney />

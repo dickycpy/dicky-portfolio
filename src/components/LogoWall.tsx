@@ -1,20 +1,11 @@
 import { motion, useMotionValue, useAnimationFrame, useTransform } from "motion/react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-
-// The user will upload logos to postimg and paste the direct URLs here
-const logos = [
-  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQkBN6ErFLOxDlTPOo_vt_L4EqUKptPvQ_qQQ&s",
-  "https://static.wixstatic.com/media/60ffec_5e361527dd784fa291294157f29dfe37~mv2.png/v1/fill/w_274,h_106,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/sidebyside_orange.png",
-  "https://i0.wp.com/glide.hk/wp-content/uploads/2023/05/HKU_iDendron_Logo_black-2.png?resize=950%2C148&ssl=1", 
-  "https://i.postimg.cc/HL9M79k7/HKSTP.png",
-  "https://ibmix.de/wp-content/uploads/2023/05/IBM-iX-Logo.png",
-  "https://upload.wikimedia.org/wikipedia/zh/thumb/8/8c/The_Hong_Kong_Jockey_Club.svg/960px-The_Hong_Kong_Jockey_Club.svg.png",
-  "https://wp.logos-download.com/wp-content/uploads/2024/01/STARLUX_Airlines_Logo.png?dl",
-  "https://hongkongai.org/wp-content/uploads/2019/08/HKAI-LAB_RGB.png"
-];
+import { usePageContent, DEFAULT_SITE } from "@/lib/content";
 
 export default function LogoWall() {
+  const { content } = usePageContent("site", DEFAULT_SITE);
+  const logos = content.logos;
   const [isHovered, setIsHovered] = useState(false);
   const [activeCenterIndex, setActiveCenterIndex] = useState(-1);
   const xTranslation = useMotionValue(0);
@@ -63,7 +54,7 @@ export default function LogoWall() {
     <div className="w-full overflow-hidden py-24 border-y border-black/5 bg-transparent backdrop-blur-md relative z-10">
       <div className="px-6 md:px-12 lg:px-24 mb-12">
         <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-neutral-400">
-          brands I’ve worked with
+          {content.logoWallHeading}
         </h3>
       </div>
       
