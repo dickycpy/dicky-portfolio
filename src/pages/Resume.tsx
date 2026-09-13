@@ -37,8 +37,9 @@ export default function Resume() {
       {/* Toolbar (hidden in print) */}
       <div className="no-print max-w-[800px] mx-auto mb-6 flex items-center justify-between gap-4">
         <p className="text-xs text-neutral-500 font-medium">
-          Tip: in the print dialog, choose <strong>Save as PDF</strong> and set
-          margins to <strong>None / Default</strong> for the cleanest export.
+          Tip: in the print dialog choose <strong>Save as PDF</strong> and keep
+          margins as <strong>Default</strong> — page spacing and header removal
+          are handled automatically.
         </p>
         <button
           onClick={() => window.print()}
@@ -48,14 +49,26 @@ export default function Resume() {
         </button>
       </div>
 
-      {/* The printable sheet */}
+      {/* The printable sheet.
+          The <table> thead/tfoot spacers are repeated by the browser on every
+          printed page, giving a consistent top/bottom margin per page WITHOUT
+          re-enabling the browser's header/footer (which needs @page margin:0). */}
       <article className="resume-sheet mx-auto bg-white text-black shadow-xl print:shadow-none">
+       <table className="resume-doc">
+        <thead className="resume-runhead">
+          <tr><td><div className="resume-spacer" /></td></tr>
+        </thead>
+        <tfoot className="resume-runfoot">
+          <tr><td><div className="resume-spacer" /></td></tr>
+        </tfoot>
+        <tbody>
+         <tr><td>
         {/* Header */}
-        <header className="mb-6">
+        <header className="mb-4">
           <p className="text-[12px] font-bold uppercase tracking-[0.28em] text-neutral-500 mb-1">
             {resume.title}
           </p>
-          <h1 className="text-[32px] leading-none font-bold tracking-tight mb-3">
+          <h1 className="text-[27px] leading-none font-bold tracking-tight mb-2">
             {resume.name}
           </h1>
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11.5px] text-neutral-700">
@@ -84,9 +97,9 @@ export default function Resume() {
 
         {/* Executive Summary */}
         {resume.summary && (
-          <section className="mb-5">
+          <section className="mb-4">
             <SectionHeading>Executive Summary</SectionHeading>
-            <p className="text-[11.5px] leading-relaxed text-neutral-800 text-justify">
+            <p className="text-[11.5px] leading-snug text-neutral-800 text-justify">
               {resume.summary}
             </p>
           </section>
@@ -94,9 +107,9 @@ export default function Resume() {
 
         {/* Professional Experience */}
         {resume.experience.length > 0 && (
-          <section className="mb-5">
+          <section className="mb-4">
             <SectionHeading>Professional Experience</SectionHeading>
-            <div className="space-y-4">
+            <div className="space-y-2.5">
               {resume.experience.map((exp, i) => (
                 <div key={i} className="resume-entry">
                   <div className="flex justify-between items-baseline gap-4">
@@ -105,12 +118,12 @@ export default function Resume() {
                       {exp.dateRange}
                     </span>
                   </div>
-                  <p className="text-[12px] font-semibold text-black mb-1.5">
+                  <p className="text-[12px] font-semibold text-black mb-1">
                     {exp.role}
                   </p>
-                  <ul className="space-y-1">
+                  <ul className="space-y-0.5">
                     {exp.bullets.map((b, j) => (
-                      <li key={j} className="flex gap-2 text-[11.5px] leading-relaxed text-neutral-800">
+                      <li key={j} className="flex gap-2 text-[11.5px] leading-snug text-neutral-800">
                         <span className="mt-[6px] w-1 h-1 rounded-full bg-black shrink-0" />
                         <span className="text-justify">{b}</span>
                       </li>
@@ -124,9 +137,9 @@ export default function Resume() {
 
         {/* Education */}
         {resume.education.length > 0 && (
-          <section className="mb-5">
+          <section className="mb-4">
             <SectionHeading>Education</SectionHeading>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {resume.education.map((ed, i) => (
                 <div key={i} className="resume-entry flex justify-between items-baseline gap-4">
                   <div>
@@ -144,9 +157,9 @@ export default function Resume() {
 
         {/* Licenses & Certifications */}
         {resume.certifications.length > 0 && (
-          <section className="mb-5">
+          <section className="mb-4">
             <SectionHeading>Licenses &amp; Certifications</SectionHeading>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {resume.certifications.map((c, i) => (
                 <div key={i} className="resume-entry flex justify-between items-baseline gap-4">
                   <div>
@@ -166,9 +179,9 @@ export default function Resume() {
         {resume.skills.length > 0 && (
           <section>
             <SectionHeading>Technical &amp; AI Exposure</SectionHeading>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {resume.skills.map((s, i) => (
-                <p key={i} className="text-[11.5px] leading-relaxed text-neutral-800">
+                <p key={i} className="text-[11.5px] leading-snug text-neutral-800">
                   <span className="font-bold text-black">{s.label}: </span>
                   {s.items}
                 </p>
@@ -176,6 +189,9 @@ export default function Resume() {
             </div>
           </section>
         )}
+         </td></tr>
+        </tbody>
+       </table>
       </article>
     </div>
   );
