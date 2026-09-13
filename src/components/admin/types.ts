@@ -59,7 +59,8 @@ export type ListTab =
   | "media"
   | "resume"
   | "pageHome"
-  | "pageAbout";
+  | "pageAbout"
+  | "pageCareer";
 
 // --- Resume / CV (print-to-PDF) ---------------------------------------------
 export interface ResumeExperience {

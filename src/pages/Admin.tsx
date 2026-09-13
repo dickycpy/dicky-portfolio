@@ -14,6 +14,7 @@ import ResumeEditor from "@/components/admin/ResumeEditor";
 import ContentEditor, {
   type FieldSchema,
 } from "@/components/admin/ContentEditor";
+import CareerEditor from "@/components/admin/CareerEditor";
 import { DEFAULT_HOME, DEFAULT_ABOUT } from "@/lib/content";
 
 const HOME_SCHEMA: FieldSchema[] = [
@@ -120,9 +121,13 @@ export default function Admin() {
     { id: "resume", label: "Resume" },
     { id: "pageHome", label: "Home Page" },
     { id: "pageAbout", label: "About Page" },
+    { id: "pageCareer", label: "Career Path" },
   ];
 
-  const isContentTab = listTab === "pageHome" || listTab === "pageAbout";
+  const isContentTab =
+    listTab === "pageHome" ||
+    listTab === "pageAbout" ||
+    listTab === "pageCareer";
 
   return (
     <ToastProvider>
@@ -204,6 +209,8 @@ export default function Admin() {
               defaults={DEFAULT_ABOUT}
               schema={ABOUT_SCHEMA}
             />
+          ) : listTab === "pageCareer" ? (
+            <CareerEditor />
           ) : listTab === "resume" ? (
             <ResumeEditor />
           ) : listTab === "media" ? (
