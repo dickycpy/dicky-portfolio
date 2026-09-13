@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { ChevronDown, ChevronUp, ExternalLink, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const introText = "I turn messy problems into clear requirements — sitting with users and stakeholders, digging out the real pain points, and translating them into what a team can build.";
+const introText = "Across every role, I've worked inside an app team — turning messy problems into clear requirements, then shipping them with the developers who build the product.";
 
 function RevealText({ text }: { text: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -23,7 +23,7 @@ function RevealText({ text }: { text: string }) {
           // eslint-disable-next-line react-hooks/rules-of-hooks
           const opacity = useTransform(scrollYProgress, [start, end], [0.15, 1]);
           
-          const isHighlight = ["problems", "requirements", "stakeholders,", "pain", "points,"].includes(word);
+          const isHighlight = ["app", "team", "requirements,", "shipping", "build"].includes(word);
 
           return (
             <motion.span
