@@ -93,6 +93,14 @@ export interface ResumeData {
   skills: ResumeSkillGroup[];
 }
 
+// A saved snapshot of the resume, for version history (e.g. "Sep 2026 v1").
+export interface ResumeVersion {
+  id: string;
+  label: string;
+  savedAt: number; // epoch ms
+  data: ResumeData;
+}
+
 export const CATEGORIES = [
   "Artificial Intelligence",
   "Digital Marketing",

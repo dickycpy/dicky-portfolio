@@ -164,9 +164,12 @@
 }
 
 @media print {
+  /* margin:0 makes Chrome/Edge drop the default header & footer
+     (print date, page URL, page numbers). We recreate the white
+     margin with padding on the sheet itself below. */
   @page {
     size: A4;
-    margin: 12mm;
+    margin: 0;
   }
 
   /* Hide everything, then reveal only the resume sheet */
@@ -184,7 +187,7 @@
     width: 100%;
     max-width: none;
     margin: 0;
-    padding: 0;
+    padding: 14mm 16mm;
     box-shadow: none !important;
   }
 

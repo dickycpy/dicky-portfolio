@@ -52,7 +52,7 @@ export default function Resume() {
       <article className="resume-sheet mx-auto bg-white text-black shadow-xl print:shadow-none">
         {/* Header */}
         <header className="mb-6">
-          <p className="text-[12px] font-bold uppercase tracking-[0.28em] text-brand-teal mb-1">
+          <p className="text-[12px] font-bold uppercase tracking-[0.28em] text-neutral-500 mb-1">
             {resume.title}
           </p>
           <h1 className="text-[32px] leading-none font-bold tracking-tight mb-3">
@@ -60,7 +60,7 @@ export default function Resume() {
           </h1>
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11.5px] text-neutral-700">
             {resume.email && (
-              <a href={`mailto:${resume.email}`} className="flex items-center gap-1.5 hover:text-brand-teal">
+              <a href={`mailto:${resume.email}`} className="flex items-center gap-1.5 hover:text-black hover:underline">
                 <Mail size={12} /> {resume.email}
               </a>
             )}
@@ -70,12 +70,12 @@ export default function Resume() {
               </span>
             )}
             {resume.portfolioUrl && (
-              <a href={resume.portfolioUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-brand-teal">
+              <a href={resume.portfolioUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-black hover:underline">
                 <Globe size={12} /> {stripProtocol(resume.portfolioUrl)}
               </a>
             )}
             {resume.linkedinUrl && (
-              <a href={resume.linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-brand-teal">
+              <a href={resume.linkedinUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-black hover:underline">
                 <Linkedin size={12} /> {stripProtocol(resume.linkedinUrl)}
               </a>
             )}
@@ -105,13 +105,13 @@ export default function Resume() {
                       {exp.dateRange}
                     </span>
                   </div>
-                  <p className="text-[12px] font-semibold text-brand-teal mb-1.5">
+                  <p className="text-[12px] font-semibold text-black mb-1.5">
                     {exp.role}
                   </p>
                   <ul className="space-y-1">
                     {exp.bullets.map((b, j) => (
                       <li key={j} className="flex gap-2 text-[11.5px] leading-relaxed text-neutral-800">
-                        <span className="mt-[6px] w-1 h-1 rounded-full bg-brand-teal shrink-0" />
+                        <span className="mt-[6px] w-1 h-1 rounded-full bg-black shrink-0" />
                         <span className="text-justify">{b}</span>
                       </li>
                     ))}

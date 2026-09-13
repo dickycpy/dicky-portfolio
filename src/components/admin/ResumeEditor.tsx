@@ -10,9 +10,12 @@ import {
   Trash2,
   ExternalLink,
   RotateCcw,
+  History,
+  Send,
+  Undo2,
 } from "lucide-react";
 import { useToast } from "./ToastProvider";
-import type { ResumeData } from "./types";
+import type { ResumeData, ResumeVersion } from "./types";
 import { defaultResume } from "@/lib/resumeData";
 
 const fieldCls =
@@ -23,15 +26,23 @@ const labelCls =
 export default function ResumeEditor() {
   const { toast } = useToast();
   const [data, setData] = useState<ResumeData>(defaultResume);
+  const [versions, setVersions] = useState<ResumeVersion[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const snap = await getDoc(doc(db, "settings", "resume"));
-        if (snap.exists()) {
-          setData({ ...defaultResume, ...(snap.data() as Partial<ResumeData>) });
+        const [liveSnap, verSnap] = await Promise.all([
+          getDoc(doc(db, "settings", "resume")),
+          getDoc(doc(db, "settings", "resumeVersions")),
+        ]);
+        if (liveSnap.exists()) {
+          setData({ ...defaultResume, ...(liveSnap.data() as Partial<ResumeData>) });
+        }
+        if (verSnap.exists()) {
+          const list = (verSnap.data().versions as ResumeVersion[]) || [];
+          setVersions([...list].sort((a, b) => b.savedAt - a.savedAt));
         }
       } catch (err) {
         console.error("Error loading resume:", err);
@@ -61,6 +72,73 @@ export default function ResumeEditor() {
     if (confirm("Reset all fields to the built-in CV template? Unsaved edits will be lost.")) {
       setData(defaultResume);
       toast("Reset to template — remember to Save.", "success");
+    }
+  };
+
+  // --- Version history ------------------------------------------------------
+  const persistVersions = async (next: ResumeVersion[]) => {
+    setVersions(next);
+    await setDoc(doc(db, "settings", "resumeVersions"), { versions: next });
+  };
+
+  // Suggest a label like "Sep 2026 v1", auto-incrementing within the month.
+  const suggestLabel = () => {
+    const now = new Date();
+    const monthYear = now.toLocaleString("en-US", { month: "short", year: "numeric" });
+    const sameMonth = versions.filter((v) => v.label.startsWith(monthYear));
+    return `${monthYear} v${sameMonth.length + 1}`;
+  };
+
+  const saveAsVersion = async () => {
+    const label = prompt(
+      "Name this version (a snapshot of the current fields):",
+      suggestLabel()
+    );
+    if (label === null) return; // cancelled
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    const version: ResumeVersion = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      label: trimmed,
+      savedAt: Date.now(),
+      data,
+    };
+    try {
+      await persistVersions([version, ...versions]);
+      toast(`Saved version "${trimmed}".`, "success");
+    } catch (err) {
+      console.error("Error saving version:", err);
+      toast("Failed to save version.", "error");
+    }
+  };
+
+  const loadVersion = (v: ResumeVersion) => {
+    setData({ ...defaultResume, ...v.data });
+    toast(`Loaded "${v.label}" into the editor — click Save to make it live.`, "success");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const makeLive = async (v: ResumeVersion) => {
+    if (!confirm(`Publish "${v.label}" as the live resume? This replaces what's on /resume now.`)) return;
+    try {
+      const restored = { ...defaultResume, ...v.data };
+      setData(restored);
+      await setDoc(doc(db, "settings", "resume"), restored, { merge: true });
+      toast(`"${v.label}" is now live on /resume.`, "success");
+    } catch (err) {
+      console.error("Error publishing version:", err);
+      toast("Failed to publish version.", "error");
+    }
+  };
+
+  const deleteVersion = async (v: ResumeVersion) => {
+    if (!confirm(`Delete version "${v.label}"? This cannot be undone.`)) return;
+    try {
+      await persistVersions(versions.filter((x) => x.id !== v.id));
+      toast(`Deleted "${v.label}".`, "success");
+    } catch (err) {
+      console.error("Error deleting version:", err);
+      toast("Failed to delete version.", "error");
     }
   };
 
@@ -108,6 +186,13 @@ export default function ResumeEditor() {
             <RotateCcw size={14} /> Reset
           </button>
           <button
+            onClick={saveAsVersion}
+            className="flex items-center gap-2 px-5 py-3 bg-white border border-neutral-200 rounded-full text-xs font-bold uppercase tracking-widest hover:border-black transition-colors"
+            title="Save current fields as a named version"
+          >
+            <History size={14} /> Save version
+          </button>
+          <button
             onClick={handleSave}
             disabled={saving}
             className="flex items-center gap-2 px-7 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all shadow-lg disabled:opacity-50"
@@ -116,6 +201,60 @@ export default function ResumeEditor() {
             {saving ? "Saving…" : "Save"}
           </button>
         </div>
+      </div>
+
+      {/* Version history */}
+      <div className="mb-10 max-w-3xl bg-white rounded-2xl border border-neutral-100 p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <History size={16} className="text-neutral-500" />
+          <h4 className="text-sm font-bold tracking-tight">Version history</h4>
+        </div>
+        <p className="text-[11px] text-neutral-400 mb-4 leading-relaxed">
+          Click <strong>Save version</strong> above to snapshot the current fields (e.g. “Sep 2026 v1”).
+          <strong> Load</strong> pulls a version into the editor; <strong>Make live</strong> publishes it to /resume; <strong>Delete</strong> removes it.
+        </p>
+        {versions.length === 0 ? (
+          <p className="text-xs text-neutral-400 italic py-3">No saved versions yet.</p>
+        ) : (
+          <ul className="divide-y divide-neutral-100">
+            {versions.map((v) => (
+              <li key={v.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-black truncate">{v.label}</p>
+                  <p className="text-[11px] text-neutral-400">
+                    {new Date(v.savedAt).toLocaleString("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => loadVersion(v)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-neutral-100 hover:bg-neutral-200 transition-colors"
+                    title="Load into editor"
+                  >
+                    <Undo2 size={12} /> Load
+                  </button>
+                  <button
+                    onClick={() => makeLive(v)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-black text-white hover:bg-neutral-800 transition-colors"
+                    title="Publish to /resume"
+                  >
+                    <Send size={12} /> Make live
+                  </button>
+                  <button
+                    onClick={() => deleteVersion(v)}
+                    className="p-1.5 text-neutral-300 hover:text-red-500 transition-colors"
+                    title="Delete version"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="space-y-10 max-w-3xl">
