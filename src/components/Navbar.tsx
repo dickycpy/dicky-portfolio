@@ -49,8 +49,9 @@ export default function Navbar() {
           )}
         >
           <Magnetic strength={0.2}>
-            <Link 
-              to="/" 
+            <Link
+              to="/"
+              state={{ animate: true }}
               className="text-xl font-bold tracking-tighter uppercase group flex items-center gap-2"
             >
               <motion.span 
@@ -71,6 +72,7 @@ export default function Navbar() {
                 <Magnetic key={link.path} strength={0.3}>
                   <Link
                     to={link.path}
+                    state={{ animate: true }}
                     className={cn(
                       "relative px-5 py-2 text-sm font-medium tracking-tight transition-all duration-300 rounded-full",
                       isActive 
@@ -96,6 +98,7 @@ export default function Navbar() {
             <Magnetic strength={0.2}>
               <Link
                 to="/resume"
+                state={{ animate: true }}
                 className="hidden md:flex items-center gap-2 px-6 py-2 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-brand-teal transition-all shadow-lg hover:shadow-brand-teal/20"
               >
                 <FileText size={14} /> Resume
@@ -150,6 +153,7 @@ export default function Navbar() {
                   >
                     <Link
                       to={link.path}
+                      state={{ animate: true }}
                       className={cn(
                         "text-4xl font-bold tracking-tighter transition-all duration-300 block",
                         location.pathname === link.path 
@@ -169,6 +173,7 @@ export default function Navbar() {
                 >
                   <Link
                     to="/resume"
+                    state={{ animate: true }}
                     className="text-4xl font-bold tracking-tighter text-brand-teal flex items-center gap-3"
                   >
                     Resume <FileText size={28} />

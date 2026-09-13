@@ -32,7 +32,7 @@ export default function SplashScreen() {
           initial={{ opacity: 1 }}
           exit={{
             y: "-100%",
-            transition: { duration: 0.7, ease: [0.76, 0, 0.24, 1] },
+            transition: { duration: 0.85, ease: [0.76, 0, 0.24, 1] },
           }}
           className="fixed inset-0 z-[9999] bg-brand-white flex flex-col items-center justify-center overflow-hidden"
         >
@@ -48,11 +48,8 @@ export default function SplashScreen() {
             }}
           />
 
-          {/* Content */}
-          <motion.div
-            exit={{ opacity: 0, transition: { duration: 0.3 } }}
-            className="relative z-10 text-center"
-          >
+          {/* Content — rides up with the panel on exit */}
+          <motion.div className="relative z-10 text-center">
             <div className="overflow-hidden mb-8">
               <motion.h1 className="text-6xl md:text-8xl font-bold tracking-tighter leading-none flex justify-center">
                 {"DICKY CHU".split("").map((char, index) => (
