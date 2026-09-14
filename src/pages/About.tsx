@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import CareerJourney from "@/components/about/CareerJourney";
+import Expertise from "@/components/about/Expertise";
 import RichText from "@/components/RichText";
 import { usePageContent, DEFAULT_ABOUT } from "@/lib/content";
 
@@ -40,7 +41,16 @@ export default function About() {
         <AboutHero />
       </section>
 
-      <CareerJourney />
+      {/* Two-column on desktop: Expertise (sticky) left, Career right.
+          On mobile it stacks — Career first, then Expertise below. */}
+      <div className="mx-auto max-w-6xl flex flex-col lg:flex-row lg:items-start gap-16 lg:gap-12">
+        <div className="order-2 lg:order-1 lg:flex-1 lg:sticky lg:top-32">
+          <Expertise />
+        </div>
+        <div className="order-1 lg:order-2 lg:flex-1">
+          <CareerJourney />
+        </div>
+      </div>
     </div>
   );
 }

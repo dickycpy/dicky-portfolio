@@ -15,6 +15,7 @@ import ContentEditor, {
   type FieldSchema,
 } from "@/components/admin/ContentEditor";
 import CareerEditor from "@/components/admin/CareerEditor";
+import ExpertiseEditor from "@/components/admin/ExpertiseEditor";
 import PageVisibilityEditor from "@/components/admin/PageVisibilityEditor";
 import {
   DEFAULT_HOME,
@@ -364,6 +365,7 @@ export default function Admin() {
                 schema={ABOUT_SCHEMA}
               />
               <CareerEditor />
+              <ExpertiseEditor />
             </div>
           ) : listTab === "pageContact" ? (
             <ContentEditor
