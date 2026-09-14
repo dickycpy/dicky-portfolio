@@ -7,10 +7,11 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase";
-import { Save, Loader2, Plus, Trash2 } from "lucide-react";
+import { Save, Loader2, Plus, Trash2, AlertCircle } from "lucide-react";
 import { useToast } from "./ToastProvider";
 import ImageUploadField from "./ImageUploadField";
 import { SOCIAL_PLATFORMS, SocialLink } from "@/lib/content";
+import { markDirty } from "@/lib/unsavedGuard";
 
 export type FieldType =
   | "text"
@@ -58,6 +59,15 @@ export default function ContentEditor({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+
+  // Register this editor's dirty state with the app-wide guard so the admin
+  // shell can warn before switching tabs or leaving the page. A stable id lets
+  // pages with two editors (e.g. Home + Logo wall) track independently.
+  const editorId = `${page}:${title}`;
+  useEffect(() => {
+    markDirty(editorId, dirty);
+    return () => markDirty(editorId, false);
+  }, [editorId, dirty]);
 
   useEffect(() => {
     let alive = true;
@@ -313,6 +323,44 @@ export default function ContentEditor({
           </motion.div>
         ))}
       </div>
+
+      {/* Pinned save bar — sticks to the bottom of the viewport while editing
+          so Save is always reachable without scrolling back to the top. Only
+          appears when there are unsaved changes, doubling as a reminder. */}
+      {dirty && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sticky bottom-4 z-30 mt-4"
+        >
+          <div className="flex items-center justify-between gap-4 bg-black text-white rounded-2xl shadow-2xl px-5 py-3">
+            <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+              <AlertCircle size={16} className="text-amber-400" />
+              Unsaved changes
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest text-neutral-300 hover:text-white transition-colors"
+              >
+                Reset
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest text-black bg-white hover:bg-brand-teal hover:text-white transition-colors disabled:opacity-40"
+              >
+                {saving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Save size={14} />
+                )}
+                {saving ? "Saving…" : "Save changes"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

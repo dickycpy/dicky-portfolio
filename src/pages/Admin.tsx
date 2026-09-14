@@ -22,6 +22,7 @@ import {
   DEFAULT_CONTACT,
   DEFAULT_SITE,
 } from "@/lib/content";
+import { hasUnsaved, clearAllUnsaved } from "@/lib/unsavedGuard";
 
 const HOME_SCHEMA: FieldSchema[] = [
   { key: "eyebrow", label: "Eyebrow greeting", type: "text" },
@@ -106,6 +107,34 @@ export default function Admin() {
       unsubProjects();
     };
   }, []);
+
+  // Warn before closing / reloading the browser tab if any editor has
+  // unsaved changes.
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasUnsaved()) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
+  // Wraps any in-app navigation (tab switch, logout) so unsaved edits prompt a
+  // confirm before they are discarded.
+  const guardedNavigate = (fn: () => void) => {
+    if (
+      hasUnsaved() &&
+      !window.confirm(
+        "You have unsaved changes that will be lost. Leave without saving?"
+      )
+    ) {
+      return;
+    }
+    clearAllUnsaved();
+    fn();
+  };
 
   const handleLogin = async () => {
     try {
@@ -207,7 +236,7 @@ export default function Admin() {
               </button>
             )}
             <button
-              onClick={() => signOut(auth)}
+              onClick={() => guardedNavigate(() => signOut(auth))}
               className="p-3 text-neutral-400 hover:text-black transition-colors"
               title="Logout"
             >
@@ -240,10 +269,12 @@ export default function Admin() {
                     {group.items.map((item) => (
                       <button
                         key={item.id}
-                        onClick={() => {
-                          setListTab(item.id);
-                          closeForm();
-                        }}
+                        onClick={() =>
+                          guardedNavigate(() => {
+                            setListTab(item.id);
+                            closeForm();
+                          })
+                        }
                         className={`text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors lg:w-full ${
                           listTab === item.id
                             ? "bg-black text-white shadow-sm"
