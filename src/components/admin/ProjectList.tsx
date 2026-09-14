@@ -45,7 +45,6 @@ interface Props {
     | "resume"
     | "pageHome"
     | "pageAbout"
-    | "pageCareer"
     | "pageContact"
     | "pageSite"
     | "pageNav"

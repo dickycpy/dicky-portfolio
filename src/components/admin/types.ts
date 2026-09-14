@@ -63,7 +63,6 @@ export type ListTab =
   | "resume"
   | "pageHome"
   | "pageAbout"
-  | "pageCareer"
   | "pageContact"
   | "pageSite"
   | "pageNav";

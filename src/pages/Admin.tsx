@@ -159,38 +159,34 @@ export default function Admin() {
   const navGroups: { label: string; items: { id: ListTab; label: string }[] }[] =
     [
       {
-        label: "Projects",
+        label: "Page Content",
         items: [
           { id: "main", label: "Main Projects" },
           { id: "lab", label: "My Lab" },
           { id: "home", label: "Home Featured" },
-          { id: "media", label: "Media" },
-        ],
-      },
-      {
-        label: "Page Content",
-        items: [
           { id: "pageHome", label: "Home Page" },
           { id: "pageAbout", label: "About Page" },
-          { id: "pageCareer", label: "Career Path" },
           { id: "pageContact", label: "Contact Page" },
           { id: "pageSite", label: "Site-wide" },
-          { id: "pageNav", label: "Navigation" },
         ],
       },
       {
         label: "Documents",
         items: [{ id: "resume", label: "Resume / CV" }],
       },
+      {
+        label: "Settings",
+        items: [
+          { id: "media", label: "Media" },
+          { id: "pageNav", label: "Navigation" },
+        ],
+      },
     ];
 
-  const isContentTab =
-    listTab === "pageHome" ||
-    listTab === "pageAbout" ||
-    listTab === "pageCareer" ||
-    listTab === "pageContact" ||
-    listTab === "pageSite" ||
-    listTab === "pageNav";
+  // The three project-list tabs are the only ones that show the "New Project"
+  // button and the "Existing Projects" heading.
+  const isProjectList =
+    listTab === "main" || listTab === "lab" || listTab === "home";
 
   return (
     <ToastProvider>
@@ -203,7 +199,7 @@ export default function Admin() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            {!isContentTab && (
+            {isProjectList && (
               <button
                 onClick={() => (showForm ? closeForm() : openNew())}
                 className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors"
@@ -266,9 +262,11 @@ export default function Admin() {
           </aside>
 
           <div className="flex-1 min-w-0 space-y-8">
-            <h2 className="text-3xl font-bold tracking-tighter">
-              {isContentTab ? "Page Content" : "Existing Projects"}
-            </h2>
+            {isProjectList && (
+              <h2 className="text-3xl font-bold tracking-tighter">
+                Existing Projects
+              </h2>
+            )}
 
             {listTab === "pageHome" ? (
             <div className="space-y-8">
@@ -288,15 +286,16 @@ export default function Admin() {
               />
             </div>
           ) : listTab === "pageAbout" ? (
-            <ContentEditor
-              page="about"
-              title="About Page"
-              description="Edit the About page hero headline, sub-text and keyword pills."
-              defaults={DEFAULT_ABOUT}
-              schema={ABOUT_SCHEMA}
-            />
-          ) : listTab === "pageCareer" ? (
-            <CareerEditor />
+            <div className="space-y-8">
+              <ContentEditor
+                page="about"
+                title="About Page"
+                description="Edit the About page hero headline, sub-text and keyword pills."
+                defaults={DEFAULT_ABOUT}
+                schema={ABOUT_SCHEMA}
+              />
+              <CareerEditor />
+            </div>
           ) : listTab === "pageContact" ? (
             <ContentEditor
               page="contact"
