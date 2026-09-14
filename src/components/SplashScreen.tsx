@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, type Variants } from "motion/react";
 import { useEffect, useState } from "react";
 
 // Plays once, on the very first load of the app — never again on route
@@ -7,11 +7,25 @@ import { useEffect, useState } from "react";
 // (Module-level flag survives re-mounts within a session.)
 let hasPlayed = false;
 
+const sweep = { duration: 0.85, ease: [0.76, 0, 0.24, 1] as const };
+
+// Each panel rests over the screen, then slides up off the top on exit. The
+// parent orchestrates a stagger so the panels leave in sequence (white first,
+// then teal → pink → neutral) — a multi-colour curtain wiping upward.
+const panelVariants: Variants = {
+  visible: { y: 0 },
+  exit: { y: "-100%", transition: sweep },
+};
+
+const containerVariants: Variants = {
+  visible: {},
+  exit: { transition: { staggerChildren: 0.08 } },
+};
+
 export default function SplashScreen() {
   const isFirstLoad =
     !hasPlayed && !window.location.pathname.startsWith("/admin");
   const [isComplete, setIsComplete] = useState(!isFirstLoad);
-  const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
     if (isFirstLoad) hasPlayed = true;
@@ -19,29 +33,12 @@ export default function SplashScreen() {
 
   useEffect(() => {
     if (!isFirstLoad) return;
-    // Content settles by ~1.1s; hold a beat, then start the upward sweep…
-    const startExit = setTimeout(() => setExiting(true), 1500);
-    // …and unmount once the staggered panels have cleared the top.
-    const finish = setTimeout(() => setIsComplete(true), 2700);
-    return () => {
-      clearTimeout(startExit);
-      clearTimeout(finish);
-    };
+    // Content settles by ~1.1s; hold a beat, then trigger the exit sweep.
+    const timer = setTimeout(() => setIsComplete(true), 1500);
+    return () => clearTimeout(timer);
   }, [isFirstLoad]);
 
   if (!isFirstLoad) return null;
-
-  // Same easing as the navbar page transition, just travelling on the Y axis.
-  const sweep = { duration: 0.85, ease: [0.76, 0, 0.24, 1] };
-
-  // Trailing colour panels that sit behind the white content panel. The
-  // content panel lifts first, then teal → pink → neutral follow it up, each
-  // slightly delayed, so a multi-colour curtain wipes off the top of the screen.
-  const layers = [
-    { color: "bg-brand-teal", delay: 0.1, z: 30 },
-    { color: "bg-brand-pink", delay: 0.18, z: 20 },
-    { color: "bg-neutral-800", delay: 0.26, z: 10 },
-  ];
 
   return (
     <AnimatePresence>
@@ -49,24 +46,14 @@ export default function SplashScreen() {
         <motion.div
           key="splash-screen"
           className="fixed inset-0 z-[9999] overflow-hidden"
+          variants={containerVariants}
+          initial="visible"
+          animate="visible"
+          exit="exit"
         >
-          {/* Trailing colour panels — revealed as the content panel lifts */}
-          {layers.map((layer, i) => (
-            <motion.div
-              key={i}
-              className={`absolute inset-0 ${layer.color}`}
-              initial={{ y: 0 }}
-              animate={exiting ? { y: "-100%" } : { y: 0 }}
-              transition={{ ...sweep, delay: exiting ? layer.delay : 0 }}
-              style={{ zIndex: layer.z }}
-            />
-          ))}
-
-          {/* White content panel — sits on top, lifts away first */}
+          {/* White content panel — leaves first */}
           <motion.div
-            initial={{ y: 0 }}
-            animate={exiting ? { y: "-100%" } : { y: 0 }}
-            transition={{ ...sweep, delay: 0 }}
+            variants={panelVariants}
             style={{ zIndex: 40 }}
             className="absolute inset-0 bg-brand-white flex flex-col items-center justify-center overflow-hidden"
           >
@@ -116,6 +103,23 @@ export default function SplashScreen() {
               </div>
             </div>
           </motion.div>
+
+          {/* Trailing colour panels — revealed as the white panel lifts */}
+          <motion.div
+            variants={panelVariants}
+            style={{ zIndex: 30 }}
+            className="absolute inset-0 bg-brand-teal"
+          />
+          <motion.div
+            variants={panelVariants}
+            style={{ zIndex: 20 }}
+            className="absolute inset-0 bg-brand-pink"
+          />
+          <motion.div
+            variants={panelVariants}
+            style={{ zIndex: 10 }}
+            className="absolute inset-0 bg-neutral-800"
+          />
         </motion.div>
       )}
     </AnimatePresence>
