@@ -26,6 +26,9 @@ export interface Project {
   showOnHome?: boolean;
   password?: string;
   status?: "published" | "coming soon";
+  // When true, the project is hidden from ALL public listings (Projects page,
+  // Home featured). The detail page stays reachable by direct URL.
+  hidden?: boolean;
   subSections?: Record<string, SubSectionBlock[]>;
   createdAt?: any;
   updatedAt?: any;
@@ -62,7 +65,8 @@ export type ListTab =
   | "pageAbout"
   | "pageCareer"
   | "pageContact"
-  | "pageSite";
+  | "pageSite"
+  | "pageNav";
 
 // --- Resume / CV (print-to-PDF) ---------------------------------------------
 export interface ResumeExperience {

@@ -22,11 +22,11 @@ export default function Home() {
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedProjects = snapshot.docs.map(doc => ({
+      const fetchedProjects = (snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })) as any[];
-      
+      })) as any[]).filter(p => !p.hidden); // respect admin hide toggle
+
       if (fetchedProjects.length > 0) {
         setProjects(fetchedProjects);
       } else {

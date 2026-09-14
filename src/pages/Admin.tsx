@@ -15,6 +15,7 @@ import ContentEditor, {
   type FieldSchema,
 } from "@/components/admin/ContentEditor";
 import CareerEditor from "@/components/admin/CareerEditor";
+import PageVisibilityEditor from "@/components/admin/PageVisibilityEditor";
 import {
   DEFAULT_HOME,
   DEFAULT_ABOUT,
@@ -167,6 +168,7 @@ export default function Admin() {
           { id: "pageCareer", label: "Career Path" },
           { id: "pageContact", label: "Contact Page" },
           { id: "pageSite", label: "Site-wide" },
+          { id: "pageNav", label: "Navigation" },
         ],
       },
       {
@@ -180,7 +182,8 @@ export default function Admin() {
     listTab === "pageAbout" ||
     listTab === "pageCareer" ||
     listTab === "pageContact" ||
-    listTab === "pageSite";
+    listTab === "pageSite" ||
+    listTab === "pageNav";
 
   return (
     <ToastProvider>
@@ -294,6 +297,8 @@ export default function Admin() {
               defaults={DEFAULT_SITE}
               schema={SITE_SCHEMA}
             />
+          ) : listTab === "pageNav" ? (
+            <PageVisibilityEditor />
           ) : listTab === "resume" ? (
             <ResumeEditor />
           ) : listTab === "media" ? (
