@@ -7,9 +7,11 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase";
-import { Save, Loader2, Plus, Trash2 } from "lucide-react";
+import { Save, Loader2, Plus, Trash2, AlertCircle } from "lucide-react";
 import { useToast } from "./ToastProvider";
 import ImageUploadField from "./ImageUploadField";
+import { SOCIAL_PLATFORMS, SocialLink } from "@/lib/content";
+import { markDirty } from "@/lib/unsavedGuard";
 
 export type FieldType =
   | "text"
@@ -18,7 +20,8 @@ export type FieldType =
   | "url"
   | "list"
   | "image"
-  | "imageList";
+  | "imageList"
+  | "socials";
 
 export interface FieldSchema {
   key: string;
@@ -56,6 +59,15 @@ export default function ContentEditor({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+
+  // Register this editor's dirty state with the app-wide guard so the admin
+  // shell can warn before switching tabs or leaving the page. A stable id lets
+  // pages with two editors (e.g. Home + Logo wall) track independently.
+  const editorId = `${page}:${title}`;
+  useEffect(() => {
+    markDirty(editorId, dirty);
+    return () => markDirty(editorId, false);
+  }, [editorId, dirty]);
 
   useEffect(() => {
     let alive = true;
@@ -96,6 +108,20 @@ export default function ContentEditor({
     list.splice(idx, 1);
     set(key, list);
   };
+
+  // Object-list helpers (used by the `socials` field: {platform, url}[]).
+  const setSocialItem = (
+    key: string,
+    idx: number,
+    patch: Partial<SocialLink>
+  ) => {
+    const list: SocialLink[] = [...(data[key] || [])];
+    list[idx] = { ...list[idx], ...patch };
+    set(key, list);
+  };
+
+  const addSocialItem = (key: string) =>
+    set(key, [...(data[key] || []), { platform: "linkedin", url: "" }]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -199,6 +225,51 @@ export default function ContentEditor({
                   <Plus size={14} /> Add image
                 </button>
               </div>
+            ) : f.type === "socials" ? (
+              <div className="space-y-3">
+                {(data[f.key] || []).map((item: SocialLink, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <select
+                      value={item.platform}
+                      onChange={(e) =>
+                        setSocialItem(f.key, idx, { platform: e.target.value })
+                      }
+                      className={`${fieldCls} max-w-[9rem] flex-shrink-0`}
+                    >
+                      {SOCIAL_PLATFORMS.map((p) => (
+                        <option key={p.value} value={p.value}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      value={item.url}
+                      onChange={(e) =>
+                        setSocialItem(f.key, idx, { url: e.target.value })
+                      }
+                      placeholder={
+                        item.platform === "email"
+                          ? "you@example.com"
+                          : "https://…"
+                      }
+                      className={fieldCls}
+                    />
+                    <button
+                      onClick={() => removeListItem(f.key, idx)}
+                      className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
+                      title="Remove"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => addSocialItem(f.key)}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
+                >
+                  <Plus size={14} /> Add social link
+                </button>
+              </div>
             ) : f.type === "list" ? (
               <div className="space-y-2">
                 {(data[f.key] || []).map((item: string, idx: number) => (
@@ -252,6 +323,44 @@ export default function ContentEditor({
           </motion.div>
         ))}
       </div>
+
+      {/* Pinned save bar — sticks to the bottom of the viewport while editing
+          so Save is always reachable without scrolling back to the top. Only
+          appears when there are unsaved changes, doubling as a reminder. */}
+      {dirty && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sticky bottom-4 z-30 mt-4"
+        >
+          <div className="flex items-center justify-between gap-4 bg-black text-white rounded-2xl shadow-2xl px-5 py-3">
+            <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+              <AlertCircle size={16} className="text-amber-400" />
+              Unsaved changes
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest text-neutral-300 hover:text-white transition-colors"
+              >
+                Reset
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-6 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest text-black bg-white hover:bg-brand-teal hover:text-white transition-colors disabled:opacity-40"
+              >
+                {saving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Save size={14} />
+                )}
+                {saving ? "Saving…" : "Save changes"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

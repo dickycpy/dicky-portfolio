@@ -41,11 +41,11 @@ interface Props {
   projects: Project[];
   listTab: Exclude<
     ListTab,
+    | "projects"
     | "media"
     | "resume"
     | "pageHome"
     | "pageAbout"
-    | "pageCareer"
     | "pageContact"
     | "pageSite"
     | "pageNav"

@@ -76,13 +76,39 @@ export interface ContactContent {
 
 // --- Site-wide (logo wall + footer) -----------------------------------------
 
+// A footer social link. `platform` selects which logo icon renders (see the
+// icon map in Footer.tsx); `url` is where it points.
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
+// Platforms offered in the admin dropdown. Keep `value` in sync with the icon
+// map in Footer.tsx.
+export const SOCIAL_PLATFORMS = [
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "github", label: "GitHub" },
+  { value: "instagram", label: "Instagram" },
+  { value: "twitter", label: "X / Twitter" },
+  { value: "facebook", label: "Facebook" },
+  { value: "youtube", label: "YouTube" },
+  { value: "dribbble", label: "Dribbble" },
+  { value: "behance", label: "Behance" },
+  { value: "email", label: "Email" },
+  { value: "website", label: "Website / Other" },
+] as const;
+
 export interface SiteContent {
   logoWallHeading: string;
   logos: string[]; // image URLs
   footerCopyright: string;
   footerTagline: string;
-  footerLinkLabel: string;
-  footerLinkUrl: string;
+  // Preferred: a list of social links rendered as logo icons in the footer.
+  footerSocials: SocialLink[];
+  // Legacy single link (kept for backward-compat with old docs; used as a
+  // fallback only if footerSocials is empty).
+  footerLinkLabel?: string;
+  footerLinkUrl?: string;
   // Per-page navbar visibility. Keyed by NAV_PAGES `key`. A page is shown
   // unless its value is explicitly `false`, so pages added later (and old
   // docs missing this map) default to visible.
@@ -160,6 +186,9 @@ export const DEFAULT_SITE: SiteContent = {
   ],
   footerCopyright: "© 2026 Dicky Chu's Portfolio.",
   footerTagline: "Made in Hong Kong 🇭🇰",
+  footerSocials: [
+    { platform: "linkedin", url: "https://www.linkedin.com/in/dicky-chu/" },
+  ],
   footerLinkLabel: "LinkedIn",
   footerLinkUrl: "https://www.linkedin.com/in/dicky-chu/",
   pageVisibility: {

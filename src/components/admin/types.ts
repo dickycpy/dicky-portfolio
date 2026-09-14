@@ -59,11 +59,11 @@ export type ListTab =
   | "main"
   | "lab"
   | "home"
+  | "projects"
   | "media"
   | "resume"
   | "pageHome"
   | "pageAbout"
-  | "pageCareer"
   | "pageContact"
   | "pageSite"
   | "pageNav";

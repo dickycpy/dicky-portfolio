@@ -8,7 +8,7 @@ import {
   getMetadata,
 } from "firebase/storage";
 import { doc, getDoc } from "firebase/firestore";
-import { storage, db } from "@/firebase";
+import { storage, db, envLabel, firestoreDbLabel } from "@/firebase";
 import {
   Loader2,
   Trash2,
@@ -235,7 +235,19 @@ export default function MediaManager({ projects }: { projects: Project[] }) {
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <h3 className="text-2xl font-bold tracking-tight">Media Library</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-2xl font-bold tracking-tight">Media Library</h3>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                envLabel === "PROD"
+                  ? "bg-black text-white"
+                  : "bg-amber-400 text-black"
+              }`}
+              title={`Firestore database: ${firestoreDbLabel}`}
+            >
+              {envLabel}
+            </span>
+          </div>
           <p className="text-neutral-400 text-xs font-bold uppercase tracking-[0.2em] mt-1">
             {loading
               ? "Scanning storage…"
