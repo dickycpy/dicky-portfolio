@@ -59,6 +59,7 @@ export type ListTab =
   | "main"
   | "lab"
   | "home"
+  | "projects"
   | "media"
   | "resume"
   | "pageHome"

@@ -75,8 +75,12 @@ const LOGO_SCHEMA: FieldSchema[] = [
 const SITE_SCHEMA: FieldSchema[] = [
   { key: "footerCopyright", label: "Footer copyright line", type: "text" },
   { key: "footerTagline", label: "Footer tagline", type: "text" },
-  { key: "footerLinkLabel", label: "Footer link label", type: "text" },
-  { key: "footerLinkUrl", label: "Footer link URL", type: "url" },
+  {
+    key: "footerSocials",
+    label: "Footer social links",
+    type: "socials",
+    hint: "Each link shows as its platform logo in the footer. Add as many as you like; list order = display order.",
+  },
 ];
 
 export default function Admin() {
@@ -159,34 +163,28 @@ export default function Admin() {
   const navGroups: { label: string; items: { id: ListTab; label: string }[] }[] =
     [
       {
+        // Mirrors the public navbar pages, in the same order.
         label: "Page Content",
         items: [
-          { id: "main", label: "Main Projects" },
-          { id: "lab", label: "My Lab" },
-          { id: "home", label: "Home Featured" },
           { id: "pageHome", label: "Home Page" },
+          { id: "projects", label: "Projects" },
           { id: "pageAbout", label: "About Page" },
           { id: "pageContact", label: "Contact Page" },
-          { id: "pageSite", label: "Site-wide" },
+          { id: "resume", label: "Resume" },
         ],
-      },
-      {
-        label: "Documents",
-        items: [{ id: "resume", label: "Resume / CV" }],
       },
       {
         label: "Settings",
         items: [
+          { id: "pageSite", label: "Site-wide" },
           { id: "media", label: "Media" },
           { id: "pageNav", label: "Navigation" },
         ],
       },
     ];
 
-  // The three project-list tabs are the only ones that show the "New Project"
-  // button and the "Existing Projects" heading.
-  const isProjectList =
-    listTab === "main" || listTab === "lab" || listTab === "home";
+  // The Projects tab is the only one that shows the "New Project" button.
+  const isProjectsTab = listTab === "projects";
 
   return (
     <ToastProvider>
@@ -199,7 +197,7 @@ export default function Admin() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            {isProjectList && (
+            {isProjectsTab && (
               <button
                 onClick={() => (showForm ? closeForm() : openNew())}
                 className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors"
@@ -262,9 +260,9 @@ export default function Admin() {
           </aside>
 
           <div className="flex-1 min-w-0 space-y-8">
-            {isProjectList && (
+            {isProjectsTab && (
               <h2 className="text-3xl font-bold tracking-tighter">
-                Existing Projects
+                Projects
               </h2>
             )}
 
@@ -284,6 +282,46 @@ export default function Admin() {
                 defaults={DEFAULT_SITE}
                 schema={LOGO_SCHEMA}
               />
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight">
+                    Home Featured
+                  </h3>
+                  <p className="text-neutral-400 text-sm mt-1">
+                    Projects shown on the Home page. Use the star on any project
+                    (under Projects) to feature it here, then drag to reorder.
+                  </p>
+                </div>
+                <ProjectList
+                  projects={projects}
+                  listTab="home"
+                  user={user}
+                  onEdit={openEdit}
+                />
+              </div>
+            </div>
+          ) : listTab === "projects" ? (
+            <div className="space-y-12">
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold tracking-tight">
+                  Main Projects
+                </h3>
+                <ProjectList
+                  projects={projects}
+                  listTab="main"
+                  user={user}
+                  onEdit={openEdit}
+                />
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold tracking-tight">My Lab</h3>
+                <ProjectList
+                  projects={projects}
+                  listTab="lab"
+                  user={user}
+                  onEdit={openEdit}
+                />
+              </div>
             </div>
           ) : listTab === "pageAbout" ? (
             <div className="space-y-8">

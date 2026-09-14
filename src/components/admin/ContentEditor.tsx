@@ -10,6 +10,7 @@ import { db } from "@/firebase";
 import { Save, Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "./ToastProvider";
 import ImageUploadField from "./ImageUploadField";
+import { SOCIAL_PLATFORMS, SocialLink } from "@/lib/content";
 
 export type FieldType =
   | "text"
@@ -18,7 +19,8 @@ export type FieldType =
   | "url"
   | "list"
   | "image"
-  | "imageList";
+  | "imageList"
+  | "socials";
 
 export interface FieldSchema {
   key: string;
@@ -96,6 +98,20 @@ export default function ContentEditor({
     list.splice(idx, 1);
     set(key, list);
   };
+
+  // Object-list helpers (used by the `socials` field: {platform, url}[]).
+  const setSocialItem = (
+    key: string,
+    idx: number,
+    patch: Partial<SocialLink>
+  ) => {
+    const list: SocialLink[] = [...(data[key] || [])];
+    list[idx] = { ...list[idx], ...patch };
+    set(key, list);
+  };
+
+  const addSocialItem = (key: string) =>
+    set(key, [...(data[key] || []), { platform: "linkedin", url: "" }]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -197,6 +213,51 @@ export default function ContentEditor({
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
                 >
                   <Plus size={14} /> Add image
+                </button>
+              </div>
+            ) : f.type === "socials" ? (
+              <div className="space-y-3">
+                {(data[f.key] || []).map((item: SocialLink, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <select
+                      value={item.platform}
+                      onChange={(e) =>
+                        setSocialItem(f.key, idx, { platform: e.target.value })
+                      }
+                      className={`${fieldCls} max-w-[9rem] flex-shrink-0`}
+                    >
+                      {SOCIAL_PLATFORMS.map((p) => (
+                        <option key={p.value} value={p.value}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      value={item.url}
+                      onChange={(e) =>
+                        setSocialItem(f.key, idx, { url: e.target.value })
+                      }
+                      placeholder={
+                        item.platform === "email"
+                          ? "you@example.com"
+                          : "https://…"
+                      }
+                      className={fieldCls}
+                    />
+                    <button
+                      onClick={() => removeListItem(f.key, idx)}
+                      className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
+                      title="Remove"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => addSocialItem(f.key)}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
+                >
+                  <Plus size={14} /> Add social link
                 </button>
               </div>
             ) : f.type === "list" ? (

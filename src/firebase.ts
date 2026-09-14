@@ -17,7 +17,15 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || configData.appId,
 };
 
-const firestoreDatabaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || configData.firestoreDatabaseId || "";
+export const firestoreDatabaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || configData.firestoreDatabaseId || "";
+
+// Which environment this build talks to. Firestore data is isolated per env
+// (SAT uses the named `env-sat` DB, PROD uses the (default) DB) while Storage
+// is SHARED across both — so the same file can look "in use" on one env and
+// "unused" on the other. Surfaced in the admin Media Library to avoid confusion.
+export const envLabel: "SAT" | "PROD" =
+  firestoreDatabaseId === "env-sat" ? "SAT" : "PROD";
+export const firestoreDbLabel = firestoreDatabaseId || "(default)";
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
