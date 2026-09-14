@@ -17,10 +17,10 @@ import { useEffect, useState } from "react";
 let hasPlayed = false;
 
 const LOGO = "/logo-mark.png";
-const FILL_DURATION = 1.2; // seconds for 0 → 100
-// Fill completes at ~1.2s; hold ~0.9s longer so the filled logo can be read
+const FILL_DURATION = 1.5; // seconds for 0 → 100 (eased a touch slower)
+// Fill completes at ~1.5s; hold ~0.9s longer so the filled logo can be read
 // before the sweep begins.
-const EXIT_AT = 2100; // ms before the sweep begins
+const EXIT_AT = 2400; // ms before the sweep begins
 
 const sweep = { duration: 0.7, ease: [0.76, 0, 0.24, 1] as const };
 
