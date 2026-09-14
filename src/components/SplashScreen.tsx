@@ -1,17 +1,30 @@
-import { motion, AnimatePresence, type Variants } from "motion/react";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+  animate,
+  type Variants,
+} from "motion/react";
 import { useEffect, useState } from "react";
 
 // Plays once, on the very first load of the app — never again on route
-// changes. Name reveal + a single progress line, then the signature
-// four-colour panel sweep peels away UPWARD (bottom → top) to reveal the site.
+// changes. Concept: the DC logo mark acts as a container that "loads up",
+// filling bottom→top with the brand gradient while a monospaced counter ticks
+// to 100. On complete the panel peels away upward with the signature
+// four-colour sweep to reveal the site.
 // (Module-level flag survives re-mounts within a session.)
 let hasPlayed = false;
 
-const sweep = { duration: 0.85, ease: [0.76, 0, 0.24, 1] as const };
+const LOGO = "/logo-mark.png";
+const FILL_DURATION = 1.2; // seconds for 0 → 100
+const EXIT_AT = 1500; // ms before the sweep begins
+
+const sweep = { duration: 0.7, ease: [0.76, 0, 0.24, 1] as const };
 
 // Each panel rests over the screen, then slides up off the top on exit. The
-// parent orchestrates a stagger so the panels leave in sequence (white first,
-// then teal → pink → neutral) — a multi-colour curtain wiping upward.
+// container staggers them so they leave in sequence (content → teal → pink →
+// neutral) — a multi-colour curtain wiping upward.
 const panelVariants: Variants = {
   visible: { y: 0 },
   exit: { y: "-100%", transition: sweep },
@@ -19,13 +32,30 @@ const panelVariants: Variants = {
 
 const containerVariants: Variants = {
   visible: {},
-  exit: { transition: { staggerChildren: 0.08 } },
+  exit: { transition: { staggerChildren: 0.07 } },
 };
+
+// The logo mark clips whatever sits inside the wrapper to the DC silhouette.
+const maskStyle = {
+  WebkitMaskImage: `url(${LOGO})`,
+  maskImage: `url(${LOGO})`,
+  WebkitMaskSize: "contain",
+  maskSize: "contain",
+  WebkitMaskRepeat: "no-repeat",
+  maskRepeat: "no-repeat",
+  WebkitMaskPosition: "center",
+  maskPosition: "center",
+} as const;
 
 export default function SplashScreen() {
   const isFirstLoad =
     !hasPlayed && !window.location.pathname.startsWith("/admin");
   const [isComplete, setIsComplete] = useState(!isFirstLoad);
+
+  // Loading counter 0 → 100, shared by the number readout and the fill height.
+  const count = useMotionValue(0);
+  const percent = useTransform(count, (v) => Math.round(v));
+  const fillHeight = useTransform(count, (v) => `${v}%`);
 
   useEffect(() => {
     if (isFirstLoad) hasPlayed = true;
@@ -33,9 +63,26 @@ export default function SplashScreen() {
 
   useEffect(() => {
     if (!isFirstLoad) return;
-    // Content settles by ~1.1s; hold a beat, then trigger the exit sweep.
-    const timer = setTimeout(() => setIsComplete(true), 1500);
-    return () => clearTimeout(timer);
+
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    const controls = animate(count, 100, {
+      duration: reduce ? 0.01 : FILL_DURATION,
+      ease: [0.22, 1, 0.36, 1],
+    });
+
+    const timer = setTimeout(
+      () => setIsComplete(true),
+      reduce ? 400 : EXIT_AT
+    );
+
+    return () => {
+      controls.stop();
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFirstLoad]);
 
   if (!isFirstLoad) return null;
@@ -51,15 +98,15 @@ export default function SplashScreen() {
           animate="visible"
           exit="exit"
         >
-          {/* White content panel — leaves first */}
+          {/* Content panel — leaves first */}
           <motion.div
             variants={panelVariants}
             style={{ zIndex: 40 }}
             className="absolute inset-0 bg-brand-white flex flex-col items-center justify-center overflow-hidden"
           >
-            {/* Static grid background (matches the site) */}
+            {/* Faint grid, tied to the site's structural language */}
             <div
-              className="absolute inset-0 opacity-[0.05] pointer-events-none"
+              className="absolute inset-0 opacity-[0.04] pointer-events-none"
               style={{
                 backgroundImage: `
                   linear-gradient(to right, rgba(0,0,0,1) 1px, transparent 1px),
@@ -69,42 +116,52 @@ export default function SplashScreen() {
               }}
             />
 
-            {/* Content */}
-            <div className="relative z-10 text-center">
-              <div className="overflow-hidden mb-8">
-                <motion.h1 className="text-6xl md:text-8xl font-bold tracking-tighter leading-none flex justify-center">
-                  {"DICKY CHU".split("").map((char, index) => (
-                    <motion.span
-                      key={index}
-                      initial={{ y: "110%" }}
-                      animate={{ y: 0 }}
-                      transition={{
-                        duration: 0.6,
-                        delay: 0.05 + index * 0.025,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      className={char === " " ? "mr-4" : ""}
-                    >
-                      {char}
-                    </motion.span>
-                  ))}
-                </motion.h1>
+            {/* Corner registration marks — a small engineered flourish */}
+            <span className="absolute top-6 left-6 text-[10px] font-mono uppercase tracking-[0.3em] text-neutral-300">
+              Portfolio
+            </span>
+            <span className="absolute top-6 right-6 text-[10px] font-mono uppercase tracking-[0.3em] text-neutral-300">
+              HKG
+            </span>
+
+            <div className="relative z-10 flex flex-col items-center">
+              {/* Logo mark, filling up */}
+              <div className="relative w-36 h-36 md:w-44 md:h-44">
+                {/* Empty silhouette (ghost) */}
+                <div
+                  className="absolute inset-0 bg-neutral-200"
+                  style={maskStyle}
+                />
+                {/* Gradient fill rising from the bottom, clipped to the mark */}
+                <div className="absolute inset-0" style={maskStyle}>
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-brand-teal to-brand-pink"
+                    style={{ height: fillHeight }}
+                  />
+                </div>
               </div>
 
-              {/* Progress line */}
-              <div className="mx-auto w-40 h-[2px] bg-black/5 relative overflow-hidden rounded-full">
-                <motion.div
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transformOrigin: "left" }}
-                  className="absolute inset-0 bg-brand-teal"
-                />
+              {/* Name */}
+              <h1 className="mt-10 text-3xl md:text-4xl font-bold tracking-tight text-black">
+                Dicky Chu
+              </h1>
+
+              {/* Loading readout */}
+              <div className="mt-3 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.25em] text-neutral-400">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-60 animate-ping" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-teal" />
+                </span>
+                <span>Loading</span>
+                <motion.span className="text-black tabular-nums">
+                  {percent}
+                </motion.span>
+                <span className="text-neutral-400">%</span>
               </div>
             </div>
           </motion.div>
 
-          {/* Trailing colour panels — revealed as the white panel lifts */}
+          {/* Trailing colour panels — revealed as the content panel lifts */}
           <motion.div
             variants={panelVariants}
             style={{ zIndex: 30 }}
