@@ -13,10 +13,18 @@ import {
   Send,
   Pencil,
   Check,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { useToast } from "./ToastProvider";
-import type { ResumeData, ResumeVersion } from "./types";
-import { defaultResume } from "@/lib/resumeData";
+import type {
+  ResumeData,
+  ResumeVersion,
+  ResumeHeadings,
+  ResumeCustomSection,
+  ResumeSectionLayout,
+} from "./types";
+import { defaultResume, DEFAULT_RESUME_HEADINGS } from "@/lib/resumeData";
 
 const fieldCls =
   "w-full bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-sm focus:border-black outline-none transition-colors";
@@ -102,6 +110,58 @@ export default function ResumeEditor() {
     setData((d) => ({ ...d, [key]: value }));
     setDirty(true);
   };
+
+  // Editable section headings (fall back to defaults so they're never blank).
+  const h = { ...DEFAULT_RESUME_HEADINGS, ...(data.headings || {}) };
+  const setHeading = (key: keyof ResumeHeadings, value: string) => {
+    setData((d) => ({
+      ...d,
+      headings: { ...DEFAULT_RESUME_HEADINGS, ...(d.headings || {}), [key]: value },
+    }));
+    setDirty(true);
+  };
+
+  // User-added custom sections.
+  const customSections = data.customSections || [];
+  const setCustom = (next: ResumeCustomSection[]) => set("customSections", next);
+  const updateCustom = (i: number, patch: Partial<ResumeCustomSection>) => {
+    const next = [...customSections];
+    next[i] = { ...next[i], ...patch };
+    setCustom(next);
+  };
+  const addCustomSection = () => {
+    setCustom([
+      ...customSections,
+      {
+        id: genId(),
+        heading: "New Section",
+        layout: "text",
+        body: "",
+        entries: [],
+        items: [],
+      },
+    ]);
+  };
+  const moveCustom = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= customSections.length) return;
+    const next = [...customSections];
+    [next[i], next[j]] = [next[j], next[i]];
+    setCustom(next);
+  };
+
+  // Editable heading input for a built-in section (kept as a plain function,
+  // not a nested component, so the <input> doesn't lose focus on each keystroke).
+  const headingField = (k: keyof ResumeHeadings) => (
+    <div className="mb-3">
+      <label className={labelCls}>Section heading (as shown on the CV)</label>
+      <input
+        className={`${fieldCls} font-bold`}
+        value={h[k]}
+        onChange={(e) => setHeading(k, e.target.value)}
+      />
+    </div>
+  );
 
   const editingVersion = versions.find((v) => v.id === editingId) || null;
   const liveVersion = versions.find((v) => v.id === liveId) || null;
@@ -470,7 +530,7 @@ export default function ResumeEditor() {
 
         {/* Summary */}
         <fieldset>
-          <legend className="text-sm font-bold tracking-tight mb-3">Executive Summary</legend>
+          {headingField("summary")}
           <textarea
             className={`${fieldCls} min-h-[110px] resize-y leading-relaxed`}
             value={data.summary}
@@ -480,8 +540,8 @@ export default function ResumeEditor() {
 
         {/* Experience */}
         <fieldset className="space-y-4">
-          <div className="flex items-center justify-between mb-1">
-            <legend className="text-sm font-bold tracking-tight">Professional Experience</legend>
+          {headingField("experience")}
+          <div className="flex items-center justify-end mb-1">
             <button
               onClick={() =>
                 set("experience", [
@@ -584,8 +644,8 @@ export default function ResumeEditor() {
 
         {/* Education */}
         <fieldset className="space-y-4">
-          <div className="flex items-center justify-between mb-1">
-            <legend className="text-sm font-bold tracking-tight">Education</legend>
+          {headingField("education")}
+          <div className="flex items-center justify-end mb-1">
             <button
               onClick={() => set("education", [...data.education, { school: "", program: "", dateRange: "" }])}
               className="flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline"
@@ -639,8 +699,8 @@ export default function ResumeEditor() {
 
         {/* Certifications */}
         <fieldset className="space-y-4">
-          <div className="flex items-center justify-between mb-1">
-            <legend className="text-sm font-bold tracking-tight">Licenses &amp; Certifications</legend>
+          {headingField("certifications")}
+          <div className="flex items-center justify-end mb-1">
             <button
               onClick={() => set("certifications", [...data.certifications, { name: "", issuer: "", dateRange: "" }])}
               className="flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline"
@@ -694,8 +754,8 @@ export default function ResumeEditor() {
 
         {/* Skills */}
         <fieldset className="space-y-4">
-          <div className="flex items-center justify-between mb-1">
-            <legend className="text-sm font-bold tracking-tight">Technical &amp; AI Exposure</legend>
+          {headingField("skills")}
+          <div className="flex items-center justify-end mb-1">
             <button
               onClick={() => set("skills", [...data.skills, { label: "", items: "" }])}
               className="flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline"
@@ -731,6 +791,272 @@ export default function ResumeEditor() {
               >
                 <Trash2 size={16} />
               </button>
+            </div>
+          ))}
+        </fieldset>
+
+        {/* Custom sections (user-added) */}
+        <fieldset className="space-y-4 border-t border-neutral-200 pt-8">
+          <div className="flex items-center justify-between mb-1">
+            <div>
+              <legend className="text-sm font-bold tracking-tight">Custom sections</legend>
+              <p className="text-[11px] text-neutral-400 mt-1 max-w-md leading-relaxed">
+                Add your own sections (e.g. Projects, Awards, Languages). They
+                appear after the ones above, in the order shown here.
+              </p>
+            </div>
+            <button
+              onClick={addCustomSection}
+              className="flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline shrink-0"
+            >
+              <Plus size={14} /> Add section
+            </button>
+          </div>
+
+          {customSections.map((sec, i) => (
+            <div
+              key={sec.id}
+              className="bg-white rounded-2xl p-5 border border-neutral-100 space-y-4"
+            >
+              {/* section toolbar */}
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                  Section #{i + 1}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => moveCustom(i, -1)}
+                    disabled={i === 0}
+                    className="p-1.5 text-neutral-300 hover:text-black transition-colors disabled:opacity-30 disabled:cursor-default"
+                    title="Move up"
+                  >
+                    <ChevronUp size={16} />
+                  </button>
+                  <button
+                    onClick={() => moveCustom(i, 1)}
+                    disabled={i === customSections.length - 1}
+                    className="p-1.5 text-neutral-300 hover:text-black transition-colors disabled:opacity-30 disabled:cursor-default"
+                    title="Move down"
+                  >
+                    <ChevronDown size={16} />
+                  </button>
+                  <button
+                    onClick={() => setCustom(customSections.filter((_, k) => k !== i))}
+                    className="p-1.5 text-neutral-300 hover:text-red-500 transition-colors"
+                    title="Delete section"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
+                <div>
+                  <label className={labelCls}>Section heading</label>
+                  <input
+                    className={`${fieldCls} font-bold`}
+                    placeholder="e.g. Selected Projects"
+                    value={sec.heading}
+                    onChange={(e) => updateCustom(i, { heading: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Layout</label>
+                  <select
+                    className={fieldCls}
+                    value={sec.layout}
+                    onChange={(e) =>
+                      updateCustom(i, {
+                        layout: e.target.value as ResumeSectionLayout,
+                      })
+                    }
+                  >
+                    <option value="text">Paragraph</option>
+                    <option value="entries">Entries (title + bullets)</option>
+                    <option value="list">List (label: items)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* layout: text */}
+              {sec.layout === "text" && (
+                <div>
+                  <label className={labelCls}>Body text</label>
+                  <textarea
+                    className={`${fieldCls} min-h-[90px] resize-y leading-relaxed`}
+                    placeholder="Write a paragraph…"
+                    value={sec.body}
+                    onChange={(e) => updateCustom(i, { body: e.target.value })}
+                  />
+                </div>
+              )}
+
+              {/* layout: entries */}
+              {sec.layout === "entries" && (
+                <div className="space-y-3">
+                  {sec.entries.map((e, ei) => (
+                    <div
+                      key={ei}
+                      className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                          Entry #{ei + 1}
+                        </span>
+                        <button
+                          onClick={() =>
+                            updateCustom(i, {
+                              entries: sec.entries.filter((_, k) => k !== ei),
+                            })
+                          }
+                          className="text-neutral-300 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input
+                          className={fieldCls}
+                          placeholder="Title"
+                          value={e.title}
+                          onChange={(ev) => {
+                            const entries = [...sec.entries];
+                            entries[ei] = { ...e, title: ev.target.value };
+                            updateCustom(i, { entries });
+                          }}
+                        />
+                        <input
+                          className={fieldCls}
+                          placeholder="Subtitle (optional)"
+                          value={e.subtitle}
+                          onChange={(ev) => {
+                            const entries = [...sec.entries];
+                            entries[ei] = { ...e, subtitle: ev.target.value };
+                            updateCustom(i, { entries });
+                          }}
+                        />
+                        <input
+                          className={fieldCls}
+                          placeholder="Date range (optional)"
+                          value={e.dateRange}
+                          onChange={(ev) => {
+                            const entries = [...sec.entries];
+                            entries[ei] = { ...e, dateRange: ev.target.value };
+                            updateCustom(i, { entries });
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        {e.bullets.map((b, bi) => (
+                          <div key={bi} className="flex gap-2 items-start">
+                            <textarea
+                              className={`${fieldCls} min-h-[48px] resize-y`}
+                              placeholder={`Bullet ${bi + 1}`}
+                              value={b}
+                              onChange={(ev) => {
+                                const entries = [...sec.entries];
+                                const bullets = [...e.bullets];
+                                bullets[bi] = ev.target.value;
+                                entries[ei] = { ...e, bullets };
+                                updateCustom(i, { entries });
+                              }}
+                            />
+                            <button
+                              onClick={() => {
+                                const entries = [...sec.entries];
+                                entries[ei] = {
+                                  ...e,
+                                  bullets: e.bullets.filter((_, k) => k !== bi),
+                                };
+                                updateCustom(i, { entries });
+                              }}
+                              className="text-neutral-300 hover:text-red-500 transition-colors mt-2"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => {
+                            const entries = [...sec.entries];
+                            entries[ei] = { ...e, bullets: [...e.bullets, ""] };
+                            updateCustom(i, { entries });
+                          }}
+                          className="flex items-center gap-1.5 text-[11px] font-bold text-neutral-500 hover:text-black"
+                        >
+                          <Plus size={12} /> Add bullet
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() =>
+                      updateCustom(i, {
+                        entries: [
+                          ...sec.entries,
+                          { title: "", subtitle: "", dateRange: "", bullets: [""] },
+                        ],
+                      })
+                    }
+                    className="flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline"
+                  >
+                    <Plus size={14} /> Add entry
+                  </button>
+                </div>
+              )}
+
+              {/* layout: list */}
+              {sec.layout === "list" && (
+                <div className="space-y-3">
+                  {sec.items.map((s, si) => (
+                    <div
+                      key={si}
+                      className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3 items-start"
+                    >
+                      <input
+                        className={fieldCls}
+                        placeholder="Label (optional)"
+                        value={s.label}
+                        onChange={(ev) => {
+                          const items = [...sec.items];
+                          items[si] = { ...s, label: ev.target.value };
+                          updateCustom(i, { items });
+                        }}
+                      />
+                      <input
+                        className={fieldCls}
+                        placeholder="Items / description"
+                        value={s.items}
+                        onChange={(ev) => {
+                          const items = [...sec.items];
+                          items[si] = { ...s, items: ev.target.value };
+                          updateCustom(i, { items });
+                        }}
+                      />
+                      <button
+                        onClick={() =>
+                          updateCustom(i, {
+                            items: sec.items.filter((_, k) => k !== si),
+                          })
+                        }
+                        className="text-neutral-300 hover:text-red-500 transition-colors mt-2.5"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() =>
+                      updateCustom(i, {
+                        items: [...sec.items, { label: "", items: "" }],
+                      })
+                    }
+                    className="flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline"
+                  >
+                    <Plus size={14} /> Add row
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </fieldset>

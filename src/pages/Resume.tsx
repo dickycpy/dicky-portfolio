@@ -3,7 +3,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase";
 import { Download, Mail, Phone, Globe, Linkedin } from "lucide-react";
 import type { ResumeData } from "@/components/admin/types";
-import { defaultResume } from "@/lib/resumeData";
+import { defaultResume, DEFAULT_RESUME_HEADINGS } from "@/lib/resumeData";
 
 function SectionHeading({ children }: { children: any }) {
   return (
@@ -31,6 +31,8 @@ export default function Resume() {
   }, []);
 
   const stripProtocol = (url: string) => url.replace(/^https?:\/\//, "");
+  const h = { ...DEFAULT_RESUME_HEADINGS, ...(resume.headings || {}) };
+  const customSections = resume.customSections || [];
 
   return (
     <div className="resume-page min-h-screen bg-neutral-100 pt-28 md:pt-32 pb-24 px-4 print:p-0 print:bg-white print:min-h-0">
@@ -93,7 +95,7 @@ export default function Resume() {
         {/* Executive Summary */}
         {resume.summary && (
           <section className="mb-4">
-            <SectionHeading>Executive Summary</SectionHeading>
+            <SectionHeading>{h.summary}</SectionHeading>
             <p className="text-[11.5px] leading-snug text-neutral-800 text-justify">
               {resume.summary}
             </p>
@@ -103,7 +105,7 @@ export default function Resume() {
         {/* Professional Experience */}
         {resume.experience.length > 0 && (
           <section className="mb-4">
-            <SectionHeading>Professional Experience</SectionHeading>
+            <SectionHeading>{h.experience}</SectionHeading>
             <div className="space-y-2.5">
               {resume.experience.map((exp, i) => (
                 <div key={i} className="resume-entry">
@@ -133,7 +135,7 @@ export default function Resume() {
         {/* Education */}
         {resume.education.length > 0 && (
           <section className="mb-4">
-            <SectionHeading>Education</SectionHeading>
+            <SectionHeading>{h.education}</SectionHeading>
             <div className="space-y-1.5">
               {resume.education.map((ed, i) => (
                 <div key={i} className="resume-entry flex justify-between items-baseline gap-4">
@@ -153,7 +155,7 @@ export default function Resume() {
         {/* Licenses & Certifications */}
         {resume.certifications.length > 0 && (
           <section className="mb-4">
-            <SectionHeading>Licenses &amp; Certifications</SectionHeading>
+            <SectionHeading>{h.certifications}</SectionHeading>
             <div className="space-y-1.5">
               {resume.certifications.map((c, i) => (
                 <div key={i} className="resume-entry flex justify-between items-baseline gap-4">
@@ -172,8 +174,8 @@ export default function Resume() {
 
         {/* Technical & AI Exposure */}
         {resume.skills.length > 0 && (
-          <section>
-            <SectionHeading>Technical &amp; AI Exposure</SectionHeading>
+          <section className={customSections.length > 0 ? "mb-4" : ""}>
+            <SectionHeading>{h.skills}</SectionHeading>
             <div className="space-y-1">
               {resume.skills.map((s, i) => (
                 <p key={i} className="text-[11.5px] leading-snug text-neutral-800">
@@ -184,6 +186,82 @@ export default function Resume() {
             </div>
           </section>
         )}
+
+        {/* Custom sections (user-added, rendered in order) */}
+        {customSections.map((sec, si) => {
+          const isLast = si === customSections.length - 1;
+          const hasContent =
+            (sec.layout === "text" && sec.body.trim()) ||
+            (sec.layout === "entries" && sec.entries.length > 0) ||
+            (sec.layout === "list" && sec.items.length > 0);
+          if (!sec.heading.trim() && !hasContent) return null;
+          return (
+            <section key={sec.id} className={isLast ? "" : "mb-4"}>
+              <SectionHeading>{sec.heading}</SectionHeading>
+
+              {sec.layout === "text" && (
+                <p className="text-[11.5px] leading-snug text-neutral-800 text-justify">
+                  {sec.body}
+                </p>
+              )}
+
+              {sec.layout === "entries" && (
+                <div className="space-y-2.5">
+                  {sec.entries.map((e, i) => (
+                    <div key={i} className="resume-entry">
+                      <div className="flex justify-between items-baseline gap-4">
+                        <h3 className="text-[13px] font-bold text-black">
+                          {e.title}
+                        </h3>
+                        {e.dateRange && (
+                          <span className="text-[11px] font-semibold text-neutral-500 whitespace-nowrap">
+                            {e.dateRange}
+                          </span>
+                        )}
+                      </div>
+                      {e.subtitle && (
+                        <p className="text-[11.5px] text-neutral-700 mb-1">
+                          {e.subtitle}
+                        </p>
+                      )}
+                      {e.bullets.filter((b) => b.trim()).length > 0 && (
+                        <ul className="space-y-0.5">
+                          {e.bullets
+                            .filter((b) => b.trim())
+                            .map((b, j) => (
+                              <li
+                                key={j}
+                                className="flex gap-2 text-[11.5px] leading-snug text-neutral-800"
+                              >
+                                <span className="mt-[6px] w-1 h-1 rounded-full bg-black shrink-0" />
+                                <span className="text-justify">{b}</span>
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {sec.layout === "list" && (
+                <div className="space-y-1">
+                  {sec.items.map((s, i) => (
+                    <p
+                      key={i}
+                      className="text-[11.5px] leading-snug text-neutral-800"
+                    >
+                      {s.label && (
+                        <span className="font-bold text-black">{s.label}: </span>
+                      )}
+                      {s.items}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
          </td></tr>
         </tbody>
        </table>

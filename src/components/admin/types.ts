@@ -89,6 +89,37 @@ export interface ResumeSkillGroup {
   items: string;
 }
 
+// Editable labels for the five built-in CV sections (so they aren't hardcoded).
+export interface ResumeHeadings {
+  summary: string;
+  experience: string;
+  education: string;
+  certifications: string;
+  skills: string;
+}
+
+// A generic, user-added CV section. `layout` picks how it renders/edits:
+//  - "text"    → a single paragraph (like Executive Summary), uses `body`
+//  - "entries" → title / subtitle / dates + bullets rows (like Experience), uses `entries`
+//  - "list"    → "Label: comma-separated items" rows (like Skills), uses `items`
+export type ResumeSectionLayout = "text" | "entries" | "list";
+
+export interface ResumeCustomEntry {
+  title: string;
+  subtitle: string;
+  dateRange: string;
+  bullets: string[];
+}
+
+export interface ResumeCustomSection {
+  id: string;
+  heading: string;
+  layout: ResumeSectionLayout;
+  body: string;
+  entries: ResumeCustomEntry[];
+  items: ResumeSkillGroup[];
+}
+
 export interface ResumeData {
   title: string;
   name: string;
@@ -101,6 +132,10 @@ export interface ResumeData {
   education: ResumeEducation[];
   certifications: ResumeCertification[];
   skills: ResumeSkillGroup[];
+  // Editable section headings (optional for backward-compat with old docs).
+  headings?: ResumeHeadings;
+  // Extra sections the user adds beyond the five built-ins.
+  customSections?: ResumeCustomSection[];
 }
 
 // A saved snapshot of the resume, for version history (e.g. "Sep 2026 v1").
