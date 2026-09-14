@@ -18,7 +18,9 @@ let hasPlayed = false;
 
 const LOGO = "/logo-mark.png";
 const FILL_DURATION = 1.2; // seconds for 0 → 100
-const EXIT_AT = 1500; // ms before the sweep begins
+// Fill completes at ~1.2s; hold ~0.9s longer so the filled logo can be read
+// before the sweep begins.
+const EXIT_AT = 2100; // ms before the sweep begins
 
 const sweep = { duration: 0.7, ease: [0.76, 0, 0.24, 1] as const };
 
@@ -127,15 +129,15 @@ export default function SplashScreen() {
             <div className="relative z-10 flex flex-col items-center">
               {/* Logo mark, filling up */}
               <div className="relative w-36 h-36 md:w-44 md:h-44">
-                {/* Empty silhouette (ghost) */}
+                {/* Empty silhouette — light disabled grey */}
                 <div
                   className="absolute inset-0 bg-neutral-200"
                   style={maskStyle}
                 />
-                {/* Gradient fill rising from the bottom, clipped to the mark */}
+                {/* Solid brand-teal fill rising from the bottom, clipped to the mark */}
                 <div className="absolute inset-0" style={maskStyle}>
                   <motion.div
-                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-brand-teal to-brand-pink"
+                    className="absolute bottom-0 left-0 right-0 bg-brand-teal"
                     style={{ height: fillHeight }}
                   />
                 </div>
