@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import CareerJourney from "@/components/about/CareerJourney";
+import Expertise from "@/components/about/Expertise";
 import RichText from "@/components/RichText";
 import { usePageContent, DEFAULT_ABOUT } from "@/lib/content";
 
@@ -40,7 +41,11 @@ export default function About() {
         <AboutHero />
       </section>
 
-      <CareerJourney />
+      {/* Stacked on all viewports: career path on top, expertise below. */}
+      <div className="space-y-24 md:space-y-32">
+        <CareerJourney />
+        <Expertise />
+      </div>
     </div>
   );
 }

@@ -61,6 +61,19 @@ export interface CareerContent {
   journey: CareerCheckpoint[];
 }
 
+// --- Expertise (About page skill groups) ------------------------------------
+
+// One expertise group: a heading (e.g. "UX / UI Design") and its skill tags.
+export interface ExpertiseGroup {
+  label: string;
+  items: string[];
+}
+
+export interface ExpertiseContent {
+  heading: string; // section eyebrow, e.g. "Expertise"
+  groups: ExpertiseGroup[];
+}
+
 // --- Contact page -----------------------------------------------------------
 
 export interface ContactContent {
@@ -250,6 +263,57 @@ export const DEFAULT_CAREER: CareerContent = {
           name: "HKU iDendron",
           logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvKwjcCnJapeWjOqfAZZc6Z84hOEX2D6ZA2w&s",
         },
+      ],
+    },
+  ],
+};
+
+export const DEFAULT_EXPERTISE: ExpertiseContent = {
+  heading: "Expertise",
+  groups: [
+    {
+      label: "UX / UI Design",
+      items: [
+        "User Research",
+        "Wireframing & Prototyping",
+        "Responsive Design Systems",
+        "Interaction Design",
+      ],
+    },
+    {
+      label: "Visual & Brand Design",
+      items: [
+        "Brand Identity & Positioning",
+        "Logo Design",
+        "Visual Storytelling",
+        "Design Systems",
+      ],
+    },
+    {
+      label: "Web & Product Development",
+      items: [
+        "Web Design (UX-focused)",
+        "HTML / CSS / JavaScript",
+        "CMS (WordPress, Wix)",
+        "E-Commerce",
+      ],
+    },
+    {
+      label: "Content & Communication",
+      items: [
+        "Copywriting",
+        "Content Strategy",
+        "Blogging & Editorial",
+        "Photo & Video Production",
+      ],
+    },
+    {
+      label: "Growth & Optimization",
+      items: [
+        "SEO / SEM",
+        "Email Marketing",
+        "Analytics",
+        "Conversion Awareness",
       ],
     },
   ],
