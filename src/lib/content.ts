@@ -83,6 +83,31 @@ export interface SiteContent {
   footerTagline: string;
   footerLinkLabel: string;
   footerLinkUrl: string;
+  // Per-page navbar visibility. Keyed by NAV_PAGES `key`. A page is shown
+  // unless its value is explicitly `false`, so pages added later (and old
+  // docs missing this map) default to visible.
+  pageVisibility?: Record<string, boolean>;
+}
+
+// Canonical list of top-level pages that can be shown/hidden in the navbar.
+// Add future pages here so they appear in the admin visibility editor.
+export const NAV_PAGES = [
+  { key: "home", label: "Home", path: "/" },
+  { key: "projects", label: "Projects", path: "/projects" },
+  { key: "about", label: "About", path: "/about" },
+  { key: "blogs", label: "Blogs", path: "/blogs" },
+  { key: "contact", label: "Contact", path: "/contact" },
+  { key: "resume", label: "Resume", path: "/resume" },
+] as const;
+
+export type PageKey = (typeof NAV_PAGES)[number]["key"];
+
+// A page is visible unless explicitly turned off (default-visible semantics).
+export function isPageVisible(
+  vis: Record<string, boolean> | undefined,
+  key: string
+): boolean {
+  return !vis || vis[key] !== false;
 }
 
 // --- Defaults (must match the current live copy verbatim) -------------------
@@ -137,6 +162,14 @@ export const DEFAULT_SITE: SiteContent = {
   footerTagline: "Made in Hong Kong 🇭🇰",
   footerLinkLabel: "LinkedIn",
   footerLinkUrl: "https://www.linkedin.com/in/dicky-chu/",
+  pageVisibility: {
+    home: true,
+    projects: true,
+    about: true,
+    blogs: true,
+    contact: true,
+    resume: true,
+  },
 };
 
 export const DEFAULT_CAREER: CareerContent = {

@@ -4,19 +4,27 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Menu, X, FileText } from "lucide-react";
 import Magnetic from "./Magnetic";
-
-const links = [
-  { name: "Home", path: "/" },
-  { name: "Projects", path: "/projects" },
-  { name: "About", path: "/about" },
-  { name: "Blogs", path: "/blogs" },
-  { name: "Contact", path: "/contact" },
-];
+import {
+  usePageContent,
+  DEFAULT_SITE,
+  NAV_PAGES,
+  isPageVisible,
+} from "@/lib/content";
 
 export default function Navbar() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Page visibility is admin-controlled via settings/site.
+  const { content: site } = usePageContent("site", DEFAULT_SITE);
+  const vis = site.pageVisibility;
+  // Menu links: every nav page except Resume (rendered as its own button),
+  // filtered by admin visibility toggles.
+  const links = NAV_PAGES.filter(
+    (p) => p.key !== "resume" && isPageVisible(vis, p.key)
+  ).map((p) => ({ name: p.label, path: p.path }));
+  const showResume = isPageVisible(vis, "resume");
 
   // Handle scroll effect
   useEffect(() => {
@@ -100,15 +108,17 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Magnetic strength={0.2}>
-              <Link
-                to="/resume"
-                state={{ animate: true }}
-                className="hidden md:flex items-center gap-2 px-6 py-2 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-brand-teal transition-all shadow-lg hover:shadow-brand-teal/20"
-              >
-                <FileText size={14} /> Resume
-              </Link>
-            </Magnetic>
+            {showResume && (
+              <Magnetic strength={0.2}>
+                <Link
+                  to="/resume"
+                  state={{ animate: true }}
+                  className="hidden md:flex items-center gap-2 px-6 py-2 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-brand-teal transition-all shadow-lg hover:shadow-brand-teal/20"
+                >
+                  <FileText size={14} /> Resume
+                </Link>
+              </Magnetic>
+            )}
 
             {/* Mobile Toggle */}
             <motion.button 
@@ -171,19 +181,21 @@ export default function Navbar() {
                   </motion.div>
                 ))}
                 
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: links.length * 0.1 }}
-                >
-                  <Link
-                    to="/resume"
-                    state={{ animate: true }}
-                    className="text-4xl font-bold tracking-tighter text-brand-teal flex items-center gap-3"
+                {showResume && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: links.length * 0.1 }}
                   >
-                    Resume <FileText size={28} />
-                  </Link>
-                </motion.div>
+                    <Link
+                      to="/resume"
+                      state={{ animate: true }}
+                      className="text-4xl font-bold tracking-tighter text-brand-teal flex items-center gap-3"
+                    >
+                      Resume <FileText size={28} />
+                    </Link>
+                  </motion.div>
+                )}
               </div>
 
               <div className="mt-auto pt-12 border-t border-neutral-100">

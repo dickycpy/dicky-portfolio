@@ -69,6 +69,20 @@ const ProjectForm: React.FC<Props> = ({
   const [draftAvailable, setDraftAvailable] = useState<ProjectFormData | null>(
     () => readDraft<ProjectFormData>(key)
   );
+  // Whether the category field is in free-text "create new" mode.
+  const [addingCategory, setAddingCategory] = useState(false);
+
+  // Category dropdown options = built-in list + every category already used by
+  // existing projects (+ the current value), de-duplicated. Lets old custom
+  // categories reappear and keeps the current selection valid.
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>(CATEGORIES as readonly string[]);
+    existingProjects.forEach((p) => {
+      if (p.category) set.add(p.category);
+    });
+    if (formData.category) set.add(formData.category);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [existingProjects, formData.category]);
 
   // A2: continuously autosave the working copy.
   useAutosave(key, formData, !loading);
@@ -364,15 +378,49 @@ const ProjectForm: React.FC<Props> = ({
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
                   Category
                 </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => patch({ category: e.target.value })}
-                  className={`${inputCls("category")} appearance-none`}
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
+                {addingCategory ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={formData.category}
+                      onChange={(e) => patch({ category: e.target.value })}
+                      placeholder="Type a new category name"
+                      className={inputCls("category")}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddingCategory(false);
+                        patch({ category: categoryOptions[0] || "" });
+                      }}
+                      title="Back to the list"
+                      className="px-3 rounded-xl border border-neutral-200 text-neutral-400 hover:text-black hover:border-black transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={formData.category}
+                    onChange={(e) => {
+                      if (e.target.value === "__new__") {
+                        setAddingCategory(true);
+                        patch({ category: "" });
+                      } else {
+                        patch({ category: e.target.value });
+                      }
+                    }}
+                    className={`${inputCls("category")} appearance-none`}
+                  >
+                    {categoryOptions.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                    <option value="__new__">+ Add new category…</option>
+                  </select>
+                )}
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">

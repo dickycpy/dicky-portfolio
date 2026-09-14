@@ -1,4 +1,14 @@
-import type { ResumeData } from "@/components/admin/types";
+import type { ResumeData, ResumeHeadings } from "@/components/admin/types";
+
+// Default labels for the five built-in sections. Used as a fallback in both the
+// public /resume page and the admin editor so headings are never blank.
+export const DEFAULT_RESUME_HEADINGS: ResumeHeadings = {
+  summary: "Executive Summary",
+  experience: "Professional Experience",
+  education: "Education",
+  certifications: "Licenses & Certifications",
+  skills: "Technical & AI Exposure",
+};
 
 // Default resume content, mirroring Dicky's current CV. Used as a fallback when
 // no `settings/resume` document exists yet, and as the seed for the admin editor.
@@ -86,4 +96,6 @@ export const defaultResume: ResumeData = {
       items: "MQTT real-time event flows, APIs, SDK integration",
     },
   ],
+  headings: { ...DEFAULT_RESUME_HEADINGS },
+  customSections: [],
 };

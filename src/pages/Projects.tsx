@@ -50,6 +50,7 @@ export default function Projects() {
   ];
 
   const filteredProjects = projects.filter(p => {
+    if (p.hidden) return false; // admin-hidden projects never show publicly
     if (activeTab === "main") return p.type === "main" || !p.type;
     return p.type === "lab";
   });

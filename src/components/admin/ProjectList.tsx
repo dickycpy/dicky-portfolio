@@ -31,6 +31,8 @@ import {
   Copy,
   GripVertical,
   Loader2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useToast } from "./ToastProvider";
 import { Project, ListTab } from "./types";
@@ -46,6 +48,7 @@ interface Props {
     | "pageCareer"
     | "pageContact"
     | "pageSite"
+    | "pageNav"
   >;
   user: User;
   onEdit: (p: Project) => void;
@@ -137,6 +140,22 @@ export default function ProjectList({ projects, listTab, user, onEdit }: Props) 
     } catch (err) {
       console.error("Toggle feature failed:", err);
       toast("Failed to update feature status.", "error");
+    }
+  };
+
+  const toggleHidden = async (p: Project) => {
+    try {
+      const hiding = !p.hidden;
+      await updateDoc(doc(db, "projects", p.id), { hidden: hiding });
+      toast(
+        hiding
+          ? "Hidden — no longer shown on the public site."
+          : "Now visible on the public site.",
+        "success"
+      );
+    } catch (err) {
+      console.error("Toggle hidden failed:", err);
+      toast("Failed to update visibility.", "error");
     }
   };
 
@@ -260,7 +279,7 @@ export default function ProjectList({ projects, listTab, user, onEdit }: Props) 
                         snapshot.isDragging
                           ? "shadow-2xl border-neutral-300"
                           : "border-neutral-100 hover:border-neutral-200"
-                      }`}
+                      } ${p.hidden ? "opacity-55" : ""}`}
                     >
                       <div
                         {...dragProvided.dragHandleProps}
@@ -300,6 +319,11 @@ export default function ProjectList({ projects, listTab, user, onEdit }: Props) 
                               Coming Soon
                             </span>
                           )}
+                          {p.hidden && (
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded flex items-center gap-1">
+                              <EyeOff size={10} /> Hidden
+                            </span>
+                          )}
                         </div>
                         <p className="text-neutral-400 text-xs truncate">
                           {p.category} · {p.description}
@@ -307,6 +331,21 @@ export default function ProjectList({ projects, listTab, user, onEdit }: Props) 
                       </div>
 
                       <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => toggleHidden(p)}
+                          className={`p-2.5 rounded-xl transition-colors ${
+                            p.hidden
+                              ? "bg-neutral-800 text-white hover:bg-neutral-700"
+                              : "text-neutral-400 hover:bg-neutral-100 hover:text-black"
+                          }`}
+                          title={
+                            p.hidden
+                              ? "Hidden from the site — click to show"
+                              : "Visible on the site — click to hide"
+                          }
+                        >
+                          {p.hidden ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
                         <button
                           onClick={() => toggleFeature(p)}
                           className={`p-2.5 rounded-xl transition-colors ${
