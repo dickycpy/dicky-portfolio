@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight, ChevronDown, ExternalLink } from "lucide-react";
 import { usePageContent, DEFAULT_CAREER } from "@/lib/content";
@@ -13,6 +13,23 @@ export default function CareerJourney() {
   const { content } = usePageContent("career", DEFAULT_CAREER);
   const journey = content.journey;
   const [expanded, setExpanded] = useState<number | null>(0);
+  const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  // Opening a card collapses the one above it, so the layout shifts up and the
+  // card you just clicked can slide out of view. Once it expands, pull it back
+  // to the top of the viewport. Delay lets the collapse/expand settle first.
+  const toggle = (i: number) => {
+    const willOpen = expanded !== i;
+    setExpanded(willOpen ? i : null);
+    if (willOpen) {
+      setTimeout(() => {
+        itemRefs.current[i]?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 350);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-3xl px-2">
@@ -29,7 +46,13 @@ export default function CareerJourney() {
         {journey.map((item, i) => {
           const open = expanded === i;
           return (
-            <div key={i} className="relative pl-11 md:pl-12">
+            <div
+              key={i}
+              ref={(el) => {
+                itemRefs.current[i] = el;
+              }}
+              className="relative pl-11 md:pl-12 scroll-mt-28"
+            >
               {/* Timeline node */}
               <span
                 aria-hidden
@@ -46,7 +69,7 @@ export default function CareerJourney() {
               }`}
             >
               <button
-                onClick={() => setExpanded(open ? null : i)}
+                onClick={() => toggle(i)}
                 aria-expanded={open}
                 className="w-full text-left"
               >
