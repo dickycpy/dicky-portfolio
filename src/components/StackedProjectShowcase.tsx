@@ -143,7 +143,7 @@ const ProjectCard: React.FC<{
         zIndex: index,
       }}
       className={cn(
-        "absolute left-0 right-0 h-[50vh] md:h-[55vh] rounded-[2.5rem] overflow-hidden",
+        "absolute left-0 right-0 h-[66vh] md:h-[55vh] rounded-[2.5rem] overflow-hidden",
         "bg-neutral-900",
         "group cursor-pointer"
       )}
