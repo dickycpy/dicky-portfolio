@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { motion, useScroll, useSpring, AnimatePresence } from "motion/react";
+import { motion, useScroll, useSpring, AnimatePresence, useAnimationControls } from "motion/react";
 import { ArrowLeft, ChevronRight, Lock, ArrowRight, Clock, Tag, Calendar, ChevronLeft } from "lucide-react";
 import { projects as mockProjects } from "@/lib/data";
 import React, { useEffect, useState, useMemo } from "react";
@@ -117,6 +117,10 @@ export default function ProjectDetail() {
     return () => unsubscribe();
   }, [id, navigate]);
 
+  // Imperative controls so the shake replays on EVERY wrong attempt — a boolean
+  // flag wouldn't re-fire when consecutive submissions leave the state unchanged.
+  const shakeControls = useAnimationControls();
+
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordInput === project.password) {
@@ -125,6 +129,10 @@ export default function ProjectDetail() {
     } else {
       setError("Incorrect password. Please try again.");
       setPasswordInput("");
+      shakeControls.start({
+        x: [0, -12, 12, -10, 10, -6, 6, 0],
+        transition: { duration: 0.5, ease: "easeInOut" },
+      });
     }
   };
 
@@ -221,7 +229,7 @@ export default function ProjectDetail() {
           <p className="text-neutral-500 mb-12">This project is confidential. Please enter the password provided to you to view the case study.</p>
           
           <form onSubmit={handlePasswordSubmit} className="space-y-6">
-            <div className="relative">
+            <motion.div className="relative" animate={shakeControls}>
               <input
                 type="password"
                 value={passwordInput}
@@ -242,7 +250,7 @@ export default function ProjectDetail() {
                   </motion.p>
                 )}
               </AnimatePresence>
-            </div>
+            </motion.div>
             <button
               type="submit"
               className="w-full py-4 bg-black text-white rounded-full font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors"
