@@ -18,16 +18,25 @@ service firebase.storage {
     // Project imagery: cover images + case-study section/subsection images.
     // Publicly readable; only an admin can upload/overwrite/delete, and only
     // reasonably sized image files.
+    //
+    // NOTE: on a DELETE request `request.resource` is null (there is no
+    // incoming file), so any check that reads request.resource.* would throw
+    // and silently deny the delete. We therefore only enforce the size/type
+    // constraints when a file is actually being written (request.resource !=
+    // null); a null request.resource means a delete, which admins may do.
     match /projects/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && isImageUnder(10 * 1024 * 1024);
+      allow write: if isAdmin()
+        && (request.resource == null || isImageUnder(10 * 1024 * 1024));
     }
 
-    // Site assets (e.g. resume PDF, misc files). Public read, admin write.
-    // Not restricted to images so a resume PDF can live here if needed.
+    // Site assets (CMS images under site/content, resume PDF, misc files).
+    // Public read, admin write. Not restricted to images so a resume PDF can
+    // live here. Same null-request.resource guard so admins can delete.
     match /site/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+      allow write: if isAdmin()
+        && (request.resource == null || request.resource.size < 20 * 1024 * 1024);
     }
 
     // Everything else is denied by default.

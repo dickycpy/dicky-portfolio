@@ -7,7 +7,8 @@ import {
   deleteObject,
   getMetadata,
 } from "firebase/storage";
-import { storage } from "@/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { storage, db } from "@/firebase";
 import {
   Loader2,
   Trash2,
@@ -15,40 +16,104 @@ import {
   RefreshCw,
   ImageOff,
   Check,
+  FileText,
+  MapPin,
 } from "lucide-react";
 import { useToast } from "./ToastProvider";
-import { Project } from "./types";
+import { Project, CASE_STUDY_SECTIONS } from "./types";
 
-// A5: browse images uploaded to Firebase Storage and delete orphaned files.
-// Uploads live under projects/, projects/sections/ and projects/subsections/.
+// A5: browse every file uploaded to Firebase Storage, see exactly where each
+// one is used across the site, and delete the ones nothing references.
+//
+// Uploads live under:
+//   projects/                 — project cover images (ProjectForm)
+//   projects/subsections/     — case-study section images (ProjectForm)
+//   site/content/             — CMS images: headshot, about image, brand logos,
+//                               career logos (ImageUploadField)
+//   site/                     — misc site assets (e.g. resume PDF)
 
 interface MediaItem {
   fullPath: string;
   name: string;
   url: string;
   size: number;
-  used: boolean; // referenced by at least one project?
+  isImage: boolean;
+  usedIn: string[]; // human-readable locations that reference this file
 }
 
-const FOLDERS = ["projects", "projects/sections", "projects/subsections"];
+// Folders scanned. listAll is NOT recursive, so each nested folder is listed
+// explicitly.
+const FOLDERS = [
+  "projects",
+  "projects/sections",
+  "projects/subsections",
+  "site",
+  "site/content",
+];
 
-// Collect every image URL currently referenced across all projects so we can
-// flag files that are safe to delete.
-function collectUsedUrls(projects: Project[]): Set<string> {
-  const used = new Set<string>();
-  const add = (u?: string) => {
-    if (u) used.add(u.split("?")[0]);
+const SECTION_LABEL: Record<string, string> = Object.fromEntries(
+  CASE_STUDY_SECTIONS.map((s) => [s.id, s.label.replace(/^\d+\.\s*/, "")])
+);
+
+const norm = (u?: string) => (u ? u.split("?")[0] : "");
+
+// Build a map of storage-URL -> list of places that reference it, drawn from
+// projects plus the page-content docs (Home, Site logo wall, Career logos).
+function buildUsageMap(
+  projects: Project[],
+  home: any,
+  site: any,
+  career: any
+): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  const add = (u: string | undefined, where: string) => {
+    const key = norm(u);
+    if (!key) return;
+    const list = map.get(key) || [];
+    list.push(where);
+    map.set(key, list);
   };
+
+  // Projects: cover + case-study section/subsection images.
   projects.forEach((p) => {
-    add(p.image);
-    Object.values(p.subSections || {}).forEach((blocks) =>
+    const title = p.title || "Untitled project";
+    add(p.image, `Project: ${title} · cover`);
+    Object.entries(p.subSections || {}).forEach(([sectionId, blocks]) => {
+      const label = SECTION_LABEL[sectionId] || sectionId;
       blocks.forEach((b) => {
-        add(b.image);
-        (b.carouselImages || []).forEach(add);
-      })
-    );
+        add(b.image, `Project: ${title} · ${label}`);
+        (b.carouselImages || []).forEach((c) =>
+          add(c, `Project: ${title} · ${label} (carousel)`)
+        );
+      });
+    });
   });
-  return used;
+
+  // Home page.
+  if (home) {
+    add(home.headshot, "Home · headshot");
+    add(home.aboutImage, "Home · about image");
+  }
+
+  // Site-wide logo wall.
+  if (site && Array.isArray(site.logos)) {
+    site.logos.forEach((logo: string, i: number) =>
+      add(logo, `Logo wall · logo ${i + 1}`)
+    );
+  }
+
+  // Career path (About page) — company + client logos.
+  if (career && Array.isArray(career.journey)) {
+    career.journey.forEach((role: any) => {
+      const co = role.company || role.title || "role";
+      add(role.logo, `Career · ${co} logo`);
+      (role.clients || []).forEach((c: any) =>
+        add(c.logo, `Career · ${co} · client ${c.name || ""}`.trim())
+      );
+    });
+  }
+
+  return map;
 }
 
 export default function MediaManager({ projects }: { projects: Project[] }) {
@@ -63,23 +128,37 @@ export default function MediaManager({ projects }: { projects: Project[] }) {
     setLoading(true);
     setError(null);
     try {
-      const usedUrls = collectUsedUrls(projects);
-      const collected: MediaItem[] = [];
+      // Pull page-content docs so we can flag site/career/home images too.
+      const [homeSnap, siteSnap, careerSnap] = await Promise.all([
+        getDoc(doc(db, "settings", "home")).catch(() => null),
+        getDoc(doc(db, "settings", "site")).catch(() => null),
+        getDoc(doc(db, "settings", "career")).catch(() => null),
+      ]);
+      const usage = buildUsageMap(
+        projects,
+        homeSnap?.exists() ? homeSnap.data() : null,
+        siteSnap?.exists() ? siteSnap.data() : null,
+        careerSnap?.exists() ? careerSnap.data() : null
+      );
 
+      const collected: MediaItem[] = [];
       for (const folder of FOLDERS) {
         try {
           const res = await listAll(ref(storage, folder));
           for (const itemRef of res.items) {
             const [url, meta] = await Promise.all([
               getDownloadURL(itemRef),
-              getMetadata(itemRef).catch(() => ({ size: 0 } as any)),
+              getMetadata(itemRef).catch(
+                () => ({ size: 0, contentType: "" } as any)
+              ),
             ]);
             collected.push({
               fullPath: itemRef.fullPath,
               name: itemRef.name,
               url,
               size: meta.size || 0,
-              used: usedUrls.has(url.split("?")[0]),
+              isImage: (meta.contentType || "").startsWith("image/"),
+              usedIn: usage.get(norm(url)) || [],
             });
           }
         } catch {
@@ -87,12 +166,13 @@ export default function MediaManager({ projects }: { projects: Project[] }) {
         }
       }
 
-      collected.sort((a, b) => Number(a.used) - Number(b.used));
+      // Unused first (so orphans are easy to spot and clean up).
+      collected.sort((a, b) => a.usedIn.length - b.usedIn.length);
       setItems(collected);
     } catch (err: any) {
       console.error("Media list failed:", err);
       setError(
-        "Couldn't list storage files. Your Storage security rules may not allow listing the projects/ folder for admins."
+        "Couldn't list storage files. Your Storage security rules may not allow listing the projects/ or site/ folders for admins."
       );
     } finally {
       setLoading(false);
@@ -116,10 +196,13 @@ export default function MediaManager({ projects }: { projects: Project[] }) {
   };
 
   const handleDelete = async (item: MediaItem) => {
+    const used = item.usedIn.length > 0;
     if (
       !window.confirm(
-        item.used
-          ? `"${item.name}" is still used by a project. Delete anyway? The project image will break.`
+        used
+          ? `"${item.name}" is still used in ${item.usedIn.length} place(s):\n\n${item.usedIn.join(
+              "\n"
+            )}\n\nDelete anyway? Those images will break.`
           : `Delete "${item.name}"? This cannot be undone.`
       )
     )
@@ -129,15 +212,20 @@ export default function MediaManager({ projects }: { projects: Project[] }) {
       await deleteObject(ref(storage, item.fullPath));
       setItems((prev) => prev.filter((i) => i.fullPath !== item.fullPath));
       toast("File deleted.", "success");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Delete failed:", err);
-      toast("Failed to delete file. Check your permissions.", "error");
+      toast(
+        err?.code === "storage/unauthorized"
+          ? "Delete denied by Storage rules. Publish the updated storage.rules in the Firebase console."
+          : "Failed to delete file. Check your permissions.",
+        "error"
+      );
     } finally {
       setBusy(null);
     }
   };
 
-  const orphanCount = items.filter((i) => !i.used).length;
+  const orphanCount = items.filter((i) => i.usedIn.length === 0).length;
 
   return (
     <motion.div
@@ -179,61 +267,102 @@ export default function MediaManager({ projects }: { projects: Project[] }) {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {items.map((item) => (
-            <div
-              key={item.fullPath}
-              className="group bg-white rounded-2xl border border-neutral-100 overflow-hidden hover:shadow-lg transition-shadow"
-            >
-              <div className="aspect-square bg-neutral-100 relative overflow-hidden">
-                <img
-                  src={item.url}
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
-                />
-                <span
-                  className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                    item.used
-                      ? "bg-brand-teal/90 text-white"
-                      : "bg-amber-400/90 text-black"
-                  }`}
-                >
-                  {item.used ? "In use" : "Unused"}
-                </span>
-              </div>
-              <div className="p-3">
-                <p className="text-[11px] font-medium text-neutral-600 truncate mb-2" title={item.name}>
-                  {item.name}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleCopy(item.url)}
-                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-[10px] font-bold uppercase tracking-widest transition-colors"
-                    title="Copy URL"
+          {items.map((item) => {
+            const used = item.usedIn.length > 0;
+            return (
+              <div
+                key={item.fullPath}
+                className="group bg-white rounded-2xl border border-neutral-100 overflow-hidden hover:shadow-lg transition-shadow flex flex-col"
+              >
+                <div className="aspect-square bg-neutral-100 relative overflow-hidden flex items-center justify-center">
+                  {item.isImage ? (
+                    <img
+                      src={item.url}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center text-neutral-400 gap-2">
+                      <FileText size={28} />
+                      <span className="text-[9px] font-bold uppercase tracking-wider">
+                        File
+                      </span>
+                    </div>
+                  )}
+                  <span
+                    className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                      used
+                        ? "bg-brand-teal/90 text-white"
+                        : "bg-amber-400/90 text-black"
+                    }`}
                   >
-                    {copied === item.url ? (
-                      <Check size={12} />
-                    ) : (
-                      <Copy size={12} />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item)}
-                    disabled={busy === item.fullPath}
-                    className="py-2 px-3 rounded-lg bg-neutral-100 text-red-500 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
-                    title="Delete file"
+                    {used ? "In use" : "Unused"}
+                  </span>
+                </div>
+                <div className="p-3 flex flex-col flex-1">
+                  <p
+                    className="text-[11px] font-medium text-neutral-600 truncate mb-1"
+                    title={item.name}
                   >
-                    {busy === item.fullPath ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Trash2 size={12} />
-                    )}
-                  </button>
+                    {item.name}
+                  </p>
+                  <p className="text-[9px] text-neutral-300 truncate mb-2">
+                    {item.fullPath.replace("/" + item.name, "") || "/"}
+                  </p>
+
+                  {used ? (
+                    <div className="mb-3 space-y-1">
+                      {item.usedIn.map((loc, i) => (
+                        <p
+                          key={i}
+                          className="flex items-start gap-1 text-[10px] leading-tight text-neutral-500"
+                          title={loc}
+                        >
+                          <MapPin
+                            size={10}
+                            className="mt-0.5 flex-shrink-0 text-brand-teal"
+                          />
+                          <span className="truncate">{loc}</span>
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mb-3 text-[10px] italic text-amber-600">
+                      Not referenced anywhere — safe to delete.
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-2 mt-auto">
+                    <button
+                      onClick={() => handleCopy(item.url)}
+                      className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                      title="Copy URL"
+                    >
+                      {copied === item.url ? (
+                        <Check size={12} />
+                      ) : (
+                        <Copy size={12} />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item)}
+                      disabled={busy === item.fullPath}
+                      className="py-2 px-3 rounded-lg bg-neutral-100 text-red-500 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
+                      title="Delete file"
+                    >
+                      {busy === item.fullPath ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={12} />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </motion.div>

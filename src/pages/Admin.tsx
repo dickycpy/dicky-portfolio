@@ -58,7 +58,11 @@ const CONTACT_SCHEMA: FieldSchema[] = [
   { key: "cardSubtitle", label: "Side-card subtitle", type: "text" },
 ];
 
-const SITE_SCHEMA: FieldSchema[] = [
+// The logo wall shows on the Home page, so it is edited under the Home Page
+// tab. Its data still lives in the site-wide doc (settings/site) because
+// LogoWall + the footer both read settings/site — so this schema targets
+// page="site" even though it appears under Home in the admin UI.
+const LOGO_SCHEMA: FieldSchema[] = [
   { key: "logoWallHeading", label: "Logo wall heading", type: "text" },
   {
     key: "logos",
@@ -66,6 +70,9 @@ const SITE_SCHEMA: FieldSchema[] = [
     type: "imageList",
     hint: "Upload or paste a URL. Order = display order in the marquee.",
   },
+];
+
+const SITE_SCHEMA: FieldSchema[] = [
   { key: "footerCopyright", label: "Footer copyright line", type: "text" },
   { key: "footerTagline", label: "Footer tagline", type: "text" },
   { key: "footerLinkLabel", label: "Footer link label", type: "text" },
@@ -264,13 +271,22 @@ export default function Admin() {
             </h2>
 
             {listTab === "pageHome" ? (
-            <ContentEditor
-              page="home"
-              title="Home Page"
-              description="Edit the Home hero and the About section. Changes go live on save."
-              defaults={DEFAULT_HOME}
-              schema={HOME_SCHEMA}
-            />
+            <div className="space-y-8">
+              <ContentEditor
+                page="home"
+                title="Home Page"
+                description="Edit the Home hero and the About section. Changes go live on save."
+                defaults={DEFAULT_HOME}
+                schema={HOME_SCHEMA}
+              />
+              <ContentEditor
+                page="site"
+                title="Logo wall"
+                description="The 'brands I've worked with' marquee shown on the Home page. Order = display order."
+                defaults={DEFAULT_SITE}
+                schema={LOGO_SCHEMA}
+              />
+            </div>
           ) : listTab === "pageAbout" ? (
             <ContentEditor
               page="about"
@@ -293,7 +309,7 @@ export default function Admin() {
             <ContentEditor
               page="site"
               title="Site-wide"
-              description="Edit the brand logo wall and the footer, shown across the whole site."
+              description="Edit the footer, shown across the whole site. (The logo wall is now edited under Home Page.)"
               defaults={DEFAULT_SITE}
               schema={SITE_SCHEMA}
             />
