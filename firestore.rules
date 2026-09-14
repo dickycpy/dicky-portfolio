@@ -72,7 +72,7 @@ service cloud.firestore {
         'developDeliverImage', 'developDeliverVideo', 'developDeliverImageDescription',
         'reflectionImage', 'reflectionVideo', 'reflectionImageDescription'
       ];
-      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl', 'order', 'type', 'sortOrder', 'subSections', 'showOnHome', 'homeSortOrder', 'status'].concat(newFields).concat(mediaFields);
+      let optionalFields = ['role', 'timeline', 'tools', 'overview', 'problem', 'solution', 'impact', 'password', 'updatedAt', 'imageUrl', 'order', 'type', 'sortOrder', 'subSections', 'sections', 'showOnHome', 'homeSortOrder', 'status'].concat(newFields).concat(mediaFields);
       let allowedFields = requiredFields.concat(optionalFields);
       
       return data.keys().hasAll(requiredFields) &&
@@ -93,6 +93,7 @@ service cloud.firestore {
              (!('timeline' in data) || (data.timeline is string && data.timeline.size() <= 200)) &&
              (!('tools' in data) || (data.tools is list && data.tools.size() <= 50)) &&
              (!('subSections' in data) || (data.subSections is map)) &&
+             (!('sections' in data) || (data.sections is list && data.sections.size() <= 30)) &&
              (!('introduction' in data) || (data.introduction is string && data.introduction.size() <= 20000)) &&
              (!('challenge' in data) || (data.challenge is string && data.challenge.size() <= 20000)) &&
              (!('approach' in data) || (data.approach is string && data.approach.size() <= 20000)) &&
