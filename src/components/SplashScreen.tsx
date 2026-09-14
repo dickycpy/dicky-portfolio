@@ -127,14 +127,6 @@ export default function SplashScreen() {
               }}
             />
 
-            {/* Corner registration marks — a small engineered flourish */}
-            <span className="absolute top-6 left-6 text-[10px] font-mono uppercase tracking-[0.3em] text-neutral-300">
-              Portfolio
-            </span>
-            <span className="absolute top-6 right-6 text-[10px] font-mono uppercase tracking-[0.3em] text-neutral-300">
-              HKG
-            </span>
-
             <div className="relative z-10 flex flex-col items-center">
               {/* Logo mark, filling up */}
               <div className="relative w-36 h-36 md:w-44 md:h-44">
