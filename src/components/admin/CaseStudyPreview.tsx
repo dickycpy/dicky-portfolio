@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "motion/react";
 import { X, Tag, Calendar } from "lucide-react";
-import { CASE_STUDY_SECTIONS, ProjectFormData } from "./types";
+import { ProjectFormData, sectionsForProject, pad2 } from "./types";
 
 // A4: renders the case study from the *current, unsaved* form data so the
 // editor can preview exactly what visitors will see without leaving the panel
@@ -45,9 +45,10 @@ export default function CaseStudyPreview({
   coverPreview,
   onClose,
 }: Props) {
-  const sections = CASE_STUDY_SECTIONS.filter(
-    (s) => (data.subSections?.[s.id] || []).length > 0
-  );
+  // Only sections with at least one block, numbered by visible position.
+  const sections = sectionsForProject(data.sections)
+    .filter((s) => (data.subSections?.[s.id] || []).length > 0)
+    .map((s, i) => ({ ...s, num: pad2(i + 1) }));
   const tools = data.tools
     .split(",")
     .map((t) => t.trim())

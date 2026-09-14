@@ -1,6 +1,14 @@
 // Shared types & constants for the Admin dashboard.
 // Extracted from the former monolithic Admin.tsx (A7 refactor).
 
+// A single case-study section. Sections are now stored per-project so their
+// labels can be edited and they can be added / removed / reordered. The visible
+// number (01, 02…) is derived from position, so it is NOT stored here.
+export interface CaseStudySection {
+  id: string;
+  label: string;
+}
+
 export interface SubSectionBlock {
   title: string;
   content: string;
@@ -30,6 +38,9 @@ export interface Project {
   // Home featured). The detail page stays reachable by direct URL.
   hidden?: boolean;
   subSections?: Record<string, SubSectionBlock[]>;
+  // Per-project case-study sections. Legacy projects have no `sections` field;
+  // they fall back to DEFAULT_SECTIONS (see sectionsForProject()).
+  sections?: CaseStudySection[];
   createdAt?: any;
   updatedAt?: any;
   authorId?: string;
@@ -53,6 +64,7 @@ export interface ProjectFormData {
   showOnHome: boolean;
   homeSortOrder: number;
   subSections: Record<string, SubSectionBlock[]>;
+  sections: CaseStudySection[];
 }
 
 export type ListTab =
@@ -166,6 +178,36 @@ export const CASE_STUDY_SECTIONS = [
   { id: "reflection", label: "07. Reflection", num: "07" },
 ] as const;
 
+// The default case-study sections a NEW project starts with, and the fallback
+// for legacy projects saved before sections were editable. Labels carry no
+// number prefix — the 01/02… is derived from position at render time so that
+// reordering and add/remove renumber automatically.
+export const DEFAULT_SECTIONS: CaseStudySection[] = [
+  { id: "introduction", label: "Introduction" },
+  { id: "challenge", label: "The Challenge" },
+  { id: "approach", label: "The Approach" },
+  { id: "understanding", label: "Understanding" },
+  { id: "define", label: "Define" },
+  { id: "developDeliver", label: "Develop & Deliver" },
+  { id: "reflection", label: "Reflection" },
+];
+
+// Zero-padded section number from a 1-based position ("01", "02", …).
+export const pad2 = (n: number): string => String(n).padStart(2, "0");
+
+// Stable unique id for a newly added section.
+export const newSectionId = (): string =>
+  `sec_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+// A project's sections, or the built-in defaults for legacy docs. Returns fresh
+// copies so callers can safely mutate the array/objects.
+export function sectionsForProject(
+  sections?: CaseStudySection[]
+): CaseStudySection[] {
+  const src = sections && sections.length ? sections : DEFAULT_SECTIONS;
+  return src.map((s) => ({ ...s }));
+}
+
 export const quillModules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -201,6 +243,7 @@ export const emptyFormData = (): ProjectFormData => ({
   showOnHome: false,
   homeSortOrder: 0,
   subSections: {},
+  sections: sectionsForProject(),
 });
 
 export const projectToFormData = (p: Project): ProjectFormData => ({
@@ -217,6 +260,7 @@ export const projectToFormData = (p: Project): ProjectFormData => ({
   showOnHome: p.showOnHome || false,
   homeSortOrder: p.homeSortOrder || 0,
   subSections: p.subSections || {},
+  sections: sectionsForProject(p.sections),
 });
 
 // Basic required-field validation (A3). Returns a map of field -> message.

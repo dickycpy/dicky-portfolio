@@ -5,6 +5,7 @@ import { projects as mockProjects } from "@/lib/data";
 import React, { useEffect, useState, useMemo } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase";
+import { sectionsForProject, pad2 } from "@/components/admin/types";
 
 const ImageCarousel = ({ images }: { images: string[] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -150,23 +151,14 @@ export default function ProjectDetail() {
   };
 
   const sections = useMemo(() => {
-    const allSections = [
-      { id: "introduction", label: "Introduction", num: "01" },
-      { id: "challenge", label: "The Challenge", num: "02" },
-      { id: "approach", label: "The Approach", num: "03" },
-      { id: "understanding", label: "Understanding", num: "04" },
-      { id: "define", label: "Define", num: "05" },
-      { id: "developDeliver", label: "Develop & Deliver", num: "06" },
-      { id: "reflection", label: "Reflection", num: "07" },
-    ];
-
     if (!project) return [];
 
-    // Only show sections that have at least one content block
-    return allSections.filter(section => {
-      const subSections = project.subSections?.[section.id] || [];
-      return subSections.length > 0;
-    });
+    // Sections are stored per-project (legacy projects fall back to the
+    // built-in defaults). Show only those with at least one content block, and
+    // number them by visible position so the 01/02… stays sequential.
+    return sectionsForProject(project.sections)
+      .filter((section) => (project.subSections?.[section.id] || []).length > 0)
+      .map((section, i) => ({ ...section, num: pad2(i + 1) }));
   }, [project]);
 
   useEffect(() => {

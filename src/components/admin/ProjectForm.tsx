@@ -19,18 +19,22 @@ import {
   Eye,
   Trash2,
   X,
+  Plus,
+  ArrowUp,
+  ArrowDown,
   Image as ImageIcon,
   RotateCcw,
 } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import {
-  CASE_STUDY_SECTIONS,
   CATEGORIES,
   ProjectFormData,
   Project,
   emptyFormData,
   projectToFormData,
+  newSectionId,
+  pad2,
   quillFormats,
   quillModules,
   validateForm,
@@ -169,6 +173,7 @@ const ProjectForm: React.FC<Props> = ({
         showOnHome: formData.showOnHome,
         homeSortOrder: formData.homeSortOrder,
         subSections: updatedSubSections,
+        sections: formData.sections,
         image: finalImageUrl,
         tools: formData.tools
           .split(",")
@@ -231,6 +236,50 @@ const ProjectForm: React.FC<Props> = ({
     patch({
       subSections: { ...formData.subSections, [sectionId]: current },
     });
+  };
+
+  // --- Section management (edit label / reorder / add / remove) -------------
+  const updateSectionLabel = (index: number, label: string) => {
+    const sections = [...formData.sections];
+    sections[index] = { ...sections[index], label };
+    patch({ sections });
+  };
+
+  const moveSection = (index: number, dir: -1 | 1) => {
+    const target = index + dir;
+    if (target < 0 || target >= formData.sections.length) return;
+    const sections = [...formData.sections];
+    [sections[index], sections[target]] = [sections[target], sections[index]];
+    patch({ sections });
+  };
+
+  const addSection = () => {
+    patch({
+      sections: [
+        ...formData.sections,
+        { id: newSectionId(), label: "New Section" },
+      ],
+    });
+  };
+
+  const removeSection = (index: number) => {
+    const section = formData.sections[index];
+    const blockCount = (formData.subSections?.[section.id] || []).length;
+    if (
+      blockCount > 0 &&
+      !window.confirm(
+        `Remove the "${section.label || "Untitled"}" section? This will also ` +
+          `delete its ${blockCount} content block${
+            blockCount === 1 ? "" : "s"
+          }. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    const sections = formData.sections.filter((_, i) => i !== index);
+    const subSections = { ...formData.subSections };
+    delete subSections[section.id];
+    patch({ sections, subSections });
   };
 
   const tabs = [
@@ -463,15 +512,55 @@ const ProjectForm: React.FC<Props> = ({
 
           {activeTab === "content" && (
             <div className="space-y-12">
-              {CASE_STUDY_SECTIONS.map((section) => (
+              {formData.sections.map((section, sectionIndex) => (
                 <div
                   key={section.id}
                   className="space-y-6 pb-12 border-b border-neutral-100 last:border-0"
                 >
-                  <div className="flex justify-between items-center">
-                    <label className="block text-xs font-bold uppercase tracking-[0.2em] text-black">
-                      {section.label}
-                    </label>
+                  {/* Section header: editable label + reorder / remove controls.
+                      The 01/02… number is derived from position, so reordering
+                      or adding/removing renumbers everything automatically. */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-2xl font-bold tracking-tighter text-neutral-200 tabular-nums">
+                      {pad2(sectionIndex + 1)}
+                    </span>
+                    <input
+                      type="text"
+                      value={section.label}
+                      onChange={(e) =>
+                        updateSectionLabel(sectionIndex, e.target.value)
+                      }
+                      placeholder="Section title"
+                      className="flex-1 min-w-[8rem] bg-white border border-neutral-200 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-black focus:border-black outline-none transition-colors"
+                    />
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => moveSection(sectionIndex, -1)}
+                        disabled={sectionIndex === 0}
+                        title="Move section up"
+                        className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500 hover:bg-black hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-neutral-100 disabled:hover:text-neutral-500"
+                      >
+                        <ArrowUp size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveSection(sectionIndex, 1)}
+                        disabled={sectionIndex === formData.sections.length - 1}
+                        title="Move section down"
+                        className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500 hover:bg-black hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-neutral-100 disabled:hover:text-neutral-500"
+                      >
+                        <ArrowDown size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeSection(sectionIndex)}
+                        title="Remove section"
+                        className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400 hover:bg-red-500 hover:text-white transition-all"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                     <button
                       type="button"
                       onClick={() => addBlock(section.id)}
@@ -705,6 +794,14 @@ const ProjectForm: React.FC<Props> = ({
                   </div>
                 </div>
               ))}
+
+              <button
+                type="button"
+                onClick={addSection}
+                className="w-full py-4 border-2 border-dashed border-neutral-200 rounded-[2rem] text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:border-black hover:text-black transition-all flex items-center justify-center gap-2"
+              >
+                <Plus size={14} /> Add Section
+              </button>
             </div>
           )}
 
