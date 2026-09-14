@@ -9,8 +9,16 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { Save, Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "./ToastProvider";
+import ImageUploadField from "./ImageUploadField";
 
-export type FieldType = "text" | "textarea" | "richtext" | "url" | "list";
+export type FieldType =
+  | "text"
+  | "textarea"
+  | "richtext"
+  | "url"
+  | "list"
+  | "image"
+  | "imageList";
 
 export interface FieldSchema {
   key: string;
@@ -158,7 +166,40 @@ export default function ContentEditor({
           >
             <label className={labelCls}>{f.label}</label>
 
-            {f.type === "list" ? (
+            {f.type === "image" ? (
+              <ImageUploadField
+                value={data[f.key] || ""}
+                onChange={(url) => set(f.key, url)}
+                placeholder={f.placeholder}
+              />
+            ) : f.type === "imageList" ? (
+              <div className="space-y-3">
+                {(data[f.key] || []).map((item: string, idx: number) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <ImageUploadField
+                        value={item}
+                        onChange={(url) => setListItem(f.key, idx, url)}
+                        placeholder={f.placeholder}
+                      />
+                    </div>
+                    <button
+                      onClick={() => removeListItem(f.key, idx)}
+                      className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
+                      title="Remove"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => addListItem(f.key)}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
+                >
+                  <Plus size={14} /> Add image
+                </button>
+              </div>
+            ) : f.type === "list" ? (
               <div className="space-y-2">
                 {(data[f.key] || []).map((item: string, idx: number) => (
                   <div key={idx} className="flex items-center gap-2">

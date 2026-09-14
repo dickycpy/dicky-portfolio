@@ -24,7 +24,7 @@ import {
 
 const HOME_SCHEMA: FieldSchema[] = [
   { key: "eyebrow", label: "Eyebrow greeting", type: "text" },
-  { key: "headshot", label: "Headshot image URL", type: "url" },
+  { key: "headshot", label: "Headshot / profile image", type: "image" },
   { key: "heroHeadline", label: "Hero headline", type: "richtext" },
   { key: "heroSub", label: "Hero sub-text", type: "richtext" },
   { key: "heroPills", label: "Hero keyword pills", type: "list" },
@@ -32,7 +32,7 @@ const HOME_SCHEMA: FieldSchema[] = [
   { key: "aboutBody", label: "About-section body", type: "richtext" },
   { key: "aboutPills", label: "About-section pills", type: "list" },
   { key: "aboutCta", label: "About button label", type: "text" },
-  { key: "aboutImage", label: "About-section image URL", type: "url" },
+  { key: "aboutImage", label: "About-section image", type: "image" },
 ];
 
 const ABOUT_SCHEMA: FieldSchema[] = [
@@ -62,8 +62,8 @@ const SITE_SCHEMA: FieldSchema[] = [
   {
     key: "logos",
     label: "Brand logos",
-    type: "list",
-    hint: "Direct image URLs. Order = display order in the marquee.",
+    type: "imageList",
+    hint: "Upload or paste a URL. Order = display order in the marquee.",
   },
   { key: "footerCopyright", label: "Footer copyright line", type: "text" },
   { key: "footerTagline", label: "Footer tagline", type: "text" },
@@ -148,18 +148,32 @@ export default function Admin() {
     );
   }
 
-  const tabs: { id: ListTab; label: string }[] = [
-    { id: "main", label: "Main Project" },
-    { id: "lab", label: "My Lab" },
-    { id: "home", label: "Home Featured" },
-    { id: "media", label: "Media" },
-    { id: "resume", label: "Resume" },
-    { id: "pageHome", label: "Home Page" },
-    { id: "pageAbout", label: "About Page" },
-    { id: "pageCareer", label: "Career Path" },
-    { id: "pageContact", label: "Contact Page" },
-    { id: "pageSite", label: "Site-wide" },
-  ];
+  const navGroups: { label: string; items: { id: ListTab; label: string }[] }[] =
+    [
+      {
+        label: "Projects",
+        items: [
+          { id: "main", label: "Main Projects" },
+          { id: "lab", label: "My Lab" },
+          { id: "home", label: "Home Featured" },
+          { id: "media", label: "Media" },
+        ],
+      },
+      {
+        label: "Page Content",
+        items: [
+          { id: "pageHome", label: "Home Page" },
+          { id: "pageAbout", label: "About Page" },
+          { id: "pageCareer", label: "Career Path" },
+          { id: "pageContact", label: "Contact Page" },
+          { id: "pageSite", label: "Site-wide" },
+        ],
+      },
+      {
+        label: "Documents",
+        items: [{ id: "resume", label: "Resume / CV" }],
+      },
+    ];
 
   const isContentTab =
     listTab === "pageHome" ||
@@ -210,29 +224,43 @@ export default function Admin() {
           )}
         </AnimatePresence>
 
-        <div className="space-y-12">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+          <aside className="lg:w-56 flex-shrink-0">
+            <nav className="flex flex-wrap lg:block gap-x-4 gap-y-6 lg:space-y-6 lg:sticky lg:top-32">
+              {navGroups.map((group) => (
+                <div key={group.label}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-300 mb-2 px-3">
+                    {group.label}
+                  </p>
+                  <div className="flex flex-wrap lg:block gap-1 lg:space-y-1">
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setListTab(item.id);
+                          closeForm();
+                        }}
+                        className={`text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors lg:w-full ${
+                          listTab === item.id
+                            ? "bg-black text-white shadow-sm"
+                            : "text-neutral-500 hover:bg-neutral-100 hover:text-black"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </nav>
+          </aside>
+
+          <div className="flex-1 min-w-0 space-y-8">
             <h2 className="text-3xl font-bold tracking-tighter">
               {isContentTab ? "Page Content" : "Existing Projects"}
             </h2>
-            <div className="flex flex-wrap bg-neutral-100 p-1 rounded-2xl">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setListTab(tab.id)}
-                  className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    listTab === tab.id
-                      ? "bg-white text-black shadow-sm"
-                      : "text-neutral-400 hover:text-neutral-600"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
-          {listTab === "pageHome" ? (
+            {listTab === "pageHome" ? (
             <ContentEditor
               page="home"
               title="Home Page"
@@ -278,6 +306,7 @@ export default function Admin() {
               onEdit={openEdit}
             />
           )}
+          </div>
         </div>
       </div>
     </ToastProvider>
