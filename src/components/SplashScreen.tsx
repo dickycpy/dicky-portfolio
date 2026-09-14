@@ -53,6 +53,8 @@ export default function SplashScreen() {
   const isFirstLoad =
     !hasPlayed && !window.location.pathname.startsWith("/admin");
   const [isComplete, setIsComplete] = useState(!isFirstLoad);
+  // Fires the owl's greeting blink once the fill has topped out.
+  const [blink, setBlink] = useState(false);
 
   // Loading counter 0 → 100, shared by the number readout and the fill height.
   const count = useMotionValue(0);
@@ -75,6 +77,12 @@ export default function SplashScreen() {
       ease: [0.22, 1, 0.36, 1],
     });
 
+    // Blink shortly after the fill reaches 100% — a little greeting.
+    const blinkTimer = setTimeout(
+      () => setBlink(true),
+      reduce ? 0 : FILL_DURATION * 1000 + 200
+    );
+
     const timer = setTimeout(
       () => setIsComplete(true),
       reduce ? 400 : EXIT_AT
@@ -82,6 +90,7 @@ export default function SplashScreen() {
 
     return () => {
       controls.stop();
+      clearTimeout(blinkTimer);
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,6 +150,43 @@ export default function SplashScreen() {
                     style={{ height: fillHeight }}
                   />
                 </div>
+
+                {/* Owl eyelids — teal discs over each eye that snap shut in a
+                    quick double-blink once the fill is full. */}
+                <motion.span
+                  className="absolute rounded-full bg-brand-teal"
+                  style={{
+                    left: "32.6%",
+                    top: "51%",
+                    width: "20%",
+                    height: "20%",
+                    translate: "-50% -50%",
+                  }}
+                  initial={{ scaleY: 0 }}
+                  animate={blink ? { scaleY: [0, 1, 0, 1, 0] } : { scaleY: 0 }}
+                  transition={{
+                    duration: 0.55,
+                    times: [0, 0.18, 0.4, 0.6, 0.85],
+                    ease: "easeInOut",
+                  }}
+                />
+                <motion.span
+                  className="absolute rounded-full bg-brand-teal"
+                  style={{
+                    left: "69%",
+                    top: "51%",
+                    width: "22%",
+                    height: "22%",
+                    translate: "-50% -50%",
+                  }}
+                  initial={{ scaleY: 0 }}
+                  animate={blink ? { scaleY: [0, 1, 0, 1, 0] } : { scaleY: 0 }}
+                  transition={{
+                    duration: 0.55,
+                    times: [0, 0.18, 0.4, 0.6, 0.85],
+                    ease: "easeInOut",
+                  }}
+                />
               </div>
 
               {/* Name */}
