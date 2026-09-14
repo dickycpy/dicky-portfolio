@@ -12,7 +12,17 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
+  GripVertical,
 } from "lucide-react";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable as DraggableBase,
+  DropResult,
+} from "@hello-pangea/dnd";
+// No @types/react here; the strictly-typed Draggable rejects the required
+// `key` prop, so alias to `any` (same workaround as ProjectList/ContentEditor).
+const Draggable: any = DraggableBase;
 import { useToast } from "./ToastProvider";
 import ImageUploadField from "./ImageUploadField";
 import {
@@ -111,6 +121,16 @@ export default function CareerEditor() {
       list[i].bullets = list[i].bullets.filter((_, k) => k !== bi);
       return list;
     });
+  const moveBullet = (i: number) => (result: DropResult) => {
+    if (!result.destination) return;
+    mutate((list) => {
+      const bullets = [...list[i].bullets];
+      const [m] = bullets.splice(result.source.index, 1);
+      bullets.splice(result.destination!.index, 0, m);
+      list[i].bullets = bullets;
+      return list;
+    });
+  };
 
   // clients
   const setClient = (
@@ -302,31 +322,62 @@ export default function CareerEditor() {
             {/* Bullets */}
             <div>
               <label className={labelCls}>Highlights</label>
-              <div className="space-y-2">
-                {role.bullets.map((b, bi) => (
-                  <div key={bi} className="flex items-start gap-2">
-                    <textarea
-                      value={b}
-                      onChange={(e) => setBullet(i, bi, e.target.value)}
-                      rows={2}
-                      className={`${fieldCls} resize-y leading-relaxed`}
-                    />
-                    <button
-                      onClick={() => removeBullet(i, bi)}
-                      className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
-                      title="Remove highlight"
+              <DragDropContext onDragEnd={moveBullet(i)}>
+                <Droppable droppableId={`bullets-${i}`}>
+                  {(dp: any) => (
+                    <div
+                      ref={dp.innerRef}
+                      {...dp.droppableProps}
+                      className="space-y-2"
                     >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  onClick={() => addBullet(i)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
-                >
-                  <Plus size={14} /> Add highlight
-                </button>
-              </div>
+                      {role.bullets.map((b, bi) => (
+                        <Draggable
+                          key={bi}
+                          draggableId={`bullet-${i}-${bi}`}
+                          index={bi}
+                        >
+                          {(drag: any) => (
+                            <div
+                              ref={drag.innerRef}
+                              {...drag.draggableProps}
+                              className="flex items-start gap-2 bg-white"
+                            >
+                              <button
+                                type="button"
+                                {...drag.dragHandleProps}
+                                className="p-2.5 mt-0.5 rounded-xl text-neutral-300 hover:text-neutral-600 cursor-grab active:cursor-grabbing flex-shrink-0"
+                                title="Drag to reorder"
+                              >
+                                <GripVertical size={16} />
+                              </button>
+                              <textarea
+                                value={b}
+                                onChange={(e) => setBullet(i, bi, e.target.value)}
+                                rows={2}
+                                className={`${fieldCls} resize-y leading-relaxed`}
+                              />
+                              <button
+                                onClick={() => removeBullet(i, bi)}
+                                className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
+                                title="Remove highlight"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {dp.placeholder}
+                      <button
+                        onClick={() => addBullet(i)}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
+                      >
+                        <Plus size={14} /> Add highlight
+                      </button>
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             </div>
 
             {/* Clients */}

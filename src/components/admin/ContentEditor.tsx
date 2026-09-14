@@ -7,7 +7,23 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase";
-import { Save, Loader2, Plus, Trash2, AlertCircle } from "lucide-react";
+import {
+  Save,
+  Loader2,
+  Plus,
+  Trash2,
+  AlertCircle,
+  GripVertical,
+} from "lucide-react";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable as DraggableBase,
+  DropResult,
+} from "@hello-pangea/dnd";
+// No @types/react here, so the strictly-typed Draggable rejects the required
+// `key` prop. Alias to `any` (same workaround as ProjectList).
+const Draggable: any = DraggableBase;
 import { useToast } from "./ToastProvider";
 import ImageUploadField from "./ImageUploadField";
 import { SOCIAL_PLATFORMS, SocialLink } from "@/lib/content";
@@ -102,6 +118,15 @@ export default function ContentEditor({
   };
 
   const addListItem = (key: string) => set(key, [...(data[key] || []), ""]);
+
+  // Reorder any list-like field (list / imageList / socials) via drag-and-drop.
+  const onListDragEnd = (key: string) => (result: DropResult) => {
+    if (!result.destination) return;
+    const list = [...(data[key] || [])];
+    const [moved] = list.splice(result.source.index, 1);
+    list.splice(result.destination.index, 0, moved);
+    set(key, list);
+  };
 
   const removeListItem = (key: string, idx: number) => {
     const list = [...(data[key] || [])];
@@ -200,24 +225,59 @@ export default function ContentEditor({
               />
             ) : f.type === "imageList" ? (
               <div className="space-y-3">
-                {(data[f.key] || []).map((item: string, idx: number) => (
-                  <div key={idx} className="flex items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <ImageUploadField
-                        value={item}
-                        onChange={(url) => setListItem(f.key, idx, url)}
-                        placeholder={f.placeholder}
-                      />
-                    </div>
-                    <button
-                      onClick={() => removeListItem(f.key, idx)}
-                      className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
-                      title="Remove"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
+                <DragDropContext onDragEnd={onListDragEnd(f.key)}>
+                  <Droppable droppableId={`imageList-${f.key}`}>
+                    {(dp: any) => (
+                      <div
+                        ref={dp.innerRef}
+                        {...dp.droppableProps}
+                        className="space-y-3"
+                      >
+                        {(data[f.key] || []).map((item: string, idx: number) => (
+                          <Draggable
+                            key={idx}
+                            draggableId={`${f.key}-${idx}`}
+                            index={idx}
+                          >
+                            {(drag: any) => (
+                              <div
+                                ref={drag.innerRef}
+                                {...drag.draggableProps}
+                                className="flex items-start gap-2 bg-white"
+                              >
+                                <button
+                                  type="button"
+                                  {...drag.dragHandleProps}
+                                  className="p-2.5 mt-1 rounded-xl text-neutral-300 hover:text-neutral-600 cursor-grab active:cursor-grabbing flex-shrink-0"
+                                  title="Drag to reorder"
+                                >
+                                  <GripVertical size={16} />
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                  <ImageUploadField
+                                    value={item}
+                                    onChange={(url) =>
+                                      setListItem(f.key, idx, url)
+                                    }
+                                    placeholder={f.placeholder}
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => removeListItem(f.key, idx)}
+                                  className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
+                                  title="Remove"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {dp.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
                 <button
                   onClick={() => addListItem(f.key)}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
@@ -227,42 +287,81 @@ export default function ContentEditor({
               </div>
             ) : f.type === "socials" ? (
               <div className="space-y-3">
-                {(data[f.key] || []).map((item: SocialLink, idx: number) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <select
-                      value={item.platform}
-                      onChange={(e) =>
-                        setSocialItem(f.key, idx, { platform: e.target.value })
-                      }
-                      className={`${fieldCls} max-w-[9rem] flex-shrink-0`}
-                    >
-                      {SOCIAL_PLATFORMS.map((p) => (
-                        <option key={p.value} value={p.value}>
-                          {p.label}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      value={item.url}
-                      onChange={(e) =>
-                        setSocialItem(f.key, idx, { url: e.target.value })
-                      }
-                      placeholder={
-                        item.platform === "email"
-                          ? "you@example.com"
-                          : "https://…"
-                      }
-                      className={fieldCls}
-                    />
-                    <button
-                      onClick={() => removeListItem(f.key, idx)}
-                      className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
-                      title="Remove"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
+                <DragDropContext onDragEnd={onListDragEnd(f.key)}>
+                  <Droppable droppableId={`socials-${f.key}`}>
+                    {(dp: any) => (
+                      <div
+                        ref={dp.innerRef}
+                        {...dp.droppableProps}
+                        className="space-y-3"
+                      >
+                        {(data[f.key] || []).map(
+                          (item: SocialLink, idx: number) => (
+                            <Draggable
+                              key={idx}
+                              draggableId={`${f.key}-${idx}`}
+                              index={idx}
+                            >
+                              {(drag: any) => (
+                                <div
+                                  ref={drag.innerRef}
+                                  {...drag.draggableProps}
+                                  className="flex items-center gap-2 bg-white"
+                                >
+                                  <button
+                                    type="button"
+                                    {...drag.dragHandleProps}
+                                    className="p-2.5 rounded-xl text-neutral-300 hover:text-neutral-600 cursor-grab active:cursor-grabbing flex-shrink-0"
+                                    title="Drag to reorder"
+                                  >
+                                    <GripVertical size={16} />
+                                  </button>
+                                  <select
+                                    value={item.platform}
+                                    onChange={(e) =>
+                                      setSocialItem(f.key, idx, {
+                                        platform: e.target.value,
+                                      })
+                                    }
+                                    className={`${fieldCls} max-w-[9rem] flex-shrink-0`}
+                                  >
+                                    {SOCIAL_PLATFORMS.map((p) => (
+                                      <option key={p.value} value={p.value}>
+                                        {p.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <input
+                                    value={item.url}
+                                    onChange={(e) =>
+                                      setSocialItem(f.key, idx, {
+                                        url: e.target.value,
+                                      })
+                                    }
+                                    placeholder={
+                                      item.platform === "email"
+                                        ? "you@example.com"
+                                        : "https://…"
+                                    }
+                                    className={fieldCls}
+                                  />
+                                  <button
+                                    onClick={() => removeListItem(f.key, idx)}
+                                    className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
+                                    title="Remove"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              )}
+                            </Draggable>
+                          )
+                        )}
+                        {dp.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
                 <button
                   onClick={() => addSocialItem(f.key)}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
@@ -272,23 +371,60 @@ export default function ContentEditor({
               </div>
             ) : f.type === "list" ? (
               <div className="space-y-2">
-                {(data[f.key] || []).map((item: string, idx: number) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input
-                      value={item}
-                      onChange={(e) => setListItem(f.key, idx, e.target.value)}
-                      placeholder={f.placeholder}
-                      className={fieldCls}
-                    />
-                    <button
-                      onClick={() => removeListItem(f.key, idx)}
-                      className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
-                      title="Remove"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
+                <DragDropContext onDragEnd={onListDragEnd(f.key)}>
+                  <Droppable droppableId={`list-${f.key}`}>
+                    {(dp: any) => (
+                      <div
+                        ref={dp.innerRef}
+                        {...dp.droppableProps}
+                        className="space-y-2"
+                      >
+                        {(data[f.key] || []).map(
+                          (item: string, idx: number) => (
+                            <Draggable
+                              key={idx}
+                              draggableId={`${f.key}-${idx}`}
+                              index={idx}
+                            >
+                              {(drag: any) => (
+                                <div
+                                  ref={drag.innerRef}
+                                  {...drag.draggableProps}
+                                  className="flex items-center gap-2 bg-white"
+                                >
+                                  <button
+                                    type="button"
+                                    {...drag.dragHandleProps}
+                                    className="p-2.5 rounded-xl text-neutral-300 hover:text-neutral-600 cursor-grab active:cursor-grabbing flex-shrink-0"
+                                    title="Drag to reorder"
+                                  >
+                                    <GripVertical size={16} />
+                                  </button>
+                                  <input
+                                    value={item}
+                                    onChange={(e) =>
+                                      setListItem(f.key, idx, e.target.value)
+                                    }
+                                    placeholder={f.placeholder}
+                                    className={fieldCls}
+                                  />
+                                  <button
+                                    onClick={() => removeListItem(f.key, idx)}
+                                    className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
+                                    title="Remove"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              )}
+                            </Draggable>
+                          )
+                        )}
+                        {dp.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
                 <button
                   onClick={() => addListItem(f.key)}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
