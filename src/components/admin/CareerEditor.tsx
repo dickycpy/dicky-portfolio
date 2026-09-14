@@ -14,6 +14,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useToast } from "./ToastProvider";
+import ImageUploadField from "./ImageUploadField";
 import {
   DEFAULT_CAREER,
   type CareerCheckpoint,
@@ -289,12 +290,11 @@ export default function CareerEditor() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className={labelCls}>Company logo URL</label>
-                <input
+                <label className={labelCls}>Company logo</label>
+                <ImageUploadField
                   value={role.logo}
-                  onChange={(e) => setField(i, "logo", e.target.value)}
+                  onChange={(url) => setField(i, "logo", url)}
                   placeholder="https://…"
-                  className={fieldCls}
                 />
               </div>
             </div>
@@ -334,19 +334,25 @@ export default function CareerEditor() {
               <label className={labelCls}>Clients</label>
               <div className="space-y-2">
                 {role.clients.map((c, ci) => (
-                  <div key={ci} className="flex items-center gap-2">
-                    <input
-                      value={c.name}
-                      onChange={(e) => setClient(i, ci, "name", e.target.value)}
-                      placeholder="Client name"
-                      className={`${fieldCls} md:w-1/3`}
-                    />
-                    <input
-                      value={c.logo}
-                      onChange={(e) => setClient(i, ci, "logo", e.target.value)}
-                      placeholder="Logo URL"
-                      className={fieldCls}
-                    />
+                  <div
+                    key={ci}
+                    className="flex items-start gap-2 bg-neutral-50 rounded-xl p-3"
+                  >
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <input
+                        value={c.name}
+                        onChange={(e) =>
+                          setClient(i, ci, "name", e.target.value)
+                        }
+                        placeholder="Client name"
+                        className={fieldCls}
+                      />
+                      <ImageUploadField
+                        value={c.logo}
+                        onChange={(url) => setClient(i, ci, "logo", url)}
+                        placeholder="Logo URL"
+                      />
+                    </div>
                     <button
                       onClick={() => removeClient(i, ci)}
                       className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
