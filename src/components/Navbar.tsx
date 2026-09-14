@@ -2,14 +2,63 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Menu, X, FileText } from "lucide-react";
+import {
+  Menu,
+  X,
+  FileText,
+  Linkedin,
+  Github,
+  Instagram,
+  Twitter,
+  Facebook,
+  Youtube,
+  Dribbble,
+  Mail,
+  Globe,
+} from "lucide-react";
 import Magnetic from "./Magnetic";
 import {
   usePageContent,
   DEFAULT_SITE,
   NAV_PAGES,
   isPageVisible,
+  SocialLink,
 } from "@/lib/content";
+
+// Same platform → icon / label / href mapping the Footer uses, so the mobile
+// menu stays in sync with the admin-managed social links (settings/site).
+const SOCIAL_ICONS: Record<string, any> = {
+  linkedin: Linkedin,
+  github: Github,
+  instagram: Instagram,
+  twitter: Twitter,
+  facebook: Facebook,
+  youtube: Youtube,
+  dribbble: Dribbble,
+  behance: Globe,
+  email: Mail,
+  website: Globe,
+};
+
+const SOCIAL_LABEL: Record<string, string> = {
+  linkedin: "LinkedIn",
+  github: "GitHub",
+  instagram: "Instagram",
+  twitter: "X / Twitter",
+  facebook: "Facebook",
+  youtube: "YouTube",
+  dribbble: "Dribbble",
+  behance: "Behance",
+  email: "Email",
+  website: "Website",
+};
+
+function socialHref(s: SocialLink): string {
+  if (s.platform === "email" && s.url && !s.url.startsWith("mailto:")) {
+    return `mailto:${s.url}`;
+  }
+  return s.url;
+}
 
 export default function Navbar() {
   const location = useLocation();
@@ -25,6 +74,15 @@ export default function Navbar() {
     (p) => p.key !== "resume" && isPageVisible(vis, p.key)
   ).map((p) => ({ name: p.label, path: p.path }));
   const showResume = isPageVisible(vis, "resume");
+
+  // Admin-managed social links (shared with the Footer). Prefer the multi-link
+  // list; fall back to the legacy single link.
+  const socials: SocialLink[] =
+    site.footerSocials && site.footerSocials.length > 0
+      ? site.footerSocials
+      : site.footerLinkUrl
+      ? [{ platform: "linkedin", url: site.footerLinkUrl }]
+      : [];
 
   // Handle scroll effect
   useEffect(() => {
@@ -198,18 +256,31 @@ export default function Navbar() {
                 )}
               </div>
 
-              <div className="mt-auto pt-12 border-t border-neutral-100">
-                <div className="flex gap-6">
-                  <a 
-                    href="https://www.linkedin.com/in/dicky-chu/" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
-                  >
-                    LinkedIn
-                  </a>
+              {socials.filter((s) => s.url).length > 0 && (
+                <div className="mt-auto pt-12 border-t border-neutral-100">
+                  <div className="flex flex-wrap items-center gap-6">
+                    {socials
+                      .filter((s) => s.url)
+                      .map((s, i) => {
+                        const Icon = SOCIAL_ICONS[s.platform] || Globe;
+                        const label = SOCIAL_LABEL[s.platform] || "Link";
+                        return (
+                          <a
+                            key={i}
+                            href={socialHref(s)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={label}
+                            title={label}
+                            className="text-neutral-500 hover:text-black transition-colors"
+                          >
+                            <Icon size={24} strokeWidth={1.75} />
+                          </a>
+                        );
+                      })}
+                  </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           </motion.div>
         )}
