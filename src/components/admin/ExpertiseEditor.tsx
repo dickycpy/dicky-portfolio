@@ -12,7 +12,16 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
+  GripVertical,
 } from "lucide-react";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable as DraggableBase,
+  DropResult,
+} from "@hello-pangea/dnd";
+// No @types/react here; alias the strictly-typed Draggable to `any`.
+const Draggable: any = DraggableBase;
 import { useToast } from "./ToastProvider";
 import { DEFAULT_EXPERTISE, type ExpertiseGroup } from "@/lib/content";
 
@@ -105,6 +114,16 @@ export default function ExpertiseEditor() {
       list[i].items = list[i].items.filter((_, k) => k !== ii);
       return list;
     });
+  const moveItem = (i: number) => (result: DropResult) => {
+    if (!result.destination) return;
+    mutate((list) => {
+      const items = [...list[i].items];
+      const [m] = items.splice(result.source.index, 1);
+      items.splice(result.destination!.index, 0, m);
+      list[i].items = items;
+      return list;
+    });
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -240,31 +259,62 @@ export default function ExpertiseEditor() {
 
             <div>
               <label className={labelCls}>Skill tags</label>
-              <div className="space-y-2">
-                {group.items.map((item, ii) => (
-                  <div key={ii} className="flex items-center gap-2">
-                    <input
-                      value={item}
-                      onChange={(e) => setItem(i, ii, e.target.value)}
-                      placeholder="User Research"
-                      className={fieldCls}
-                    />
-                    <button
-                      onClick={() => removeItem(i, ii)}
-                      className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
-                      title="Remove tag"
+              <DragDropContext onDragEnd={moveItem(i)}>
+                <Droppable droppableId={`items-${i}`}>
+                  {(dp: any) => (
+                    <div
+                      ref={dp.innerRef}
+                      {...dp.droppableProps}
+                      className="space-y-2"
                     >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  onClick={() => addItem(i)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
-                >
-                  <Plus size={14} /> Add tag
-                </button>
-              </div>
+                      {group.items.map((item, ii) => (
+                        <Draggable
+                          key={ii}
+                          draggableId={`item-${i}-${ii}`}
+                          index={ii}
+                        >
+                          {(drag: any) => (
+                            <div
+                              ref={drag.innerRef}
+                              {...drag.draggableProps}
+                              className="flex items-center gap-2 bg-white"
+                            >
+                              <button
+                                type="button"
+                                {...drag.dragHandleProps}
+                                className="p-2.5 rounded-xl text-neutral-300 hover:text-neutral-600 cursor-grab active:cursor-grabbing flex-shrink-0"
+                                title="Drag to reorder"
+                              >
+                                <GripVertical size={16} />
+                              </button>
+                              <input
+                                value={item}
+                                onChange={(e) => setItem(i, ii, e.target.value)}
+                                placeholder="User Research"
+                                className={fieldCls}
+                              />
+                              <button
+                                onClick={() => removeItem(i, ii)}
+                                className="p-2.5 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0"
+                                title="Remove tag"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {dp.placeholder}
+                      <button
+                        onClick={() => addItem(i)}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-teal hover:underline mt-1"
+                      >
+                        <Plus size={14} /> Add tag
+                      </button>
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             </div>
           </motion.div>
         ))}
